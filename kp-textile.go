@@ -2,7 +2,9 @@ package main
 
 import (
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
+	lambda "github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	s3 "github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+	awss3assets "github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
 
 	// "github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	constructs "github.com/aws/constructs-go/constructs/v10"
@@ -30,6 +32,18 @@ func NewKpTextileStack(scope constructs.Construct, id string, props *KpTextileSt
 		BucketName: jsii.String("kp-textile-test-bucket"),
 		Versioned:  jsii.Bool(true),
 	})
+
+	env := make(map[string]*string)
+	env["test"] = jsii.String("WORLD")
+
+	lambda.NewFunction(stack, jsii.String("MyLambda"), &lambda.FunctionProps{
+		Environment:  &env,
+		Runtime:      lambda.Runtime_GO_1_X(),
+		Handler:      jsii.String("test-api"),
+		Code:         lambda.Code_FromAsset(jsii.String("./test-api/main.zip"), &awss3assets.AssetOptions{}),
+		FunctionName: jsii.String("mayLambdaFn"),
+	})
+
 	return stack
 }
 
