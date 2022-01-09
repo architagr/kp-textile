@@ -6,7 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRoutes(engine *gin.Engine, controller *controller.HnsCodeController) {
+func InitRoutes(engine *gin.Engine) {
+	controller := controller.InitHnsCodeController()
 	engine.GET("/", func(c *gin.Context) {
 		controller.GetAll(c)
 	})

@@ -12,10 +12,10 @@ type HnsCodeService struct {
 	hnsCodeRepo *persistance.HnsCodePersistance
 }
 
-func InitHnsCodeService(hnsCodeRepoObj *persistance.HnsCodePersistance) *HnsCodeService {
+func InitHnsCodeService() *HnsCodeService {
 	if hnsCodeServiceObj == nil {
 		hnsCodeServiceObj = &HnsCodeService{
-			hnsCodeRepo: hnsCodeRepoObj,
+			hnsCodeRepo: persistance.InitHnsCodePersistance(),
 		}
 	}
 	return hnsCodeServiceObj
@@ -25,7 +25,7 @@ func (service *HnsCodeService) GetAll() []model.HnsCodeDto {
 	return service.hnsCodeRepo.GetAll()
 }
 
-func (service *HnsCodeService) Get(id int) model.HnsCodeDto {
+func (service *HnsCodeService) Get(id string) model.HnsCodeDto {
 	return service.hnsCodeRepo.Get(id)
 }
 

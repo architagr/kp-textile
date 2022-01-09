@@ -3,7 +3,6 @@ package controller
 import (
 	"hsn-code-service/model"
 	"hsn-code-service/service"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,26 +22,25 @@ type HnsCodeController struct {
 	hnsCodeSvc *service.HnsCodeService
 }
 
-func InitHnsCodeController(svc *service.HnsCodeService) *HnsCodeController {
+func InitHnsCodeController() *HnsCodeController {
 	if hnsCodeCtr == nil {
 		return &HnsCodeController{
-			hnsCodeSvc: svc,
+			hnsCodeSvc: service.InitHnsCodeService(),
 		}
 	}
 
 	return hnsCodeCtr
 }
-func (ctrl *HnsCodeController) GetAll(context *gin.Context) []model.HnsCodeDto {
-	return ctrl.hnsCodeSvc.GetAll()
+func (ctrl *HnsCodeController) GetAll(context *gin.Context) {
+	data := ctrl.hnsCodeSvc.GetAll()
+	context.JSON(200, data)
 }
 
-func (ctrl *HnsCodeController) Get(context *gin.Context) model.HnsCodeDto {
-	idStr := context.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
+func (ctrl *HnsCodeController) Get(context *gin.Context) {
+	id := context.Param("id")
+	data := ctrl.hnsCodeSvc.Get(id)
+	context.JSON(200, data)
 
-	}
-	return ctrl.hnsCodeSvc.Get(id)
 }
 
 func (ctrl *HnsCodeController) Add(context *gin.Context) model.HnsCodeDto {
