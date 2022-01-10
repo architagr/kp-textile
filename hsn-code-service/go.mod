@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go v1.42.30
 	github.com/awslabs/aws-lambda-go-api-proxy v0.12.0
 	github.com/gin-gonic/gin v1.7.7
+	github.com/iris-contrib/go.uuid v2.0.0+incompatible
 )
 
 require (

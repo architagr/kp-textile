@@ -1,13 +1,18 @@
 package router
 
 import (
+	"hsn-code-service/common"
 	"hsn-code-service/controller"
 
 	"github.com/gin-gonic/gin"
 )
 
 func InitRoutes(engine *gin.Engine) {
-	controller := controller.InitHnsCodeController()
+	controller, err := controller.InitHnsCodeController()
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		panic(err)
+	}
 	engine.GET("/", func(c *gin.Context) {
 		controller.GetAll(c)
 	})
@@ -17,7 +22,7 @@ func InitRoutes(engine *gin.Engine) {
 	engine.POST("/", func(c *gin.Context) {
 		controller.Add(c)
 	})
-	engine.POST("/multiple", func(c *gin.Context) {
+	engine.POST("/addmultiple", func(c *gin.Context) {
 		controller.AddMultiple(c)
 	})
 }

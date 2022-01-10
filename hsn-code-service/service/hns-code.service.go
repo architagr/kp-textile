@@ -1,38 +1,129 @@
 package service
 
 import (
-	"hsn-code-service/model"
+	commonModels "commonpkg/models"
+	"fmt"
+	"net/http"
+
 	"hsn-code-service/persistance"
 )
 
-// TODO: return standard response model and error
 var hnsCodeServiceObj *HnsCodeService
 
 type HnsCodeService struct {
 	hnsCodeRepo *persistance.HnsCodePersistance
 }
 
-func InitHnsCodeService() *HnsCodeService {
+func InitHnsCodeService() (*HnsCodeService, *commonModels.ErrorDetail) {
 	if hnsCodeServiceObj == nil {
+		repo, err := persistance.InitHnsCodePersistance()
+		if err != nil {
+			return nil, err
+		}
 		hnsCodeServiceObj = &HnsCodeService{
-			hnsCodeRepo: persistance.InitHnsCodePersistance(),
+			hnsCodeRepo: repo,
 		}
 	}
-	return hnsCodeServiceObj
+	return hnsCodeServiceObj, nil
 }
 
-func (service *HnsCodeService) GetAll() []model.HnsCodeDto {
-	return service.hnsCodeRepo.GetAll()
+func (service *HnsCodeService) GetAll() commonModels.GenericListResponse {
+	allCodes, err := service.hnsCodeRepo.GetAll()
+
+	if err != nil {
+
+		return commonModels.GenericListResponse{
+			GenericResponse: commonModels.GenericResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: "could not get All HSN Codes",
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+		}
+	} else {
+		return commonModels.GenericListResponse{
+			GenericResponse: commonModels.GenericResponse{
+				StatusCode: http.StatusOK,
+				Data:       allCodes,
+			},
+			Start:    0,
+			Total:    len(allCodes),
+			PageSize: len(allCodes),
+		}
+	}
 }
 
-func (service *HnsCodeService) Get(id string) model.HnsCodeDto {
-	return service.hnsCodeRepo.Get(id)
+func (service *HnsCodeService) Get(id string) commonModels.GenericResponse {
+	hsnCode, err := service.hnsCodeRepo.Get(id)
+	if err != nil {
+		return commonModels.GenericResponse{
+			StatusCode:   http.StatusBadRequest,
+			ErrorMessage: fmt.Sprintf("Could not get HSN Code for id: %s", id),
+			Errors: []commonModels.ErrorDetail{
+				*err,
+			},
+		}
+	} else {
+		return commonModels.GenericResponse{
+			StatusCode: http.StatusOK,
+			Data:       hsnCode,
+		}
+	}
 }
 
-func (service *HnsCodeService) Add(code string) model.HnsCodeDto {
-	return service.hnsCodeRepo.Add(code)
+func (service *HnsCodeService) Add(code string) commonModels.GenericResponse {
+
+	hsnCode, err := service.hnsCodeRepo.Add(code)
+
+	if err != nil {
+		return commonModels.GenericResponse{
+			StatusCode:   http.StatusBadRequest,
+			ErrorMessage: fmt.Sprintf("could not add HSN Code - %s", code),
+			Errors: []commonModels.ErrorDetail{
+				*err,
+			},
+		}
+	} else {
+		return commonModels.GenericResponse{
+			StatusCode: http.StatusCreated,
+			Data:       hsnCode,
+		}
+	}
 }
 
-func (service *HnsCodeService) AddMultiple(codes []string) []model.HnsCodeDto {
-	return service.hnsCodeRepo.AddMultiple(codes)
+func (service *HnsCodeService) AddMultiple(codes []string) commonModels.GenericListResponse {
+	allCodes, err := service.hnsCodeRepo.AddMultiple(codes)
+
+	if err != nil {
+
+		if len(allCodes) > 0 && len(codes) > len(allCodes) {
+			return commonModels.GenericListResponse{
+				GenericResponse: commonModels.GenericResponse{
+					StatusCode:   http.StatusPartialContent,
+					ErrorMessage: "could not add All HSN Codes",
+					Errors:       err,
+					Data:         allCodes,
+				},
+			}
+		} else {
+			return commonModels.GenericListResponse{
+				GenericResponse: commonModels.GenericResponse{
+					StatusCode:   http.StatusBadRequest,
+					ErrorMessage: "could not add All HSN Codes",
+					Errors:       err,
+				},
+			}
+		}
+	} else {
+		return commonModels.GenericListResponse{
+			GenericResponse: commonModels.GenericResponse{
+				StatusCode: http.StatusCreated,
+				Data:       allCodes,
+			},
+			Start:    0,
+			Total:    len(allCodes),
+			PageSize: len(allCodes),
+		}
+	}
 }

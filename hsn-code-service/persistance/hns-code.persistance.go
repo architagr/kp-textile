@@ -1,75 +1,124 @@
 package persistance
 
 import (
+	commonModels "commonpkg/models"
 	"fmt"
-	"hsn-code-service/model"
-	"log"
+	"hsn-code-service/common"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	uuid "github.com/iris-contrib/go.uuid"
 )
 
-var hnsCodes = []model.HnsCodeDto{
-	{
-		Id:      "1",
-		HnsCode: "1-123",
-	},
-	{
-		Id:      "2",
-		HnsCode: "2-123",
-	},
-}
 var hnsCodepersistanceObj *HnsCodePersistance
 
 type HnsCodePersistance struct {
-	db *dynamodb.DynamoDB
+	db        *dynamodb.DynamoDB
+	tableName string
 }
 
-func InitHnsCodePersistance() *HnsCodePersistance {
-	// TODO: get connection to DB
+func InitHnsCodePersistance() (*HnsCodePersistance, *commonModels.ErrorDetail) {
 	if hnsCodepersistanceObj == nil {
-		dynamoDbSession := session.Must(session.NewSessionWithOptions(session.Options{
+		dbSession, err := session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
-		}))
+		})
+
+		if err != nil {
+			return nil, &commonModels.ErrorDetail{
+				ErrorCode:    commonModels.ErrorDbConnection,
+				ErrorMessage: err.Error(),
+			}
+		}
+		dynamoDbSession := session.Must(dbSession, err)
+
 		hnsCodepersistanceObj = &HnsCodePersistance{
-			db: dynamodb.New(dynamoDbSession),
+			db:        dynamodb.New(dynamoDbSession),
+			tableName: "hsn-code",
 		}
 	}
 
-	return hnsCodepersistanceObj
+	return hnsCodepersistanceObj, nil
 }
 
-func (repo *HnsCodePersistance) GetAll() []model.HnsCodeDto {
+func (repo *HnsCodePersistance) GetAll() ([]commonModels.HnsCodeDto, *commonModels.ErrorDetail) {
 
 	result, err := repo.db.Scan(&dynamodb.ScanInput{
-		TableName: aws.String("hsn-code"),
+		TableName: &repo.tableName,
+		Limit:     aws.Int64(100),
 	})
 	if err != nil {
-		log.Fatalf("Got error calling GetItem: %s", err)
+		common.WriteLog(1, err.Error())
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorNoDataFound,
+			ErrorMessage: err.Error(),
+		}
 	}
 	if result.Items == nil {
-		msg := "Could not find hsn codes"
-		log.Fatalf(msg)
-	}
-	items := make([]model.HnsCodeDto, 0)
+		message := "Could not find HSN codes"
+		common.WriteLog(5, message)
 
-	for _, val := range result.Items {
-		item := model.HnsCodeDto{}
-		err = dynamodbattribute.UnmarshalMap(val, &item)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorNoDataFound,
+			ErrorMessage: message,
+		}
+	}
+
+	items := make([]commonModels.HnsCodeDto, 0)
+	tempItem, errorDetails := buildHsnCodes(result.Items)
+	if errorDetails != nil {
+		return nil, errorDetails
+	}
+	items = append(items, tempItem...)
+
+	for result.LastEvaluatedKey != nil {
+		result, err = repo.db.Scan(&dynamodb.ScanInput{
+			TableName:         &repo.tableName,
+			Limit:             aws.Int64(100),
+			ExclusiveStartKey: result.LastEvaluatedKey,
+		})
 		if err != nil {
-			log.Fatal("hsn codes not is correct format")
+			common.WriteLog(1, err.Error())
+			return nil, &commonModels.ErrorDetail{
+				ErrorCode:    commonModels.ErrorNoDataFound,
+				ErrorMessage: err.Error(),
+			}
+		}
+
+		if result.Items != nil {
+			tempItem, errorDetails = buildHsnCodes(result.Items)
+			if errorDetails != nil {
+				return nil, errorDetails
+			}
+			items = append(items, tempItem...)
+		}
+	}
+	return items, nil
+}
+
+func buildHsnCodes(dbItems []map[string]*dynamodb.AttributeValue) ([]commonModels.HnsCodeDto, *commonModels.ErrorDetail) {
+	items := make([]commonModels.HnsCodeDto, 0)
+
+	for _, val := range dbItems {
+		item := commonModels.HnsCodeDto{}
+		err := dynamodbattribute.UnmarshalMap(val, &item)
+		if err != nil {
+			common.WriteLog(1, err.Error())
+			return nil, &commonModels.ErrorDetail{
+				ErrorCode:    commonModels.ErrorNoDataFound,
+				ErrorMessage: err.Error(),
+			}
 		}
 		items = append(items, item)
 	}
-	return items
+	return items, nil
 }
 
-func (repo *HnsCodePersistance) Get(id string) model.HnsCodeDto {
-	var hnsCode *model.HnsCodeDto
+func (repo *HnsCodePersistance) Get(id string) (*commonModels.HnsCodeDto, *commonModels.ErrorDetail) {
+	var hnsCode *commonModels.HnsCodeDto
 	result, err := repo.db.Query(&dynamodb.QueryInput{
-		TableName: aws.String("hsn-code"),
+		TableName: &repo.tableName,
 		KeyConditions: map[string]*dynamodb.Condition{
 			"id": {
 				ComparisonOperator: aws.String("EQ"),
@@ -83,42 +132,78 @@ func (repo *HnsCodePersistance) Get(id string) model.HnsCodeDto {
 	})
 
 	if err != nil {
-		log.Fatalf("Got error calling GetItem: %s", err)
+		common.WriteLog(1, err.Error())
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorNoDataFound,
+			ErrorMessage: err.Error(),
+		}
 	}
-	if result.Items == nil {
-		msg := fmt.Sprintf("Could not find hsn codes for id %s", id)
-		log.Fatalf(msg)
+	if result.Items == nil || len(result.Items) == 0 {
+		message := fmt.Sprintf("Could not find HSN codes for id %s", id)
+		common.WriteLog(3, message)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorNoDataFound,
+			ErrorMessage: message,
+		}
 	}
 	if len(result.Items) > 0 {
 
 		err = dynamodbattribute.UnmarshalMap(result.Items[0], &hnsCode)
 		if err != nil {
-			log.Fatal("hsn codes not is correct format")
+			common.WriteLog(1, err.Error())
+			return nil, &commonModels.ErrorDetail{
+				ErrorCode:    commonModels.ErrorNoDataFound,
+				ErrorMessage: "hsn codes not is correct format",
+			}
 		}
-	} else {
-		log.Fatal("hsn codes not found")
 	}
-	return *hnsCode
+	return hnsCode, nil
 }
 
-func (repo *HnsCodePersistance) Add(code string) model.HnsCodeDto {
-	length := len(hnsCodes)
+func (repo *HnsCodePersistance) Add(code string) (*commonModels.HnsCodeDto, *commonModels.ErrorDetail) {
+	id, _ := uuid.NewV1()
+	newHnsCode := commonModels.HnsCodeDto{Id: id.String(), HnsCode: code}
 
-	id := hnsCodes[length-1].Id + "1"
+	av, err := dynamodbattribute.MarshalMap(newHnsCode)
+	if err != nil {
+		common.WriteLog(1, err.Error())
 
-	newHnsCode := model.HnsCodeDto{Id: id, HnsCode: code}
-	hnsCodes = append(hnsCodes, newHnsCode)
-	return newHnsCode
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: fmt.Sprintf("Got error marshalling new HnsCode item: %s", err),
+		}
+	}
+	_, err = repo.db.PutItem(&dynamodb.PutItemInput{
+		TableName: &repo.tableName,
+		Item:      av,
+	})
+
+	if err != nil {
+		common.WriteLog(1, err.Error())
+
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorInsert,
+			ErrorMessage: fmt.Sprintf("Error in adding HSN code %s, error message; %s", code, err.Error()),
+		}
+	}
+
+	return &newHnsCode, nil
 }
 
-func (repo *HnsCodePersistance) AddMultiple(codes []string) []model.HnsCodeDto {
-	var newHnsCodes []model.HnsCodeDto
+func (repo *HnsCodePersistance) AddMultiple(codes []string) ([]commonModels.HnsCodeDto, []commonModels.ErrorDetail) {
+	var newHnsCodes []commonModels.HnsCodeDto
+	var errors = make([]commonModels.ErrorDetail, 0)
 	for _, val := range codes {
-		newHnsCode := repo.Add(val)
-
-		newHnsCodes = append(newHnsCodes, newHnsCode)
+		newHnsCode, err := repo.Add(val)
+		if err != nil {
+			common.WriteLog(1, err.Error())
+			errors = append(errors, *err)
+		} else {
+			newHnsCodes = append(newHnsCodes, *newHnsCode)
+		}
 	}
-
-	// TODO: return error of the codes which have not been added
-	return newHnsCodes
+	if len(errors) > 0 {
+		return nil, errors
+	}
+	return newHnsCodes, nil
 }

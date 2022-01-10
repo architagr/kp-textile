@@ -1,65 +1,86 @@
 package controller
 
 import (
-	"hsn-code-service/model"
+	commonModels "commonpkg/models"
+	"net/http"
+
 	"hsn-code-service/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AddRequest struct {
-	code string `form:"code"`
+	Code string `json:"code" binding:"required"`
 }
 
 type AddMultipleRequest struct {
-	codes []string `form:"codes"`
+	Codes []string `json:"codes"`
+}
+type GetRequest struct {
+	Id string `uri:"id"`
 }
 
 var hnsCodeCtr *HnsCodeController
 
-// TODO: analysis response from service and in case of error send error response
 type HnsCodeController struct {
 	hnsCodeSvc *service.HnsCodeService
 }
 
-func InitHnsCodeController() *HnsCodeController {
+func InitHnsCodeController() (*HnsCodeController, *commonModels.ErrorDetail) {
 	if hnsCodeCtr == nil {
-		return &HnsCodeController{
-			hnsCodeSvc: service.InitHnsCodeService(),
+		svc, err := service.InitHnsCodeService()
+		if err != nil {
+			return nil, err
+		}
+		hnsCodeCtr = &HnsCodeController{
+			hnsCodeSvc: svc,
 		}
 	}
-
-	return hnsCodeCtr
+	return hnsCodeCtr, nil
 }
 func (ctrl *HnsCodeController) GetAll(context *gin.Context) {
 	data := ctrl.hnsCodeSvc.GetAll()
-	context.JSON(200, data)
+	context.JSON(data.StatusCode, data)
 }
 
 func (ctrl *HnsCodeController) Get(context *gin.Context) {
-	id := context.Param("id")
-	data := ctrl.hnsCodeSvc.Get(id)
-	context.JSON(200, data)
+	var getRquest GetRequest
+
+	if err := context.ShouldBindUri(&getRquest); err == nil {
+		data := ctrl.hnsCodeSvc.Get(getRquest.Id)
+		context.JSON(data.StatusCode, data)
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
 
 }
 
-func (ctrl *HnsCodeController) Add(context *gin.Context) model.HnsCodeDto {
+func (ctrl *HnsCodeController) Add(context *gin.Context) {
 	var addData AddRequest
-	if context.ShouldBind(&addData) == nil {
-		return ctrl.hnsCodeSvc.Add(addData.code)
+
+	var b []byte
+	context.Request.Body.Read(b)
+
+	if err := context.ShouldBindJSON(&addData); err == nil {
+		data := ctrl.hnsCodeSvc.Add(addData.Code)
+		context.JSON(data.StatusCode, data)
 	} else {
-		// FIXME: error
-		return model.HnsCodeDto{}
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
 	}
 }
 
-func (ctrl *HnsCodeController) AddMultiple(context *gin.Context) []model.HnsCodeDto {
+func (ctrl *HnsCodeController) AddMultiple(context *gin.Context) {
 	var addData AddMultipleRequest
-	if context.ShouldBind(&addData) == nil {
-		return ctrl.hnsCodeSvc.AddMultiple(addData.codes)
+	if err := context.ShouldBindJSON(&addData); err == nil {
+		data := ctrl.hnsCodeSvc.AddMultiple(addData.Codes)
+		context.JSON(data.StatusCode, data)
 	} else {
-		// FIXME: error
-		return []model.HnsCodeDto{}
-
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
 	}
 }
