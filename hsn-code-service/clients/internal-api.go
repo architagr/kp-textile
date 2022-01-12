@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"hsn-code-service/common"
 	"os"
 
@@ -14,15 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// TODO: create a env read logic for local
 var ginLambda *ginadapter.GinLambda
 var ginEngine *gin.Engine
 var isLocal string
 
 func init() {
 	isLocal = os.Getenv("isLocal")
-	fmt.Printf("isLocal %s -\n", isLocal)
 	common.InitLogger()
+	common.InitEnv(isLocal)
 
 	common.WriteLog(1, "Service start")
 	ginEngine = gin.Default()
@@ -41,6 +39,6 @@ func main() {
 	if isLocal == "" {
 		lambda.Start(Handler)
 	} else {
-		ginEngine.Run()
+		ginEngine.Run(common.EnvValues.PortNumber)
 	}
 }

@@ -35,7 +35,7 @@ func InitHnsCodePersistance() (*HnsCodePersistance, *commonModels.ErrorDetail) {
 
 		hnsCodepersistanceObj = &HnsCodePersistance{
 			db:        dynamodb.New(dynamoDbSession),
-			tableName: "hsn-code",
+			tableName: common.EnvValues.TableName,
 		}
 	}
 
