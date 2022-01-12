@@ -12,7 +12,7 @@ var EnvValues Env
 func InitEnv(isLocal string) {
 	if isLocal == "" {
 		EnvValues = Env{
-			TableName:  os.Getenv("hsn-code-table"),
+			TableName:  os.Getenv("hsnCodeTable"),
 			PortNumber: "0",
 		}
 	} else {

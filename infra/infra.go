@@ -1,6 +1,10 @@
 package main
 
 import (
+	common "infra/common"
+	hsncodeinfra "infra/hsn-code-infra"
+	"os"
+
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
 	constructs "github.com/aws/constructs-go/constructs/v10"
 	jsii "github.com/aws/jsii-runtime-go"
@@ -25,23 +29,19 @@ func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	// The code that defines your stack goes here
-
-	// example resource
-	// queue := awssqs.NewQueue(stack, jsii.String("InfraQueue"), &awssqs.QueueProps{
-	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
-	// })
-
 	return stack
 }
 
 func main() {
 	app := awscdk.NewApp(nil)
-
-	NewInfraStack(app, "KpTextileStack", &InfraStackProps{
-		awscdk.StackProps{
+	commonStackProps := common.CommonStackProps{
+		IsLocal: os.Getenv("isLocal"),
+	}
+	hsncodeinfra.NewHsnCodeStack(app, "HsnCodeStack", &hsncodeinfra.HsnCodeStackProps{
+		StackProps: awscdk.StackProps{
 			Env: env(),
 		},
+		CommonStackProps: commonStackProps,
 	})
 
 	app.Synth(nil)
