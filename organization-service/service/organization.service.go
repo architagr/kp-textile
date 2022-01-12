@@ -5,30 +5,30 @@ import (
 	"fmt"
 	"net/http"
 
-	"hsn-code-service/persistance"
+	"organization-service/persistance"
 )
 
-var hnsCodeServiceObj *HnsCodeService
+var organizationServiceObj *OrganizationService
 
-type HnsCodeService struct {
-	hnsCodeRepo *persistance.HnsCodePersistance
+type OrganizationService struct {
+	organizationRepo *persistance.OrganizationPersistance
 }
 
-func InitHnsCodeService() (*HnsCodeService, *commonModels.ErrorDetail) {
-	if hnsCodeServiceObj == nil {
-		repo, err := persistance.InitHnsCodePersistance()
+func InitHnsCodeService() (*OrganizationService, *commonModels.ErrorDetail) {
+	if organizationServiceObj == nil {
+		repo, err := persistance.InitOrganizationPersistance()
 		if err != nil {
 			return nil, err
 		}
-		hnsCodeServiceObj = &HnsCodeService{
-			hnsCodeRepo: repo,
+		organizationServiceObj = &OrganizationService{
+			organizationRepo: repo,
 		}
 	}
-	return hnsCodeServiceObj, nil
+	return organizationServiceObj, nil
 }
 
-func (service *HnsCodeService) GetAll() commonModels.HnsCodeListResponse {
-	allCodes, err := service.hnsCodeRepo.GetAll()
+func (service *OrganizationService) GetAll() commonModels.HnsCodeListResponse {
+	allCodes, err := service.organizationRepo.GetAll()
 
 	if err != nil {
 
@@ -58,8 +58,8 @@ func (service *HnsCodeService) GetAll() commonModels.HnsCodeListResponse {
 	}
 }
 
-func (service *HnsCodeService) Get(id string) commonModels.HnsCodeResponse {
-	hsnCode, err := service.hnsCodeRepo.Get(id)
+func (service *OrganizationService) Get(id string) commonModels.HnsCodeResponse {
+	hsnCode, err := service.organizationRepo.Get(id)
 	if err != nil {
 		return commonModels.HnsCodeResponse{
 			CommonResponse: commonModels.CommonResponse{
@@ -80,8 +80,9 @@ func (service *HnsCodeService) Get(id string) commonModels.HnsCodeResponse {
 	}
 }
 
-func (service *HnsCodeService) Add(code string) commonModels.HnsCodeResponse {
-	hsnCode, err := service.hnsCodeRepo.Add(code)
+func (service *OrganizationService) Add(code string) commonModels.HnsCodeResponse {
+
+	hsnCode, err := service.organizationRepo.Add(code)
 
 	if err != nil {
 		return commonModels.HnsCodeResponse{
@@ -103,8 +104,8 @@ func (service *HnsCodeService) Add(code string) commonModels.HnsCodeResponse {
 	}
 }
 
-func (service *HnsCodeService) AddMultiple(codes []string) commonModels.HnsCodeListResponse {
-	allCodes, err := service.hnsCodeRepo.AddMultiple(codes)
+func (service *OrganizationService) AddMultiple(codes []string) commonModels.HnsCodeListResponse {
+	allCodes, err := service.organizationRepo.AddMultiple(codes)
 
 	if err != nil {
 

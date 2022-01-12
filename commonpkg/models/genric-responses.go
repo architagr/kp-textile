@@ -29,15 +29,13 @@ func (err *ErrorDetail) Error() string {
 	return fmt.Sprintf("ErrorCode: %s : ErrorMessage: %s", err.ErrorCode, err.ErrorMessage)
 }
 
-type GenericResponse struct {
+type CommonResponse struct {
 	StatusCode   int           `json:"statusCode,omitempty"`
-	Data         interface{}   `json:"data,omitempty"`
 	ErrorMessage string        `json:"errorMessage,omitempty"`
 	Errors       []ErrorDetail `json:"errors,omitempty"`
 }
-
-type GenericListResponse struct {
-	GenericResponse
+type CommonListResponse struct {
+	CommonResponse
 	Start    int `json:"start,omitempty"`
 	PageSize int `json:"pageSize,omitempty"`
 	Total    int `json:"total,omitempty"`

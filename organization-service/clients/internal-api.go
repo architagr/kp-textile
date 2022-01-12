@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"hsn-code-service/common"
+	"organization-service/common"
 	"os"
 
-	"hsn-code-service/router"
+	"organization-service/router"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
