@@ -12,6 +12,7 @@ lambda-build:
 	rm -f internal-api main.zip
 	GOOS=linux go build clients/internal-api.go
 	zip main.zip internal-api
+	rm -f internal-api
 
 start-internal:
 	go run ./clients/internal-api.go
