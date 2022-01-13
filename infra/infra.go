@@ -3,6 +3,8 @@ package main
 import (
 	common "infra/common"
 	hsncodeinfra "infra/hsn-code-infra"
+	qualityinfra "infra/quality-infra"
+
 	"os"
 
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
@@ -38,6 +40,12 @@ func main() {
 		IsLocal: os.Getenv("isLocal"),
 	}
 	hsncodeinfra.NewHsnCodeStack(app, "HsnCodeStack", &hsncodeinfra.HsnCodeStackProps{
+		StackProps: awscdk.StackProps{
+			Env: env(),
+		},
+		CommonStackProps: commonStackProps,
+	})
+	qualityinfra.NewQualityStack(app, "QualityStack", &qualityinfra.QualityStackProps{
 		StackProps: awscdk.StackProps{
 			Env: env(),
 		},
