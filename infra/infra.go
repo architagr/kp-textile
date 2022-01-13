@@ -1,6 +1,7 @@
 package main
 
 import (
+	clientinfra "infra/client-infra"
 	common "infra/common"
 	hsncodeinfra "infra/hsn-code-infra"
 	qualityinfra "infra/quality-infra"
@@ -51,7 +52,12 @@ func main() {
 		},
 		CommonStackProps: commonStackProps,
 	})
-
+	clientinfra.NewClientStack(app, "ClientStack", &clientinfra.ClientStackProps{
+		StackProps: awscdk.StackProps{
+			Env: env(),
+		},
+		CommonStackProps: commonStackProps,
+	})
 	app.Synth(nil)
 }
 

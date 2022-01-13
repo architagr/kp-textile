@@ -1,6 +1,6 @@
-fileName="quality-service"
-name="QualityService"
-privatename="qualityService"
+fileName="client-service"
+name="ClientService"
+privatename="clientService"
 
 cd "$fileName"
 

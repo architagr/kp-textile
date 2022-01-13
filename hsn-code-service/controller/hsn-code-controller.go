@@ -60,9 +60,6 @@ func (ctrl *HnsCodeController) Get(context *gin.Context) {
 func (ctrl *HnsCodeController) Add(context *gin.Context) {
 	var addData AddRequest
 
-	var b []byte
-	context.Request.Body.Read(b)
-
 	if err := context.ShouldBindJSON(&addData); err == nil {
 		data := ctrl.hnsCodeSvc.Add(addData.Code)
 		context.JSON(data.StatusCode, data)
