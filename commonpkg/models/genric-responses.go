@@ -1,6 +1,10 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+)
 
 const (
 	// db error codes start from 10--
@@ -36,7 +40,7 @@ type CommonResponse struct {
 }
 type CommonListResponse struct {
 	CommonResponse
-	Start    int `json:"start,omitempty"`
-	PageSize int `json:"pageSize,omitempty"`
-	Total    int `json:"total,omitempty"`
+	LastEvalutionKey map[string]*dynamodb.AttributeValue `json:"lastEvalutionKey,omitempty"`
+	PageSize         int64                               `json:"pageSize,omitempty"`
+	Total            int64                               `json:"total,omitempty"`
 }

@@ -1,5 +1,9 @@
 package models
 
+import (
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+)
+
 const (
 	Status_Active   = "Active"
 	Status_Blocked  = "Blocked"
@@ -92,18 +96,18 @@ type AddressDto struct {
 
 type ClientFilterDto struct {
 	BranchId               string
-	CompanyName            string `json:"companyName,omitempty"`
-	Alias                  string `json:"alias,omitempty"`
-	Email                  string `json:"email,omitempty"`
-	ContactPersonFirstName string `json:"contactPersonFirstName,omitempty"`
-	ContactPersonLastName  string `json:"contactPersonLastName,omitempty"`
-	PaymentTerm            string `json:"paymentTerm,omitempty"`
+	CompanyName            string `json:"companyName,omitempty" form:"companyName"`
+	Alias                  string `json:"alias,omitempty" form:"alias"`
+	Email                  string `json:"email,omitempty" form:"email"`
+	ContactPersonFirstName string `json:"contactPersonFirstName,omitempty" form:"contactPersonFirstName"`
+	ContactPersonLastName  string `json:"contactPersonLastName,omitempty" form:"contactPersonLastName"`
+	PaymentTerm            string `json:"paymentTerm,omitempty" form:"paymentTerm"`
 }
 
 type ClientListRequest struct {
-	Start    int             `json:"start,omitempty"`
-	PageSize int             `json:"pageSize,omitempty"`
-	Filter   ClientFilterDto `json:"filter,omitempty"`
+	LastEvalutionKey map[string]*dynamodb.AttributeValue `json:"lastEvalutionKey,omitempty"`
+	PageSize         int64                               `json:"pageSize,omitempty" form:"pageSize"`
+	ClientFilterDto
 }
 
 type ClientListResponse struct {
@@ -118,4 +122,9 @@ type ClientRequest struct {
 type ClientResponse struct {
 	CommonResponse
 	Data ClientDto `json:"data,omitempty"`
+}
+
+type GetClientRequestDto struct {
+	BranchId string
+	ClientId string `uri:"clientId"`
 }

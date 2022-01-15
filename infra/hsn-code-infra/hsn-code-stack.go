@@ -55,6 +55,7 @@ func buildLambda(stack awscdk.Stack, hsnCodeTable dynamodb.Table) {
 
 	env := make(map[string]*string)
 	env["hsnCodeTable"] = hsnCodeTable.TableName()
+	env["GIN_MODE"] = jsii.String("release")
 
 	function := lambda.NewFunction(stack, jsii.String("hsn-code-lambda"), &lambda.FunctionProps{
 		Environment:  &env,

@@ -45,16 +45,90 @@ func InitClientServicePersistance() (*ClientServicePersistance, *commonModels.Er
 	return clientServicePersistanceObj, nil
 }
 
-func (repo *ClientServicePersistance) GetClientByFilter(filterData commonModels.ClientFilterDto) ([]commonModels.ClientDto, *commonModels.ErrorDetail) {
+func (repo *ClientServicePersistance) GetPersonByClientId(request commonModels.GetClientRequestDto) ([]commonModels.ContactPersonDto, *commonModels.ErrorDetail) {
+	keyCondition := expression.KeyAnd(
+		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
+		expression.Key("sortKey").BeginsWith(fmt.Sprintf("%s|%s", common.ContactSortKey, request.ClientId)),
+	)
 
-	filter := expression.Name("branchId").Contains(filterData.BranchId)
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
 
-	if len(filterData.CompanyName) > 0 {
-		filter = filter.And(expression.Name("compnayName").Contains(filterData.CompanyName))
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("Got error building expression: %s", err.Error()))
 	}
 
+	result, err := repo.db.Query(&dynamodb.QueryInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		TableName:                 aws.String(repo.clientTableName),
+	})
+
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("get person for client %s call failed: %s", request.ClientId, err.Error()))
+	}
+
+	clientPersons := make([]commonModels.ContactPersonDto, len(result.Items))
+	for i, val := range result.Items {
+		clientPerson := commonModels.ContactPersonDto{}
+
+		err = dynamodbattribute.UnmarshalMap(val, &clientPerson)
+
+		if err != nil {
+			log.Fatalf("Got error unmarshalling: %s", err)
+		}
+		clientPersons[i] = clientPerson
+	}
+	return clientPersons, nil
+}
+
+func (repo *ClientServicePersistance) GetClient(request commonModels.GetClientRequestDto) (commonModels.ClientDto, *commonModels.ErrorDetail) {
+
+	keyCondition := expression.KeyAnd(
+		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
+		expression.Key("sortKey").Equal(expression.Value(fmt.Sprintf("%s|%s", common.ClientSortKey, request.ClientId))),
+	)
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("Got error building expression: %s", err.Error()))
+	}
+
+	result, err := repo.db.Query(&dynamodb.QueryInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		TableName:                 aws.String(repo.clientTableName),
+	})
+
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("get client call failed: %s", err.Error()))
+	}
+
+	client := commonModels.ClientDto{}
+	if len(result.Items) > 0 {
+		err = dynamodbattribute.UnmarshalMap(result.Items[0], &client)
+
+		if err != nil {
+			log.Fatalf("Got error unmarshalling: %s", err)
+		}
+	}
+	return client, nil
+}
+
+func buildFilterExpression(filterData commonModels.ClientListRequest, projection *expression.ProjectionBuilder) (*expression.Expression, *commonModels.ErrorDetail) {
+
+	filter := expression.Name("branchId").Equal(expression.Value(filterData.BranchId)).And(expression.Name("sortKey").BeginsWith(common.ClientSortKey))
+
 	if len(filterData.Alias) > 0 {
-		filter = filter.And(expression.Name("alias").Contains(filterData.Alias))
+		filter = filter.And(expression.Name("alias").Contains(filterData.Alias).Or(expression.Name("alias").Equal(expression.Value(filterData.Alias))).Or(expression.Name("alias").BeginsWith(filterData.Alias)))
+	}
+
+	if len(filterData.CompanyName) > 0 {
+		filter = filter.And(expression.Name("companyName").Contains(filterData.CompanyName).Or(expression.Name("companyName").Equal(expression.Value(filterData.CompanyName))).Or(expression.Name("companyName").BeginsWith(filterData.CompanyName)))
 	}
 
 	if len(filterData.Email) > 0 {
@@ -72,23 +146,84 @@ func (repo *ClientServicePersistance) GetClientByFilter(filterData commonModels.
 	if len(filterData.PaymentTerm) > 0 {
 		filter = filter.And(expression.Name("paymentTerm").Contains(filterData.PaymentTerm))
 	}
+	builder := expression.NewBuilder().WithFilter(filter)
 
-	expr, err := expression.NewBuilder().WithFilter(filter).Build()
+	if projection != nil {
+		builder.WithProjection(*projection)
+	}
+	expr, err := builder.Build()
 
 	if err != nil {
 		common.WriteLog(1, fmt.Sprintf("Got error building expression: %s", err.Error()))
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorInvalidRequestParam,
+			ErrorMessage: "Error building filter",
+		}
 	}
+
+	return &expr, nil
+}
+
+func (repo *ClientServicePersistance) GetClientTotalByFilter(filterData commonModels.ClientListRequest) (int64, *commonModels.ErrorDetail) {
+	var count int64
+	proj := expression.NamesList(expression.Name("branchId"))
+	expr, errorDetails := buildFilterExpression(filterData, &proj)
+	if errorDetails != nil {
+		return count, errorDetails
+	}
+
+	var result *dynamodb.ScanOutput
+	var err error
+
+	result, err = repo.db.Scan(&dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		TableName:                 aws.String(repo.clientTableName),
+		ExclusiveStartKey:         filterData.LastEvalutionKey,
+		Limit:                     aws.Int64(filterData.PageSize),
+	})
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("filter client call failed: %s", err.Error()))
+	}
+	filterData.LastEvalutionKey = result.LastEvaluatedKey
+	count = count + int64(len(result.Items))
+	for len(result.Items) > 0 && result.LastEvaluatedKey != nil {
+		result, err = repo.db.Scan(&dynamodb.ScanInput{
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			FilterExpression:          expr.Filter(),
+			TableName:                 aws.String(repo.clientTableName),
+			ExclusiveStartKey:         filterData.LastEvalutionKey,
+			Limit:                     aws.Int64(filterData.PageSize),
+		})
+		if err != nil {
+			common.WriteLog(1, fmt.Sprintf("filter client call failed: %s", err.Error()))
+		}
+		filterData.LastEvalutionKey = result.LastEvaluatedKey
+		count = count + int64(len(result.Items))
+	}
+	return count, nil
+}
+func (repo *ClientServicePersistance) GetClientByFilter(filterData commonModels.ClientListRequest) ([]commonModels.ClientDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
+
+	expr, errorDetails := buildFilterExpression(filterData, nil)
+	if errorDetails != nil {
+		return nil, nil, errorDetails
+	}
+
 	result, err := repo.db.Scan(&dynamodb.ScanInput{
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		FilterExpression:          expr.Filter(),
-		ProjectionExpression:      expr.Projection(),
 		TableName:                 aws.String(repo.clientTableName),
+		ExclusiveStartKey:         filterData.LastEvalutionKey,
+		Limit:                     aws.Int64(filterData.PageSize),
 	})
-
 	if err != nil {
 		common.WriteLog(1, fmt.Sprintf("filter client call failed: %s", err.Error()))
 	}
+
 	clients := make([]commonModels.ClientDto, len(result.Items))
 	for i, val := range result.Items {
 		client := commonModels.ClientDto{}
@@ -100,10 +235,37 @@ func (repo *ClientServicePersistance) GetClientByFilter(filterData commonModels.
 		}
 		clients[i] = client
 	}
-	return clients, nil
+
+	if len(result.Items) > 0 {
+		return clients, result.LastEvaluatedKey, nil
+	} else {
+		return clients, nil, nil
+	}
 }
 
 func (repo *ClientServicePersistance) AddClient(client commonModels.ClientDto) (*commonModels.ClientDto, *commonModels.ErrorDetail) {
+	existigClients, _, errorDetails := repo.GetClientByFilter(commonModels.ClientListRequest{
+		ClientFilterDto: commonModels.ClientFilterDto{BranchId: client.BranchId,
+			CompanyName: client.CompanyName,
+			Alias:       client.Alias,
+			Email:       client.ContactInfo.Email,
+		},
+		PageSize: 10,
+	})
+
+	if errorDetails != nil {
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: fmt.Sprintf("Error in validating exiting client, error: %s", errorDetails.Error()),
+		}
+	}
+	if len(existigClients) > 0 {
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorInsert,
+			ErrorMessage: "similar client already exists",
+		}
+	}
+
 	av, err := dynamodbattribute.MarshalMap(client)
 	if err != nil {
 		common.WriteLog(1, err.Error())

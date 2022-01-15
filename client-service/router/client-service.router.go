@@ -17,4 +17,12 @@ func InitRoutes(engine *gin.Engine) {
 	engine.POST("/", func(c *gin.Context) {
 		controller.Add(c)
 	})
+
+	engine.GET("/:clientId", func(c *gin.Context) {
+		controller.Get(c)
+	})
+
+	engine.POST("/getall", func(c *gin.Context) {
+		controller.GetAll(c)
+	})
 }

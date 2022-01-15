@@ -55,6 +55,7 @@ func buildLambda(stack awscdk.Stack, qualityTable dynamodb.Table) {
 
 	env := make(map[string]*string)
 	env["qualityTable"] = qualityTable.TableName()
+	env["GIN_MODE"] = jsii.String("release")
 
 	function := lambda.NewFunction(stack, jsii.String("QualityServiceLambda"), &lambda.FunctionProps{
 		Environment:  &env,

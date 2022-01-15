@@ -74,5 +74,73 @@ func (service *ClientServiceService) Add(client commonModels.AddClientRequest) c
 		},
 		Data: client,
 	}
+}
 
+func (service *ClientServiceService) GetClient(request commonModels.GetClientRequestDto) commonModels.AddClientResponse {
+	client, err := service.clientServiceRepo.GetClient(request)
+	if err != nil {
+		return commonModels.AddClientResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: fmt.Sprintf("could not get client with client id  - %s", request.ClientId),
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+		}
+	}
+	clientPersons, err := service.clientServiceRepo.GetPersonByClientId(request)
+	if err != nil {
+		return commonModels.AddClientResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: fmt.Sprintf("could not get client with client id  - %s", request.ClientId),
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+		}
+	}
+	return commonModels.AddClientResponse{
+		CommonResponse: commonModels.CommonResponse{
+			StatusCode: http.StatusOK,
+		},
+		Data: commonModels.AddClientRequest{
+			ClientDto:      client,
+			ContactPersons: clientPersons,
+		},
+	}
+}
+
+func (service *ClientServiceService) GetAll(request commonModels.ClientListRequest) commonModels.ClientListResponse {
+
+	client, lastEvaluationKey, err := service.clientServiceRepo.GetClientByFilter(request)
+	if err != nil {
+		return commonModels.ClientListResponse{
+			CommonListResponse: commonModels.CommonListResponse{
+				CommonResponse: commonModels.CommonResponse{
+					StatusCode:   http.StatusBadRequest,
+					ErrorMessage: "could not get clients",
+					Errors: []commonModels.ErrorDetail{
+						*err,
+					},
+				},
+			},
+		}
+	}
+	request.LastEvalutionKey = nil
+	//request.PageSize = 100
+	count, _ := service.clientServiceRepo.GetClientTotalByFilter(request)
+
+	return commonModels.ClientListResponse{
+		CommonListResponse: commonModels.CommonListResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode: http.StatusOK,
+			},
+			LastEvalutionKey: lastEvaluationKey,
+			PageSize:         int64(len(client)),
+			Total:            count,
+		},
+		Data: client,
+	}
 }
