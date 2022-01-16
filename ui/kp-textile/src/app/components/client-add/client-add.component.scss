@@ -1,0 +1,25 @@
+.card-header {
+    &.flex {
+      display: flex;
+    }
+    .align-right {
+      align-items: flex-end;
+      margin-left: auto;
+    }
+  }
+
+  .mat-divider{
+    border-color: #2b3553;
+  }
+  .mat-expansion-panel{
+      background-color: #27293d;
+  }
+  .mat-expansion-panel-header-title {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .mat-expansion-indicator::after{
+    color: rgba(255, 255, 255, 0.6);
+  }
+.mat-panel-action{
+    flex-grow: 0;
+}

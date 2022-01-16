@@ -15,6 +15,14 @@ import {MatSidenavModule} from '@angular/material/sidenav';
 import { HomeComponent } from './components/home/home.component'; 
 import {MatMenuModule} from '@angular/material/menu';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ClientService } from './services/client-service';
+import { HttpClientModule } from '@angular/common/http';
+import {MatFormFieldModule} from '@angular/material/form-field'; 
+import {MatPaginatorModule} from '@angular/material/paginator';
+import { HsnCodeComponent } from './components/hsn-code/hsn-code.component'; 
+import {MatDividerModule} from '@angular/material/divider';
+import {MatExpansionModule} from '@angular/material/expansion';
+import { ReactiveFormsModule } from '@angular/forms';
 @NgModule({
   declarations: [
     AppComponent,
@@ -24,18 +32,25 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     ClientListComponent,
     ClientAddComponent,
     ClientUpdateComponent,
-    HomeComponent
+    HomeComponent,
+    HsnCodeComponent
   ],
   imports: [
     BrowserModule,
+    HttpClientModule,
     AppRoutingModule,
     MatTableModule,
     MatSidenavModule,
     MatMenuModule,
     BrowserAnimationsModule,
-    NgbModule
+    NgbModule,
+    MatFormFieldModule,
+    MatPaginatorModule,
+    MatDividerModule,
+    MatExpansionModule,
+    ReactiveFormsModule
   ],
-  providers: [],
+  providers: [ClientService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

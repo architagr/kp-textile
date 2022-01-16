@@ -1,8 +1,20 @@
-.example-container {
-    height: 400px;
-    overflow: auto;
+.icon-pencil {
+  margin-right: 5px;
+}
+tr.example-detail-row {
+  height: 0;
+}
+.example-element-detail {
+  overflow: hidden;
+  display: flex;
+}
+
+.card-header {
+  &.flex {
+    display: flex;
   }
-  
-  table {
-    width: 100%;
+  .align-right {
+    align-items: flex-end;
+    margin-left: auto;
   }
+}

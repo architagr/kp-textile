@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, ElementRef } from '@angular/core';
-import { ROUTES } from "../menu/menu.component";
 import { Location } from "@angular/common";
 import { Router } from "@angular/router";
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { ROUTES } from 'src/app/models/route-model';
 
 
 @Component({

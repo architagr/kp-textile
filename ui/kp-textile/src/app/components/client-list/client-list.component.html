@@ -1,31 +1,82 @@
-<div class="example-container mat-elevation-z8">
-    <table mat-table [dataSource]="dataSource">
-  
-      <!-- Position Column -->
-      <ng-container matColumnDef="position">
-        <th mat-header-cell *matHeaderCellDef> No. </th>
-        <td mat-cell *matCellDef="let element"> {{element.position}} </td>
-      </ng-container>
-  
-      <!-- Name Column -->
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef> Name </th>
-        <td mat-cell *matCellDef="let element"> {{element.name}} </td>
-      </ng-container>
-  
-      <!-- Weight Column -->
-      <ng-container matColumnDef="weight">
-        <th mat-header-cell *matHeaderCellDef> Weight </th>
-        <td mat-cell *matCellDef="let element"> {{element.weight}} </td>
-      </ng-container>
-  
-      <!-- Symbol Column -->
-      <ng-container matColumnDef="symbol">
-        <th mat-header-cell *matHeaderCellDef> Symbol </th>
-        <td mat-cell *matCellDef="let element"> {{element.symbol}} </td>
-      </ng-container>
-  
-      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-    </table>
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card card-plain">
+        <div class="card-header flex">
+          <h4 class="card-title">Client List</h4>
+          <button routerLink="/addclient" class="btn btn-icon btn-round align-right"><i
+              class="tim-icons icon-simple-add"></i></button>
+        </div>
+        <div class="card-body">
+          <div class=" form-group">
+            <input (keyup)="applyFilter($event)" class=" form-control" placeholder="search" type="text" value="" />
+          </div>
+          <div class="table-responsive">
+            <table mat-table [dataSource]="clients" multiTemplateDataRows class="table tablesorter" matSort
+              matSortActive="created" matSortDisableClear matSortDirection="desc">
+              <ng-container matColumnDef="CompanyName">
+                <th mat-header-cell *matHeaderCellDef>Company Name</th>
+                <td mat-cell *matCellDef="let client">{{client.companyName}}</td>
+              </ng-container>
+              <ng-container matColumnDef="Email">
+                <th mat-header-cell *matHeaderCellDef>Email</th>
+                <td mat-cell *matCellDef="let client">{{client.contactInfo.email}}</td>
+              </ng-container>
+              <ng-container matColumnDef="expandedDetail">
+                <td mat-cell *matCellDef="let client" [attr.colspan]="displayedColumns.length"
+                  [@detailExpand1]="client == expandedElement ? 'expanded' : 'collapsed'">
+                  <div class="example-element-detail"
+                    [@detailExpand]="client == expandedElement ? 'expanded' : 'collapsed'">
+                    Address : ({{client.addresses[0].addressType}})
+                    <br>
+                    {{client.addresses[0].label}}
+                    <br>
+                    {{client.addresses[0].addressLine1}}
+                    , {{client.addresses[0].addressLine2}}
+                    <br>
+                    {{client.addresses[0].city}}
+                    , {{client.addresses[0].state}}
+                    , {{client.addresses[0].pincode}}
+                    <br>
+                    {{client.addresses[0].country}}
+                  </div>
+
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="Address">
+                <th mat-header-cell *matHeaderCellDef>Address</th>
+                <td mat-cell *matCellDef="let client"> {{client.addresses.length}}</td>
+              </ng-container>
+              <ng-container matColumnDef="ContactInfo">
+                <th mat-header-cell *matHeaderCellDef>Contact Info</th>
+                <td mat-cell *matCellDef="let client"> Email: {{client.contactInfo.email}}
+                  <br>
+                  Mobile: {{client.contactInfo.mobile}}
+                  <br>
+                  WhatsApp: {{client.contactInfo.whatsapp}}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="Action">
+                <th mat-header-cell *matHeaderCellDef>Action</th>
+                <td mat-cell *matCellDef="let client"> <i class="tim-icons icon-pencil"></i>
+                  <i class="tim-icons icon-trash-simple"></i>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                [class.example-expanded-row]="expandedElement === row"
+                (click)="expandedElement = expandedElement === row ? null : row"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr>
+              <!-- Row shown when there is no matching data. -->
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell" colspan="4">No data matching the filter</td>
+              </tr>
+            </table>
+            <!-- <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Select page of users"></mat-paginator> -->
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+</div>

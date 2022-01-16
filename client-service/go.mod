@@ -7,7 +7,7 @@ replace commonpkg => ./../commonpkg
 require (
 	commonpkg v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-lambda-go v1.28.0
-	github.com/aws/aws-sdk-go v1.42.33
+	github.com/aws/aws-sdk-go v1.42.35
 	github.com/awslabs/aws-lambda-go-api-proxy v0.12.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible
