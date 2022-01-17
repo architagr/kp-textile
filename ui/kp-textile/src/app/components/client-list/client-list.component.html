@@ -3,13 +3,12 @@
     <div class="col-md-12">
       <div class="card card-plain">
         <div class="card-header flex">
-          <h4 class="card-title">Client List</h4>
           <button routerLink="/addclient" class="btn btn-icon btn-round align-right"><i
               class="tim-icons icon-simple-add"></i></button>
         </div>
         <div class="card-body">
           <div class=" form-group">
-            <input (keyup)="applyFilter($event)" class=" form-control" placeholder="search" type="text" value="" />
+            <input (keyup)="applyFilter($event)" class=" form-control" placeholder="search" type="text" />
           </div>
           <div class="table-responsive">
             <table mat-table [dataSource]="clients" multiTemplateDataRows class="table tablesorter" matSort
@@ -18,9 +17,9 @@
                 <th mat-header-cell *matHeaderCellDef>Company Name</th>
                 <td mat-cell *matCellDef="let client">{{client.companyName}}</td>
               </ng-container>
-              <ng-container matColumnDef="Email">
-                <th mat-header-cell *matHeaderCellDef>Email</th>
-                <td mat-cell *matCellDef="let client">{{client.contactInfo.email}}</td>
+              <ng-container matColumnDef="PaymentTerms">
+                <th mat-header-cell *matHeaderCellDef>Payment Terms</th>
+                <td mat-cell *matCellDef="let client">{{client.paymentTerm}}</td>
               </ng-container>
               <ng-container matColumnDef="expandedDetail">
                 <td mat-cell *matCellDef="let client" [attr.colspan]="displayedColumns.length"
@@ -43,9 +42,11 @@
 
                 </td>
               </ng-container>
-              <ng-container matColumnDef="Address">
-                <th mat-header-cell *matHeaderCellDef>Address</th>
-                <td mat-cell *matCellDef="let client"> {{client.addresses.length}}</td>
+              <ng-container matColumnDef="Status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let client"><span class="badge"
+                    [ngClass]="{ 'active-status': client.status == 'Active', 'blocked-status': client.status == 'Blocked', 'inactive-status': client.status == 'Inactive' }">{{client.status}}</span>
+                </td>
               </ng-container>
               <ng-container matColumnDef="ContactInfo">
                 <th mat-header-cell *matHeaderCellDef>Contact Info</th>

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"commonpkg/middlewares"
 	"hsn-code-service/common"
 	"hsn-code-service/controller"
 
@@ -13,6 +14,7 @@ func InitRoutes(engine *gin.Engine) {
 		common.WriteLog(1, err.Error())
 		panic(err)
 	}
+	engine.Use(middlewares.CORSMiddleware())
 	engine.GET("/", func(c *gin.Context) {
 		controller.GetAll(c)
 	})

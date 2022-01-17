@@ -10,19 +10,19 @@ import { ClientService } from 'src/app/services/client-service';
   styleUrls: ['./client-list.component.scss'],
   animations: [
     trigger('detailExpand', [
-      state('collapsed', style({height: '0px', minHeight: '0'})),
-      state('expanded', style({height: '*',})),
+      state('collapsed', style({ height: '0px', minHeight: '0' })),
+      state('expanded', style({ height: '*', })),
       transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
     ]),
     trigger('detailExpand1', [
-      state('collapsed', style({'padding-top': '0px', 'padding-bottom': '0px'})),
-      state('expanded', style({'padding-top': '*', 'padding-bottom': '*'})),
+      state('collapsed', style({ 'padding-top': '0px', 'padding-bottom': '0px' })),
+      state('expanded', style({ 'padding-top': '*', 'padding-bottom': '*' })),
       transition('expanded <=> collapsed', animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
     ]),
   ],
 })
 export class ClientListComponent implements OnInit {
-  displayedColumns: string[] = ['CompanyName', 'Email', 'Address', 'ContactInfo', 'Action'];
+  displayedColumns: string[] = ['CompanyName', 'PaymentTerms', 'Status', 'ContactInfo', 'Action'];
   clients: ClientDto[] = []
   clientsAll: ClientDto[] = []
   expandedElement: ClientDto | null = null
@@ -38,9 +38,9 @@ export class ClientListComponent implements OnInit {
   }
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
-    if(filterValue.length>0)
-    this.clients = this.clients.filter(x=>x.companyName.toLocaleLowerCase().includes(filterValue.toLocaleLowerCase()))
+    if (filterValue.length > 0)
+      this.clients = this.clientsAll.filter(x => x.companyName.toLocaleLowerCase().includes(filterValue.toLocaleLowerCase()));
     else
-    this.clients = this.clientsAll
+      this.clients = this.clientsAll;
   }
 }

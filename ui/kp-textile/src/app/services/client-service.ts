@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
-import { map, Observable, Subject, switchMap } from "rxjs";
+import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
-import { AddClientRequest, AddClientResponse, ClientDto, ClientListResponse, ClientResponse } from "../models/client-model";
+import { AddClientRequest, AddClientResponse, ClientListResponse } from "../models/client-model";
 
 @Injectable({
     providedIn: 'root',

@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { HsnCodeComponent } from './hsn-code.component';
+import { SalesComponent } from './sales.component';
 
-describe('HsnCodeComponent', () => {
-  let component: HsnCodeComponent;
-  let fixture: ComponentFixture<HsnCodeComponent>;
+describe('SalesComponent', () => {
+  let component: SalesComponent;
+  let fixture: ComponentFixture<SalesComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ HsnCodeComponent ]
+      declarations: [ SalesComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(HsnCodeComponent);
+    fixture = TestBed.createComponent(SalesComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

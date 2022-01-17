@@ -17,8 +17,14 @@
                                     <div class="col-md-5 pr-md-1">
                                         <div class="form-group">
                                             <label> Company Name </label>
-                                            <input class="form-control" formControlName="companyName"
-                                                placeholder="Company Name" type="text" />
+                                            <input class="form-control "
+                                                [ngClass]="{'error': addClientForm.dirty && formControls['companyName'].errors}"
+                                                formControlName="companyName" placeholder="Company Name" type="text" />
+                                            <div *ngIf="formControls['companyName'].errors">
+                                                <p class=" text-danger">
+                                                    Company name is required
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-3 px-md-1">
@@ -26,70 +32,116 @@
                                             <label> Company Alias </label>
                                             <input class="form-control" formControlName="alias"
                                                 placeholder="Company Alias" type="text" />
+
                                         </div>
                                     </div>
                                     <div class="col-md-4 pl-md-1">
                                         <div class="form-group">
                                             <label> Website </label>
-                                            <input class="form-control" formControlName="website" placeholder="website"
-                                                type="text" />
+                                            <input class="form-control"
+                                                [ngClass]="{'error': addClientForm.dirty && formControls['website'].errors}"
+                                                formControlName="website" placeholder="website" type="text" />
+                                            <div *ngIf="formControls['website'].errors">
+                                                <p class=" text-danger">
+                                                    website is not in correct format. ex. www.domain.com or
+                                                    www.subdomain.domain.com
+                                                </p>
+                                            </div>
                                         </div>
 
                                     </div>
                                 </div>
                                 <div class="row" formGroupName="contactInfo">
-                                    <div class="col-md-3 pr-md-1">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label> Landline </label>
                                             <input class="form-control" formControlName="landline"
                                                 placeholder="Lineline number" type="text" />
                                         </div>
                                     </div>
-                                    <div class="col-md-3 px-md-1">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label> Mobile </label>
                                             <input class="form-control" formControlName="mobile" placeholder="Mobile"
+                                                [ngClass]="{'error': addClientForm.dirty &&  companyContactInfo['mobile'].errors}"
                                                 type="text" />
+                                            <div *ngIf="companyContactInfo['mobile'].errors">
+                                                <p class=" text-danger">
+                                                    Mobile number is not is correct format
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 pl-md-1">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label> WhatsApp </label>
                                             <input class="form-control" formControlName="whatsapp"
+                                                [ngClass]="{'error': addClientForm.dirty &&  companyContactInfo['whatsapp'].errors}"
                                                 placeholder="WhatsApp" type="text" />
+                                            <div *ngIf="companyContactInfo['whatsapp'].errors">
+                                                <p class=" text-danger">
+                                                    whatsapp number is not is correct format
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 pr-md-1">
+                                    <div class="col-md-3">
                                         <div class="form-group">
                                             <label> Email address </label>
-                                            <input class="form-control" formControlName="email"
+                                            <input
+                                                [ngClass]="{'error': addClientForm.dirty &&  companyContactInfo['email'].errors}"
+                                                class="form-control" formControlName="email"
                                                 placeholder="mike@email.com" type="email" />
+                                            <div *ngIf="companyContactInfo['email'].errors">
+                                                <p class=" text-danger">
+                                                    email is not is correct format
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row">
-
-                                    <div class="col-md-4 px-md-1">
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label> Payment Term </label>
-                                            <select formControlName="paymentTerm" class="form-control">
+                                            <select
+                                                [ngClass]="{'error': addClientForm.dirty &&  formControls['paymentTerm'].errors}"
+                                                formControlName="paymentTerm" class="form-control">
                                                 <option value="">Select Payment term</option>
                                                 <option value="15Days">15 Days</option>
                                                 <option value="Monthly">Monthly</option>
                                                 <option value="Bill">Per bill</option>
                                             </select>
-
+                                            <div *ngIf="formControls['paymentTerm'].errors">
+                                                <p class=" text-danger">
+                                                    Payment term is required
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-4 pl-md-1">
                                         <div class="form-group">
                                             <label> Status </label>
-                                            <select formControlName="status" class="form-control">
+                                            <select
+                                                [ngClass]="{'error': addClientForm.dirty &&  formControls['status'].errors}"
+                                                formControlName="status" class="form-control">
                                                 <option value="">Select Status</option>
                                                 <option value="Active">Active</option>
                                                 <option value="Blocked">Blocked</option>
                                                 <option value="Inactive">Inactive</option>
                                             </select>
+                                            <div *ngIf="formControls['status'].errors">
+                                                <p class=" text-danger">
+                                                    status is required
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label> GSTN </label>
+                                            <input class="form-control" formControlName="gstn" placeholder="GSTN"
+                                                type="text" />
                                         </div>
                                     </div>
                                 </div>
@@ -111,50 +163,72 @@
                             <mat-panel-title>
                                 Address Details
                             </mat-panel-title>
-                            <mat-panel-description class="mat-panel-action">
-                                
-                            </mat-panel-description>
                         </mat-expansion-panel-header>
                         <div class="card">
-                            <div class=" card-header"><button (click)="addAddress()" class="btn btn-icon btn-round align-right"><i
-                                class="tim-icons icon-simple-add"></i></button></div>
+                            <div class=" card-header"><button (click)="addAddress()"
+                                    class="btn btn-icon btn-round align-right"><i
+                                        class="tim-icons icon-simple-add"></i></button></div>
                             <div class="card-body">
                                 <ng-container formArrayName="addresses">
                                     <ng-container *ngFor="let address of addresses.controls; let i = index">
-                                        <ng-container [formGroupName]="i">
-                                            <h5>#{{i+1}}</h5>
+                                        <div [formGroupName]="i" class="sub-form">
+                                            <div class="card-subheading">
+                                                <h4>Address {{i+1}}</h4>
+
+                                                <button (click)="removeAddress(i)"
+                                                    class="btn btn-icon btn-round align-right"><i
+                                                        class="tim-icons icon-trash-simple"></i></button>
+                                            </div>
                                             <div class="row">
                                                 <div class="col-md-2 pr-md-1">
                                                     <div class="form-group">
                                                         <label> Address Label </label>
-                                                        <input class="form-control" formControlName="label"
+                                                        <input
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['label'].errors}"
+                                                            class="form-control" formControlName="label"
                                                             placeholder="Address Label" type="text" />
+                                                        <div *ngIf="getAddressControl(i)['label'].errors">
+                                                            <p class=" text-danger">
+                                                                Address Label is required
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-2 pr-md-1">
                                                     <div class="form-group">
                                                         <label> Address Type </label>
-                                                        <select formControlName="addressType" class="form-control">
+                                                        <select
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['addressType'].errors}"
+                                                            formControlName="addressType" class="form-control">
                                                             <option value="">Select Address Type</option>
                                                             <option value="HeadOffice">HeadOffice</option>
                                                             <option value="SalesOffice">SalesOffice</option>
                                                             <option value="RegionalOffice">RegionalOffice</option>
                                                             <option value="ShippingOffice">ShippingOffice</option>
                                                             <option value="Residence">Residence</option>
+                                                            <option value="Warehouse">Warehouse</option>
                                                         </select>
+                                                        <div *ngIf="getAddressControl(i)['addressType'].errors">
+                                                            <p class=" text-danger">
+                                                                Please select address Type
+                                                            </p>
+                                                        </div>
                                                     </div>
-
-
                                                 </div>
-
                                                 <div class="col-md-8">
                                                     <div class="form-group">
                                                         <label> Address Line 1 </label>
-                                                        <input class="form-control" formControlName="addressLine1"
-                                                            placeholder="Address Line 1" type="text" />
+                                                        <input class="form-control"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['addressLine1'].errors}"
+                                                            formControlName="addressLine1" placeholder="Address Line 1"
+                                                            type="text" />
+                                                        <div *ngIf="getAddressControl(i)['addressLine1'].errors">
+                                                            <p class=" text-danger">
+                                                                Address Line 1 is required
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
-
                                             </div>
                                             <div class="row">
                                                 <div class="col-md-6">
@@ -167,20 +241,34 @@
                                                 <div class="col-md-3 pl-md-1">
                                                     <div class="form-group">
                                                         <label> Country </label>
-                                                        <select formControlName="country" class="form-control">
+                                                        <select formControlName="country"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['country'].errors}"
+                                                            class="form-control">
                                                             <option value="">Select Country</option>
                                                             <option value="India">India</option>
                                                         </select>
+                                                        <div *ngIf="getAddressControl(i)['country'].errors">
+                                                            <p class=" text-danger">
+                                                                Please select a country
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 pl-md-1">
                                                     <div class="form-group">
                                                         <label> State </label>
-                                                        <select formControlName="state" class="form-control">
+                                                        <select formControlName="state"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['state'].errors}"
+                                                            class="form-control">
                                                             <option value="">Select State</option>
                                                             <option value="Delhi">Delhi</option>
                                                             <option value="Rajasthan">Rajasthan</option>
                                                         </select>
+                                                        <div *ngIf="getAddressControl(i)['state'].errors">
+                                                            <p class=" text-danger">
+                                                                Please select a state
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -189,14 +277,27 @@
                                                     <div class="form-group">
                                                         <label> City </label>
                                                         <input formControlName="city" class="form-control"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['city'].errors}"
                                                             placeholder="City" type="text" />
+                                                        <div *ngIf="getAddressControl(i)['city'].errors">
+                                                            <p class=" text-danger">
+                                                                City is required
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 pl-md-1">
                                                     <div class="form-group">
                                                         <label> Pincode </label>
-                                                        <input formControlName="pincode" class="form-control"
+                                                        <input
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['pincode'].errors}"
+                                                            formControlName="pincode" class="form-control"
                                                             placeholder="Pincode" type="text" />
+                                                        <div *ngIf="getAddressControl(i)['pincode'].errors">
+                                                            <p class=" text-danger">
+                                                                Pincode is required
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 pl-md-1">
@@ -210,12 +311,18 @@
                                                     <div class="form-group">
                                                         <label> Mobile </label>
                                                         <input formControlName="mobile" class="form-control"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['mobile'].errors}"
                                                             placeholder="Mobile" type="text" />
+                                                        <div *ngIf="getAddressControl(i)['mobile'].errors">
+                                                            <p class=" text-danger">
+                                                                Mobile number is not is the correct format
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <mat-divider></mat-divider>
-                                        </ng-container>
+                                        </div>
+                                        <mat-divider></mat-divider>
                                     </ng-container>
                                 </ng-container>
                             </div>
@@ -229,31 +336,50 @@
                         </mat-expansion-panel-header>
                         <div class="card">
                             <div class=" card-header">
-                                <button (click)="addContactPerson()"  class="btn btn-icon btn-round"><i
-                                class="tim-icons icon-simple-add"></i></button>
+                                <button (click)="addContactPerson()" class="btn btn-icon btn-round"><i
+                                        class="tim-icons icon-simple-add"></i></button>
                             </div>
                             <div class="card-body">
                                 <ng-container formArrayName="contactPersons">
                                     <ng-container *ngFor="let person of contactPersons.controls; let i = index">
-                                        <ng-container [formGroupName]="i"   >
-                                            <h5>#{{i+1}}</h5>
+                                        <div [formGroupName]="i" class="sub-form">
+                                            <div class="card-subheading">
+                                                <h4>Contact Person {{i+1}}</h4>
+
+                                                <button (click)="removeAddress(i)"
+                                                    class="btn btn-icon btn-round align-right"><i
+                                                        class="tim-icons icon-trash-simple"></i></button>
+                                            </div>
                                             <div class="row">
                                                 <div class="col-md-2 pr-md-1">
                                                     <div class="form-group">
                                                         <label> Salutation </label>
-                                                        <select formControlName="salutation" class="form-control">
+                                                        <select
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getContactPersonControl(i)['salutation'].errors}"
+                                                            formControlName="salutation" class="form-control">
                                                             <option value="">Select Salutation</option>
                                                             <option value="Mr.">Mr.</option>
                                                             <option value="Mrs.">Mrs.</option>
                                                             <option value="Ms">Ms</option>
                                                         </select>
+                                                        <div *ngIf="getContactPersonControl(i)['salutation'].errors">
+                                                            <p class=" text-danger">
+                                                                Salutation is required
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 pr-md-1">
                                                     <div class="form-group">
                                                         <label> First Name </label>
                                                         <input formControlName="firstName" class="form-control"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getContactPersonControl(i)['firstName'].errors}"
                                                             placeholder="First Name" type="text" />
+                                                        <div *ngIf="getContactPersonControl(i)['firstName'].errors">
+                                                            <p class=" text-danger">
+                                                                First Name is required
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3">
@@ -273,7 +399,9 @@
                                                 <div class="col-md-2">
                                                     <div class="form-group">
                                                         <label> Person Type </label>
-                                                        <select formControlName="personType" class="form-control">
+                                                        <select
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getContactPersonControl(i)['personType'].errors}"
+                                                            formControlName="personType" class="form-control">
                                                             <option value="">Select Person Type</option>
                                                             <option value="Sales">Sales</option>
                                                             <option value="Account">Account</option>
@@ -282,6 +410,11 @@
                                                             <option value="Director">Director</option>
                                                             <option value="Chairman">Chairman</option>
                                                         </select>
+                                                        <div *ngIf="getContactPersonControl(i)['personType'].errors">
+                                                            <p class=" text-danger">
+                                                                Person Type is required
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -290,22 +423,36 @@
                                                     <div class="col-md-2 pr-md-1">
                                                         <div class="form-group">
                                                             <label> Address Label </label>
-                                                            <input formControlName="label"
-                                                                class="form-control" placeholder="Address Label"
-                                                                type="text" />
+                                                            <input formControlName="label" class="form-control"
+                                                                [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['label'].errors}"
+                                                                placeholder="Address Label" type="text" />
+                                                            <div
+                                                                *ngIf="getContactPersonAddressControl(i)['label'].errors">
+                                                                <p class=" text-danger">
+                                                                    Address Label is required
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-2 pr-md-1">
                                                         <div class="form-group">
                                                             <label> Address Type </label>
-                                                            <select formControlName="addressType" class="form-control">
+                                                            <select formControlName="addressType" class="form-control"
+                                                                [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['addressType'].errors}">
                                                                 <option value="">Select Address Type</option>
                                                                 <option value="HeadOffice">HeadOffice</option>
                                                                 <option value="SalesOffice">SalesOffice</option>
                                                                 <option value="RegionalOffice">RegionalOffice</option>
                                                                 <option value="ShippingOffice">ShippingOffice</option>
                                                                 <option value="Residence">Residence</option>
+                                                                <option value="Warehouse">Warehouse</option>
                                                             </select>
+                                                            <div
+                                                                *ngIf="getContactPersonAddressControl(i)['addressType'].errors">
+                                                                <p class=" text-danger">
+                                                                    Address type is required
+                                                                </p>
+                                                            </div>
                                                         </div>
 
 
@@ -315,7 +462,14 @@
                                                         <div class="form-group">
                                                             <label> Address Line 1 </label>
                                                             <input formControlName="addressLine1" class="form-control"
+                                                                [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['addressLine1'].errors}"
                                                                 placeholder="Address Line 1" type="text" />
+                                                            <div
+                                                                *ngIf="getContactPersonAddressControl(i)['addressLine1'].errors">
+                                                                <p class=" text-danger">
+                                                                    Address line 1 is required
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -331,20 +485,35 @@
                                                     <div class="col-md-3 pl-md-1">
                                                         <div class="form-group">
                                                             <label> Country </label>
-                                                            <select formControlName="country" class="form-control">
+                                                            <select
+                                                                [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['country'].errors}"
+                                                                formControlName="country" class="form-control">
                                                                 <option value="">Select Country</option>
                                                                 <option value="India">India</option>
                                                             </select>
+                                                            <div
+                                                                *ngIf="getContactPersonAddressControl(i)['country'].errors">
+                                                                <p class=" text-danger">
+                                                                    Country is required
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3 pl-md-1">
                                                         <div class="form-group">
                                                             <label> State </label>
-                                                            <select formControlName="state" class="form-control">
+                                                            <select formControlName="state" class="form-control"
+                                                                [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['state'].errors}">
                                                                 <option value="">Select State</option>
                                                                 <option value="Delhi">Delhi</option>
                                                                 <option value="Rajasthan">Rajasthan</option>
                                                             </select>
+                                                            <div
+                                                                *ngIf="getContactPersonAddressControl(i)['state'].errors">
+                                                                <p class=" text-danger">
+                                                                    State is required
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -353,14 +522,28 @@
                                                         <div class="form-group">
                                                             <label> City </label>
                                                             <input formControlName="city" class="form-control"
+                                                                [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['city'].errors}"
                                                                 placeholder="City" type="text" />
+                                                            <div
+                                                                *ngIf="getContactPersonAddressControl(i)['city'].errors">
+                                                                <p class=" text-danger">
+                                                                    City is required
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3 pl-md-1">
                                                         <div class="form-group">
                                                             <label> Pincode </label>
                                                             <input formControlName="pincode" class="form-control"
+                                                                [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['pincode'].errors}"
                                                                 placeholder="Pincode" type="text" />
+                                                            <div
+                                                                *ngIf="getContactPersonAddressControl(i)['pincode'].errors">
+                                                                <p class=" text-danger">
+                                                                    Pincode is required
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-3 pl-md-1">
@@ -374,7 +557,14 @@
                                                         <div class="form-group">
                                                             <label> Mobile </label>
                                                             <input formControlName="mobile" class="form-control"
+                                                                [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['mobile'].errors}"
                                                                 placeholder="Mobile" type="text" />
+                                                            <div
+                                                                *ngIf="getContactPersonAddressControl(i)['mobile'].errors">
+                                                                <p class=" text-danger">
+                                                                    Mobile Number is not in correct format
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -384,7 +574,14 @@
                                                     <div class="form-group">
                                                         <label> Email </label>
                                                         <input formControlName="email" class="form-control"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getContactPersonContactInfoControl(i)['email'].errors}"
                                                             placeholder="Email" type="text" />
+                                                        <div
+                                                            *ngIf="getContactPersonContactInfoControl(i)['email'].errors">
+                                                            <p class=" text-danger">
+                                                                email is not is correct format
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 pr-md-1">
@@ -398,14 +595,28 @@
                                                     <div class="form-group">
                                                         <label> Mobile </label>
                                                         <input formControlName="mobile" class="form-control"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getContactPersonContactInfoControl(i)['mobile'].errors}"
                                                             placeholder="Mobile" type="text" />
+                                                        <div
+                                                            *ngIf="getContactPersonContactInfoControl(i)['mobile'].errors">
+                                                            <p class=" text-danger">
+                                                                mobile number is not is correct format
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 pl-md-1">
                                                     <div class="form-group">
                                                         <label> WhatsApp </label>
                                                         <input formControlName="whatsapp" class="form-control"
+                                                            [ngClass]="{'error': addClientForm.dirty &&  getContactPersonContactInfoControl(i)['whatsapp'].errors}"
                                                             placeholder="WhatsApp" type="text" />
+                                                        <div
+                                                            *ngIf="getContactPersonContactInfoControl(i)['whatsapp'].errors">
+                                                            <p class=" text-danger">
+                                                                WhatsApp number is not is correct format
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -420,12 +631,13 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <mat-divider></mat-divider>
-                                        </ng-container>
+                                        </div>
+                                        <mat-divider></mat-divider>
                                     </ng-container>
                                 </ng-container>
 
-                                <button class="btn btn-fill btn-primary" type="submit">Save</button>
+                                <button class="btn btn-fill btn-primary" [disabled]="!addClientForm.valid"
+                                    type="submit">Save</button>
                                 <button class="btn btn-fill btn-info" type="button">Cancel</button>
                             </div>
                         </div>

@@ -33,6 +33,7 @@ func (ctrl *ClientServiceController) Add(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&addData); err == nil {
 		//TODO: add branch id from middleware
+		addData.BranchId = "branchId"
 		data := ctrl.clientServiceSvc.Add(addData)
 		context.JSON(data.StatusCode, data)
 	} else {

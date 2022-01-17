@@ -18,7 +18,7 @@ func InitEnv(isLocal string) {
 	} else {
 		EnvValues = Env{
 			TableName:  "hsn-code",
-			PortNumber: ":8080",
+			PortNumber: ":8081",
 		}
 	}
 }

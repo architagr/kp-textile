@@ -1,0 +1,22 @@
+<h1 mat-dialog-title>{{data.id===""? "Add Hsn Code": "Update Hsn Code" }}</h1>
+<form [formGroup]="addHsnCodeForm" (submit)="onNoClick()">
+    <div mat-dialog-content>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label> Hsn Code </label>
+                            <input formControlName="hsnCode" class="form-control" placeholder="Hsn Code" type="text" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div mat-dialog-actions>
+        <button class="btn btn-primary" [disabled]="!addHsnCodeForm.valid" type="submit">Save</button>
+        <button class="btn btn-fill btn-info" (click)="onNoClick()" type="button">Cancel</button>
+    </div>
+</form>

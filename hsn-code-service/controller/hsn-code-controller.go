@@ -2,6 +2,7 @@ package controller
 
 import (
 	commonModels "commonpkg/models"
+	"fmt"
 	"net/http"
 
 	"hsn-code-service/service"
@@ -62,6 +63,7 @@ func (ctrl *HnsCodeController) Add(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&addData); err == nil {
 		data := ctrl.hnsCodeSvc.Add(addData.Code)
+		fmt.Println("data received ")
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{

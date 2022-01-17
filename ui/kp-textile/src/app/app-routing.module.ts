@@ -3,6 +3,9 @@ import { RouterModule, Routes } from '@angular/router';
 import { ClientAddComponent } from './components/client-add/client-add.component';
 import { ClientListComponent } from './components/client-list/client-list.component';
 import { HomeComponent } from './components/home/home.component';
+import { HsnCodeAddComponent } from './components/hsn-code-add/hsn-code-add.component';
+import { HsnCodeListComponent } from './components/hsn-code-list/hsn-code-list.component';
+import { SalesComponent } from './components/sales/sales.component';
 
 const routes: Routes = [
   {
@@ -25,6 +28,18 @@ const routes: Routes = [
     path:"updateclient/:clientId",
     component:ClientAddComponent
   },
+  {
+    path:"hsncode",
+    component: HsnCodeListComponent
+  },
+  {
+    path:"addhsncode",
+    component: HsnCodeAddComponent
+  },
+  {
+    path:'sales',
+    component: SalesComponent
+  }
 ];
 
 @NgModule({

@@ -22,6 +22,7 @@ const (
 	AddressType_RegionalOffice = "RegionalOffice"
 	AddressType_ShippingOffice = "ShippingOffice"
 	AddressType_Residence      = "Residence"
+	AddressType_Warehouse      = "Warehouse"
 )
 
 const (
@@ -45,6 +46,7 @@ type ClientDto struct {
 	Addresses        []AddressDto      `json:"addresses,omitempty"`
 	Remark           string            `json:"remark,omitempty"`
 	Status           string            `json:"status,omitempty"`
+	Gstn             string            `json:"gstn,omitempty"`
 	ParentClientId   string            `json:"parentClientId,omitempty"`
 	ParentClientPath string            `json:"parentClientPath,omitempty"`
 }

@@ -49,10 +49,12 @@ func (service *ClientServiceService) Add(client commonModels.AddClientRequest) c
 	}
 	errors := make([]commonModels.ErrorDetail, 0)
 	clientContacts := make([]commonModels.ContactPersonDto, len(client.ContactPersons))
+	fmt.Printf("clinet contact in service - %+v\n", client.ContactPersons)
 	for i, contact := range client.ContactPersons {
 		contactId, _ := uuid.NewV1()
 		contact.ContactId = contactId.String()
 		contact.ClientId = client.ClientId
+		contact.BranchId = client.BranchId
 		contact.SortKey = fmt.Sprintf("%s|%s|%s", common.ContactSortKey, client.ClientId, contact.ContactId)
 		_, err := service.clientServiceRepo.AddClientContact(contact)
 

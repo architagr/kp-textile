@@ -19,10 +19,16 @@ import { ClientService } from './services/client-service';
 import { HttpClientModule } from '@angular/common/http';
 import {MatFormFieldModule} from '@angular/material/form-field'; 
 import {MatPaginatorModule} from '@angular/material/paginator';
-import { HsnCodeComponent } from './components/hsn-code/hsn-code.component'; 
 import {MatDividerModule} from '@angular/material/divider';
 import {MatExpansionModule} from '@angular/material/expansion';
 import { ReactiveFormsModule } from '@angular/forms';
+import { HsnCodeListComponent } from './components/hsn-code-list/hsn-code-list.component';
+import { HsnCodeAddComponent } from './components/hsn-code-add/hsn-code-add.component';
+import { HsnCodeUpdateComponent } from './components/hsn-code-update/hsn-code-update.component';
+import { HsnCodeService } from './services/hsn-code-service';
+import {MatDialogModule} from '@angular/material/dialog';
+import { SalesComponent } from './components/sales/sales.component';
+import {MatAutocompleteModule} from '@angular/material/autocomplete';
 @NgModule({
   declarations: [
     AppComponent,
@@ -33,7 +39,10 @@ import { ReactiveFormsModule } from '@angular/forms';
     ClientAddComponent,
     ClientUpdateComponent,
     HomeComponent,
-    HsnCodeComponent
+    HsnCodeListComponent,
+    HsnCodeAddComponent,
+    HsnCodeUpdateComponent,
+    SalesComponent
   ],
   imports: [
     BrowserModule,
@@ -48,9 +57,11 @@ import { ReactiveFormsModule } from '@angular/forms';
     MatPaginatorModule,
     MatDividerModule,
     MatExpansionModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatAutocompleteModule
   ],
-  providers: [ClientService],
+  providers: [ClientService, HsnCodeService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

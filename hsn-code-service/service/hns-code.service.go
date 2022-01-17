@@ -49,9 +49,8 @@ func (service *HnsCodeService) GetAll() commonModels.HnsCodeListResponse {
 				CommonResponse: commonModels.CommonResponse{
 					StatusCode: http.StatusOK,
 				},
-				Start:    0,
-				Total:    len(allCodes),
-				PageSize: len(allCodes),
+				Total:    int64(len(allCodes)),
+				PageSize: int64(len(allCodes)),
 			},
 			Data: allCodes,
 		}
@@ -133,9 +132,8 @@ func (service *HnsCodeService) AddMultiple(codes []string) commonModels.HnsCodeL
 	} else {
 		return commonModels.HnsCodeListResponse{
 			CommonListResponse: commonModels.CommonListResponse{
-				Start:    0,
-				Total:    len(allCodes),
-				PageSize: len(allCodes),
+				Total:    int64(len(allCodes)),
+				PageSize: int64(len(allCodes)),
 				CommonResponse: commonModels.CommonResponse{
 					StatusCode: http.StatusCreated,
 				},

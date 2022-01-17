@@ -15,7 +15,7 @@ export const ROUTES: RouteInfo[] = [
   },
   {
     path: "/client",
-    title: "Client",
+    title: "Client List",
     icon: "icon-bank",
     class: "",
     showMenu:true

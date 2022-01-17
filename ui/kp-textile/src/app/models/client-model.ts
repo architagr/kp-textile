@@ -13,7 +13,8 @@ export interface ClientDto {
     remark: string
     status: string
     parentClientId: string
-    parentClientPath: string
+    parentClientPath: string;
+    gstn: string;
 }
 
 export interface ContactDetailsDto {

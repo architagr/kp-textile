@@ -1,0 +1,41 @@
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row" [formGroup]="salesForm" >
+                        <div class="col-md-6 pr-md-1">
+                            <div class="form-group">
+                                <label> Client </label>
+                                <input class="form-control" formControlName="client"
+                                    placeholder="Company Name" type="text" [matAutocomplete]="clientAuto" />
+
+                                    <mat-autocomplete autoActiveFirstOption #clientAuto="matAutocomplete">
+                                        <mat-option *ngFor="let option of clinetFilteredOptions | async" [value]="option.companyName" [disabled]="option.status ==='Blocked'" >
+                                          {{option.companyName}}
+                                        </mat-option>
+                                      </mat-autocomplete>
+
+                            </div>
+                        </div>
+                        <div class="col-md-6 pr-md-1">
+                            
+                            <div class="form-group">
+                                <label> Hsn Code </label>
+                                <input matInput class="form-control" formControlName="hsnCode"
+                                    placeholder="Hsn Code" type="text" [matAutocomplete]="hsnCodeAuto" />
+
+                                    <mat-autocomplete autoActiveFirstOption #hsnCodeAuto="matAutocomplete">
+                                        <mat-option *ngFor="let option of hsnCodeFilteredOptions | async" [value]="option.hnsCode" >
+                                          {{option.hnsCode}}
+                                        </mat-option>
+                                      </mat-autocomplete>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

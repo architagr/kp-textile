@@ -292,6 +292,8 @@ func (repo *ClientServicePersistance) AddClient(client commonModels.ClientDto) (
 }
 
 func (repo *ClientServicePersistance) AddClientContact(clientContact commonModels.ContactPersonDto) (*commonModels.ContactPersonDto, *commonModels.ErrorDetail) {
+	fmt.Println("adding contact - ", clientContact)
+
 	av, err := dynamodbattribute.MarshalMap(clientContact)
 	if err != nil {
 		common.WriteLog(1, err.Error())
