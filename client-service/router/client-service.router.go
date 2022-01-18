@@ -22,6 +22,12 @@ func InitRoutes(engine *gin.Engine) {
 	engine.GET("/:clientId", func(c *gin.Context) {
 		controller.Get(c)
 	})
+	engine.DELETE("/:clientId", func(c *gin.Context) {
+		controller.Delete(c)
+	})
+	engine.PUT("/:clientId", func(c *gin.Context) {
+		controller.Put(c)
+	})
 
 	engine.POST("/getall", func(c *gin.Context) {
 		controller.GetAll(c)

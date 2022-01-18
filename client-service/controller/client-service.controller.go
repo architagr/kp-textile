@@ -59,6 +59,43 @@ func (ctrl *ClientServiceController) Get(context *gin.Context) {
 	}
 }
 
+func (ctrl *ClientServiceController) Delete(context *gin.Context) {
+	var request commonModels.GetClientRequestDto
+
+	if err := context.ShouldBindUri(&request); err == nil {
+		//TODO: add branch id from middleware
+		request.BranchId = "branchId"
+
+		data := ctrl.clientServiceSvc.DeleteClient(request)
+		context.JSON(data.StatusCode, data)
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+}
+func (ctrl *ClientServiceController) Put(context *gin.Context) {
+	var request commonModels.AddClientRequest
+
+	if err := context.ShouldBindJSON(&request); err == nil {
+		if err1 := context.ShouldBindUri(&request); err1 == nil {
+			//TODO: add branch id from middleware
+			request.BranchId = "branchId"
+
+			data := ctrl.clientServiceSvc.Put(request)
+			context.JSON(data.StatusCode, data)
+		} else {
+			context.JSON(http.StatusBadRequest, gin.H{
+				"error": err1,
+			})
+		}
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+}
+
 func (ctrl *ClientServiceController) GetAll(context *gin.Context) {
 	var getAllRequest commonModels.ClientListRequest
 	if err := context.ShouldBindJSON(&getAllRequest); err == nil {

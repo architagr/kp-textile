@@ -48,7 +48,7 @@ func InitClientServicePersistance() (*ClientServicePersistance, *commonModels.Er
 func (repo *ClientServicePersistance) GetPersonByClientId(request commonModels.GetClientRequestDto) ([]commonModels.ContactPersonDto, *commonModels.ErrorDetail) {
 	keyCondition := expression.KeyAnd(
 		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("sortKey").BeginsWith(fmt.Sprintf("%s|%s", common.ContactSortKey, request.ClientId)),
+		expression.Key("sortKey").BeginsWith(common.GetClientSortKey(request.ClientId)),
 	)
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
@@ -87,7 +87,7 @@ func (repo *ClientServicePersistance) GetClient(request commonModels.GetClientRe
 
 	keyCondition := expression.KeyAnd(
 		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("sortKey").Equal(expression.Value(fmt.Sprintf("%s|%s", common.ClientSortKey, request.ClientId))),
+		expression.Key("sortKey").Equal(expression.Value(common.GetClientSortKey(request.ClientId))),
 	)
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
@@ -243,7 +243,7 @@ func (repo *ClientServicePersistance) GetClientByFilter(filterData commonModels.
 	}
 }
 
-func (repo *ClientServicePersistance) AddClient(client commonModels.ClientDto) (*commonModels.ClientDto, *commonModels.ErrorDetail) {
+func (repo *ClientServicePersistance) UpsertClient(client commonModels.ClientDto, isNew bool) (*commonModels.ClientDto, *commonModels.ErrorDetail) {
 	existigClients, _, errorDetails := repo.GetClientByFilter(commonModels.ClientListRequest{
 		ClientFilterDto: commonModels.ClientFilterDto{BranchId: client.BranchId,
 			CompanyName: client.CompanyName,
@@ -260,19 +260,29 @@ func (repo *ClientServicePersistance) AddClient(client commonModels.ClientDto) (
 		}
 	}
 	if len(existigClients) > 0 {
-		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorInsert,
-			ErrorMessage: "similar client already exists",
+		flag := true
+		if !isNew {
+			flag = false
+			for _, val := range existigClients {
+				if val.ClientId != client.ClientId {
+					flag = true
+				}
+			}
+		}
+		if flag {
+			return nil, &commonModels.ErrorDetail{
+				ErrorCode:    commonModels.ErrorInsert,
+				ErrorMessage: "similar client already exists",
+			}
 		}
 	}
-
 	av, err := dynamodbattribute.MarshalMap(client)
 	if err != nil {
 		common.WriteLog(1, err.Error())
 
 		return nil, &commonModels.ErrorDetail{
 			ErrorCode:    commonModels.ErrorServer,
-			ErrorMessage: fmt.Sprintf("Got error marshalling new Client detailes item: %s", err),
+			ErrorMessage: fmt.Sprintf("Got error marshalling client details item, client name - %s, client id - %s, err: %s", client.CompanyName, client.ClientId, err),
 		}
 	}
 	_, err = repo.db.PutItem(&dynamodb.PutItemInput{
@@ -285,13 +295,13 @@ func (repo *ClientServicePersistance) AddClient(client commonModels.ClientDto) (
 
 		return nil, &commonModels.ErrorDetail{
 			ErrorCode:    commonModels.ErrorInsert,
-			ErrorMessage: fmt.Sprintf("Error in adding Client %s, error message; %s", client.CompanyName, err.Error()),
+			ErrorMessage: fmt.Sprintf("Error in adding/updating Client %s, client id %s, error message; %s", client.CompanyName, client.ClientId, err.Error()),
 		}
 	}
 	return &client, nil
 }
 
-func (repo *ClientServicePersistance) AddClientContact(clientContact commonModels.ContactPersonDto) (*commonModels.ContactPersonDto, *commonModels.ErrorDetail) {
+func (repo *ClientServicePersistance) UpsertClientContact(clientContact commonModels.ContactPersonDto) (*commonModels.ContactPersonDto, *commonModels.ErrorDetail) {
 	fmt.Println("adding contact - ", clientContact)
 
 	av, err := dynamodbattribute.MarshalMap(clientContact)
@@ -317,4 +327,49 @@ func (repo *ClientServicePersistance) AddClientContact(clientContact commonModel
 		}
 	}
 	return &clientContact, nil
+}
+
+func (repo *ClientServicePersistance) DeleteClientContact(branchId, clientId, contactId string) *commonModels.ErrorDetail {
+	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &repo.clientTableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"branchId": {
+				N: aws.String(branchId),
+			},
+			"sortKey": {
+				S: aws.String(common.GetClientContactSortKey(clientId, contactId)),
+			},
+		},
+	})
+	if err != nil {
+		common.WriteLog(1, err.Error())
+
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in deleting Client contact id (%s) for client id %s, error message; %s", contactId, clientId, err.Error()),
+		}
+	}
+	return nil
+}
+
+func (repo *ClientServicePersistance) DeleteClient(branchId, clientId string) *commonModels.ErrorDetail {
+	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &repo.clientTableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"branchId": {
+				N: aws.String(branchId),
+			},
+			"sortKey": {
+				S: aws.String(common.GetClientSortKey(clientId)),
+			},
+		},
+	})
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in deleting client id %s, error message; %s", clientId, err.Error()),
+		}
+	}
+	return nil
 }

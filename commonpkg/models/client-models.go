@@ -37,7 +37,7 @@ const (
 type ClientDto struct {
 	BranchId         string            `json:"branchId,omitempty"`
 	SortKey          string            `json:"sortKey,omitempty"`
-	ClientId         string            `json:"clientId,omitempty"`
+	ClientId         string            `json:"clientId,omitempty" uri:"clientId"`
 	CompanyName      string            `json:"companyName,omitempty"`
 	Alias            string            `json:"alias,omitempty"`
 	ContactInfo      ContactDetailsDto `json:"contactInfo,omitempty"`
