@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ClientAddComponent } from './components/client-add/client-add.component';
 import { ClientListComponent } from './components/client-list/client-list.component';
+import { ClientUpdateComponent } from './components/client-update/client-update.component';
 import { HomeComponent } from './components/home/home.component';
 import { HsnCodeAddComponent } from './components/hsn-code-add/hsn-code-add.component';
 import { HsnCodeListComponent } from './components/hsn-code-list/hsn-code-list.component';
@@ -26,7 +27,7 @@ const routes: Routes = [
   },
   {
     path:"updateclient/:clientId",
-    component:ClientAddComponent
+    component:ClientUpdateComponent
   },
   {
     path:"hsncode",

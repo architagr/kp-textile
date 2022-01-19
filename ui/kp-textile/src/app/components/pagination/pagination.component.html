@@ -1,0 +1,20 @@
+<div class="box" [formGroup]="form">
+    <div class="form-group">
+        <select formControlName="pageSize" class="form-control">
+            <option value="1">1</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+    </div>
+
+    <div> showing {{start}} to {{end}} of {{total}}</div>
+    <div>
+        <button type="button" (click)="onPreviousClick()" [disabled]="pageNumber == 0" class="btn btn-icon btn-round">
+            <i class="tim-icons icon-minimal-left"></i></button>
+        <button type="button" (click)="onNextClick()" [disabled]="end>=total" class="btn btn-icon btn-round">
+            <i class="tim-icons icon-minimal-right"></i></button>
+    </div>
+</div>

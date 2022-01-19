@@ -108,9 +108,7 @@
                                                 [ngClass]="{'error': addClientForm.dirty &&  formControls['paymentTerm'].errors}"
                                                 formControlName="paymentTerm" class="form-control">
                                                 <option value="">Select Payment term</option>
-                                                <option value="15Days">15 Days</option>
-                                                <option value="Monthly">Monthly</option>
-                                                <option value="Bill">Per bill</option>
+                                                <option *ngFor="let name of paymentTermsValues" [value]="name">{{name}}</option>
                                             </select>
                                             <div *ngIf="formControls['paymentTerm'].errors">
                                                 <p class=" text-danger">
@@ -126,9 +124,7 @@
                                                 [ngClass]="{'error': addClientForm.dirty &&  formControls['status'].errors}"
                                                 formControlName="status" class="form-control">
                                                 <option value="">Select Status</option>
-                                                <option value="Active">Active</option>
-                                                <option value="Blocked">Blocked</option>
-                                                <option value="Inactive">Inactive</option>
+                                                <option *ngFor="let name of statusValues" [value]="name">{{name}}</option>
                                             </select>
                                             <div *ngIf="formControls['status'].errors">
                                                 <p class=" text-danger">
@@ -165,7 +161,7 @@
                             </mat-panel-title>
                         </mat-expansion-panel-header>
                         <div class="card">
-                            <div class=" card-header"><button (click)="addAddress()"
+                            <div class=" card-header"><button type="button" (click)="addAddress()"
                                     class="btn btn-icon btn-round align-right"><i
                                         class="tim-icons icon-simple-add"></i></button></div>
                             <div class="card-body">
@@ -175,7 +171,7 @@
                                             <div class="card-subheading">
                                                 <h4>Address {{i+1}}</h4>
 
-                                                <button (click)="removeAddress(i)"
+                                                <button type="button" (click)="removeAddress(i)"
                                                     class="btn btn-icon btn-round align-right"><i
                                                         class="tim-icons icon-trash-simple"></i></button>
                                             </div>
@@ -201,12 +197,7 @@
                                                             [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['addressType'].errors}"
                                                             formControlName="addressType" class="form-control">
                                                             <option value="">Select Address Type</option>
-                                                            <option value="HeadOffice">HeadOffice</option>
-                                                            <option value="SalesOffice">SalesOffice</option>
-                                                            <option value="RegionalOffice">RegionalOffice</option>
-                                                            <option value="ShippingOffice">ShippingOffice</option>
-                                                            <option value="Residence">Residence</option>
-                                                            <option value="Warehouse">Warehouse</option>
+                                                            <option *ngFor="let name of addressTypeValues" [value]="name">{{name}}</option>
                                                         </select>
                                                         <div *ngIf="getAddressControl(i)['addressType'].errors">
                                                             <p class=" text-danger">
@@ -336,7 +327,7 @@
                         </mat-expansion-panel-header>
                         <div class="card">
                             <div class=" card-header">
-                                <button (click)="addContactPerson()" class="btn btn-icon btn-round"><i
+                                <button type="button" (click)="addContactPerson()" class="btn btn-icon btn-round"><i
                                         class="tim-icons icon-simple-add"></i></button>
                             </div>
                             <div class="card-body">
@@ -346,7 +337,7 @@
                                             <div class="card-subheading">
                                                 <h4>Contact Person {{i+1}}</h4>
 
-                                                <button (click)="removeAddress(i)"
+                                                <button type="button" (click)="removeContactPerson(i)"
                                                     class="btn btn-icon btn-round align-right"><i
                                                         class="tim-icons icon-trash-simple"></i></button>
                                             </div>
@@ -360,7 +351,7 @@
                                                             <option value="">Select Salutation</option>
                                                             <option value="Mr.">Mr.</option>
                                                             <option value="Mrs.">Mrs.</option>
-                                                            <option value="Ms">Ms</option>
+                                                            <option value="Ms.">Ms.</option>
                                                         </select>
                                                         <div *ngIf="getContactPersonControl(i)['salutation'].errors">
                                                             <p class=" text-danger">
@@ -403,12 +394,7 @@
                                                             [ngClass]="{'error': addClientForm.dirty &&  getContactPersonControl(i)['personType'].errors}"
                                                             formControlName="personType" class="form-control">
                                                             <option value="">Select Person Type</option>
-                                                            <option value="Sales">Sales</option>
-                                                            <option value="Account">Account</option>
-                                                            <option value="Store">Store</option>
-                                                            <option value="Marketing">Marketing</option>
-                                                            <option value="Director">Director</option>
-                                                            <option value="Chairman">Chairman</option>
+                                                            <option *ngFor="let name of personTypeValues" [value]="name">{{name}}</option>
                                                         </select>
                                                         <div *ngIf="getContactPersonControl(i)['personType'].errors">
                                                             <p class=" text-danger">
@@ -440,12 +426,7 @@
                                                             <select formControlName="addressType" class="form-control"
                                                                 [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['addressType'].errors}">
                                                                 <option value="">Select Address Type</option>
-                                                                <option value="HeadOffice">HeadOffice</option>
-                                                                <option value="SalesOffice">SalesOffice</option>
-                                                                <option value="RegionalOffice">RegionalOffice</option>
-                                                                <option value="ShippingOffice">ShippingOffice</option>
-                                                                <option value="Residence">Residence</option>
-                                                                <option value="Warehouse">Warehouse</option>
+                                                                <option *ngFor="let name of addressTypeValues" [value]="name">{{name}}</option>
                                                             </select>
                                                             <div
                                                                 *ngIf="getContactPersonAddressControl(i)['addressType'].errors">
@@ -638,7 +619,7 @@
 
                                 <button class="btn btn-fill btn-primary" [disabled]="!addClientForm.valid"
                                     type="submit">Save</button>
-                                <button class="btn btn-fill btn-info" type="button">Cancel</button>
+                                <button class="btn btn-fill btn-info" [routerLink]="['/client']" type="button">Cancel</button>
                             </div>
                         </div>
                     </mat-expansion-panel>

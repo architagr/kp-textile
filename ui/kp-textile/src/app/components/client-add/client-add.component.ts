@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AddressType, PaymentTerm, PersonType, Status } from 'src/app/models/client-model';
 import { ClientService } from 'src/app/services/client-service';
-
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-client-add',
   templateUrl: './client-add.component.html',
@@ -9,6 +10,11 @@ import { ClientService } from 'src/app/services/client-service';
 })
 export class ClientAddComponent implements OnInit {
   addClientForm: FormGroup;
+
+  paymentTermsValues: string[] = [];
+  statusValues: string[] = [];
+  addressTypeValues: string[] = [];
+  personTypeValues: string[] = [];
 
   private getContactInfoFormGroup(): FormGroup {
     return this.fb.group({
@@ -29,7 +35,7 @@ export class ClientAddComponent implements OnInit {
       state: new FormControl('', [Validators.required]),
       city: new FormControl('', [Validators.required]),
       landline: new FormControl(''),
-      mobile: new FormControl('',[Validators.pattern('^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$')]),
+      mobile: new FormControl('', [Validators.pattern('^([0|\+[0-9]{1,5})?([7-9][0-9]{9})$')]),
     });
   }
 
@@ -46,6 +52,7 @@ export class ClientAddComponent implements OnInit {
     })
   }
   constructor(
+    private router: Router,
     private clientService: ClientService,
     private fb: FormBuilder
   ) {
@@ -65,28 +72,31 @@ export class ClientAddComponent implements OnInit {
         this.getContactPersonFormGroup()
       ])
     })
-
+    this.paymentTermsValues = Object.values(PaymentTerm);
+    this.statusValues = Object.values(Status);
+    this.addressTypeValues = Object.values(AddressType);
+    this.personTypeValues = Object.values(PersonType);
   }
 
-  getAddressControl(index: number):{ [key: string]: AbstractControl }{
+  getAddressControl(index: number): { [key: string]: AbstractControl } {
     return (this.addresses.controls[index] as FormGroup).controls
   }
 
-  getContactPersonControl(index: number):{ [key: string]: AbstractControl }{
+  getContactPersonControl(index: number): { [key: string]: AbstractControl } {
     return (this.contactPersons.controls[index] as FormGroup).controls
   }
-  getContactPersonContactInfoControl(index: number):{ [key: string]: AbstractControl }{
+  getContactPersonContactInfoControl(index: number): { [key: string]: AbstractControl } {
     return ((this.contactPersons.controls[index] as FormGroup).controls['contactInfo'] as FormGroup).controls
   }
-  getContactPersonAddressControl(index: number):{ [key: string]: AbstractControl }{
+  getContactPersonAddressControl(index: number): { [key: string]: AbstractControl } {
     return ((this.contactPersons.controls[index] as FormGroup).controls['address'] as FormGroup).controls
   }
 
-  get formControls(): { [key: string]: AbstractControl }{
+  get formControls(): { [key: string]: AbstractControl } {
     return this.addClientForm.controls
   }
-  get companyContactInfo():{ [key: string]: AbstractControl }{
-    return (this.addClientForm.controls['contactInfo']as FormGroup).controls
+  get companyContactInfo(): { [key: string]: AbstractControl } {
+    return (this.addClientForm.controls['contactInfo'] as FormGroup).controls
   }
   get addresses(): FormArray {
     return this.addClientForm.controls['addresses'] as FormArray
@@ -102,7 +112,7 @@ export class ClientAddComponent implements OnInit {
     return this.addClientForm.controls['contactPersons'] as FormArray
   }
   addContactPerson() {
-    this.contactPersons.push(this.getContactInfoFormGroup());
+    this.contactPersons.push(this.getContactPersonFormGroup());
   }
   removeContactPerson(removeIndex: number) {
     this.contactPersons.removeAt(removeIndex);
@@ -112,13 +122,16 @@ export class ClientAddComponent implements OnInit {
 
   }
 
-  submitData(){
-    this.clientService.addClient(this.addClientForm.value).subscribe(data=>{
-      console.log(`response from save `, data)
-    },err=>{
-      console.log(`error from save `, err) 
-    }, ()=>{
-      console.log(`save over`, this.addClientForm.value) 
+  submitData() {
+    this.clientService.addClient(this.addClientForm.value).subscribe({
+      next: (data) => {
+        console.log(`response from save `, data)
+        this.router.navigate(['/client']);
+      }, error: (err) => {
+        console.log(`error from save `, err)
+      }, complete: () => {
+        console.log(`save over`, this.addClientForm.value)
+      }
     })
   }
 }

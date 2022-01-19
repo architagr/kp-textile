@@ -1,5 +1,33 @@
 import { CommonListResponse, CommonResponse } from "./genric-model";
 
+export enum Status {
+    Active = "Active",
+    Blocked = "Blocked",
+    Inactive = "Inactive",
+}
+
+export enum PaymentTerm {
+    Days15 = "15Days",
+    Monthly = "Monthly",
+    Bill = "Bill",
+}
+
+export enum AddressType{
+    HeadOffice     = "HeadOffice",
+	SalesOffice    = "SalesOffice",
+	RegionalOffice = "RegionalOffice",
+	ShippingOffice = "ShippingOffice",
+	Residence      = "Residence",
+	Warehouse      = "Warehouse",
+}
+export enum PersonType{
+    Sales     = "Sales",
+	Account   = "Account",
+	Store     = "Store",
+	Marketing = "Marketing",
+	Director  = "Director",
+	Chairman  = "Chairman",
+}
 export interface ClientDto {
     branchId: string
     sortKey: string
@@ -68,5 +96,5 @@ export interface AddClientRequest extends ClientDto {
 }
 
 export interface AddClientResponse extends CommonResponse {
-	data: AddClientRequest
+    data: AddClientRequest
 }

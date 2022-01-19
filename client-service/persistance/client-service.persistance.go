@@ -260,6 +260,7 @@ func (repo *ClientServicePersistance) UpsertClient(client commonModels.ClientDto
 			ErrorMessage: fmt.Sprintf("Error in validating exiting client, error: %s", errorDetails.Error()),
 		}
 	}
+	fmt.Printf("isNew %v, existing clients %+v\n", isNew, existigClients)
 	if len(existigClients) > 0 {
 		flag := true
 		if !isNew {

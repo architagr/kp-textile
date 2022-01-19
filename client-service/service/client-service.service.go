@@ -263,7 +263,7 @@ func (service *ClientServiceService) GetAll(request commonModels.ClientListReque
 				StatusCode: http.StatusOK,
 			},
 			LastEvalutionKey: lastEvaluationKey,
-			PageSize:         int64(len(client)),
+			PageSize:         request.PageSize,
 			Total:            count,
 		},
 		Data: client,

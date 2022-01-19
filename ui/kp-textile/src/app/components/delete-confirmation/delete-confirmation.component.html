@@ -1,0 +1,16 @@
+<h1 mat-dialog-title>{{data.heading}}</h1>
+<div mat-dialog-content>
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <p>{{data.message}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div mat-dialog-actions>
+    <button class="btn btn-primary" (click)="onOkClick()">Yes</button>
+    <button class="btn btn-fill btn-info" (click)="onNoClick()" type="button">No</button>
+</div>
