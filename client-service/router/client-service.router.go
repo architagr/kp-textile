@@ -14,7 +14,8 @@ func InitRoutes(engine *gin.Engine) {
 		common.WriteLog(1, err.Error())
 		panic(err)
 	}
-	engine.Use(middlewares.CORSMiddleware())
+	engine.Use(middlewares.CORSMiddleware(), middlewares.ValidateTokenMiddleware())
+
 	engine.POST("/", func(c *gin.Context) {
 		controller.Add(c)
 	})

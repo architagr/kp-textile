@@ -102,7 +102,7 @@ func (service *ClientServiceService) Put(client commonModels.AddClientRequest) c
 				StatusCode:   http.StatusBadRequest,
 				ErrorMessage: fmt.Sprintf("could no delete contact person data client id - %s that were rermoved", client.ClientId),
 				Errors: []commonModels.ErrorDetail{
-					*err,
+					*errDelete,
 				},
 			},
 		}
@@ -124,7 +124,7 @@ func (service *ClientServiceService) Put(client commonModels.AddClientRequest) c
 	}
 	client.ContactPersons = clientContacts
 
-	var status int = http.StatusCreated
+	var status int = http.StatusOK
 	if len(errors) > 0 {
 		status = http.StatusPartialContent
 	}
@@ -141,10 +141,10 @@ func deleteClientContact(branchId, clientId string, contactPersons []commonModel
 		BranchId: branchId,
 		ClientId: clientId,
 	})
+
 	if err != nil {
 		return err
 	}
-
 	for _, exClientPerson := range existingContact {
 		found := false
 		for _, person := range contactPersons {
@@ -185,6 +185,16 @@ func (service *ClientServiceService) DeleteClient(request commonModels.GetClient
 					*deleteErr,
 				},
 			}
+		}
+	}
+	clientDeleteErr := ClientServiceObj.clientServiceRepo.DeleteClient(request.BranchId, request.ClientId)
+	if clientDeleteErr != nil {
+		return commonModels.CommonResponse{
+			ErrorMessage: fmt.Sprintf("error in deleting client id %s", request.ClientId),
+			StatusCode:   http.StatusBadRequest,
+			Errors: []commonModels.ErrorDetail{
+				*clientDeleteErr,
+			},
 		}
 	}
 	return commonModels.CommonResponse{

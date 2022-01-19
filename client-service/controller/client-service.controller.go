@@ -2,6 +2,7 @@ package controller
 
 import (
 	commonModels "commonpkg/models"
+	"fmt"
 	"net/http"
 
 	"client-service/service"
@@ -32,8 +33,7 @@ func (ctrl *ClientServiceController) Add(context *gin.Context) {
 	var addData commonModels.AddClientRequest
 
 	if err := context.ShouldBindJSON(&addData); err == nil {
-		//TODO: add branch id from middleware
-		addData.BranchId = "branchId"
+		addData.BranchId = getBranchIdFromContext(context)
 		data := ctrl.clientServiceSvc.Add(addData)
 		context.JSON(data.StatusCode, data)
 	} else {
@@ -47,8 +47,7 @@ func (ctrl *ClientServiceController) Get(context *gin.Context) {
 	var request commonModels.GetClientRequestDto
 
 	if err := context.ShouldBindUri(&request); err == nil {
-		//TODO: add branch id from middleware
-		request.BranchId = "branchId"
+		request.BranchId = getBranchIdFromContext((context))
 
 		data := ctrl.clientServiceSvc.GetClient(request)
 		context.JSON(data.StatusCode, data)
@@ -63,8 +62,7 @@ func (ctrl *ClientServiceController) Delete(context *gin.Context) {
 	var request commonModels.GetClientRequestDto
 
 	if err := context.ShouldBindUri(&request); err == nil {
-		//TODO: add branch id from middleware
-		request.BranchId = "branchId"
+		request.BranchId = getBranchIdFromContext(context)
 
 		data := ctrl.clientServiceSvc.DeleteClient(request)
 		context.JSON(data.StatusCode, data)
@@ -79,8 +77,7 @@ func (ctrl *ClientServiceController) Put(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&request); err == nil {
 		if err1 := context.ShouldBindUri(&request); err1 == nil {
-			//TODO: add branch id from middleware
-			request.BranchId = "branchId"
+			request.BranchId = getBranchIdFromContext(context)
 
 			data := ctrl.clientServiceSvc.Put(request)
 			context.JSON(data.StatusCode, data)
@@ -100,8 +97,7 @@ func (ctrl *ClientServiceController) GetAll(context *gin.Context) {
 	var getAllRequest commonModels.ClientListRequest
 	if err := context.ShouldBindJSON(&getAllRequest); err == nil {
 		if err1 := context.ShouldBindQuery(&getAllRequest); err1 == nil {
-			//TODO: add branch id from middleware
-			getAllRequest.BranchId = "branchId"
+			getAllRequest.BranchId = getBranchIdFromContext((context))
 			data := ctrl.clientServiceSvc.GetAll(getAllRequest)
 			context.JSON(data.StatusCode, data)
 		} else {
@@ -115,4 +111,8 @@ func (ctrl *ClientServiceController) GetAll(context *gin.Context) {
 		})
 	}
 
+}
+
+func getBranchIdFromContext(context *gin.Context) string {
+	return fmt.Sprint(context.Keys[commonModels.ContextKey_BranchId])
 }

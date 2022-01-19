@@ -48,7 +48,7 @@ func InitClientServicePersistance() (*ClientServicePersistance, *commonModels.Er
 func (repo *ClientServicePersistance) GetPersonByClientId(request commonModels.GetClientRequestDto) ([]commonModels.ContactPersonDto, *commonModels.ErrorDetail) {
 	keyCondition := expression.KeyAnd(
 		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("sortKey").BeginsWith(common.GetClientSortKey(request.ClientId)),
+		expression.Key("sortKey").BeginsWith(common.GetClientContactSortKey(request.ClientId, "")),
 	)
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
@@ -70,6 +70,7 @@ func (repo *ClientServicePersistance) GetPersonByClientId(request commonModels.G
 	}
 
 	clientPersons := make([]commonModels.ContactPersonDto, len(result.Items))
+
 	for i, val := range result.Items {
 		clientPerson := commonModels.ContactPersonDto{}
 
@@ -334,7 +335,7 @@ func (repo *ClientServicePersistance) DeleteClientContact(branchId, clientId, co
 		TableName: &repo.clientTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			"branchId": {
-				N: aws.String(branchId),
+				S: aws.String(branchId),
 			},
 			"sortKey": {
 				S: aws.String(common.GetClientContactSortKey(clientId, contactId)),
@@ -357,7 +358,7 @@ func (repo *ClientServicePersistance) DeleteClient(branchId, clientId string) *c
 		TableName: &repo.clientTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			"branchId": {
-				N: aws.String(branchId),
+				S: aws.String(branchId),
 			},
 			"sortKey": {
 				S: aws.String(common.GetClientSortKey(clientId)),

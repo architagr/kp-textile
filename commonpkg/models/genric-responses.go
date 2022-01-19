@@ -21,7 +21,8 @@ const (
 	ErrorInvalidRequestParam        = "KP1104"
 
 	// general error codes start from 00--
-	ErrorServer = "KP0001"
+	ErrorServer       = "KP0001"
+	ErrorUnauthorized = "KP0002"
 )
 
 type ErrorDetail struct {
