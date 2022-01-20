@@ -53,7 +53,7 @@ export class SalesComponent implements OnInit {
     this.getHsnCodes();
   }
   getClients() {
-    this.clientService.getAllClient(10, {}).subscribe(response => {
+    this.clientService.getAllClient(10,"", {}).subscribe(response => {
       this.clients = response.data
     });
     

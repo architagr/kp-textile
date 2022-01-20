@@ -35,6 +35,10 @@ import { SpinnerComponent } from './components/spinner/spinner.component';
 import { ToastrModule } from 'ngx-toastr';
 import { DeleteConfirmationComponent } from './components/delete-confirmation/delete-confirmation.component';
 import { PaginationComponent } from './components/pagination/pagination.component';
+import { VendorListComponent } from './components/vendor/vendor-list/vendor-list.component';
+import { VendorAddComponent } from './components/vendor/vendor-add/vendor-add.component';
+import { VendorUpdateComponent } from './components/vendor/vendor-update/vendor-update.component';
+import { VendorService } from './services/vendor-service';
 
 @NgModule({
   declarations: [
@@ -52,7 +56,10 @@ import { PaginationComponent } from './components/pagination/pagination.componen
     SalesComponent,
     SpinnerComponent,
     DeleteConfirmationComponent,
-    PaginationComponent
+    PaginationComponent,
+    VendorListComponent,
+    VendorAddComponent,
+    VendorUpdateComponent
   ],
   imports: [
     BrowserModule,
@@ -73,7 +80,7 @@ import { PaginationComponent } from './components/pagination/pagination.componen
     MatProgressSpinnerModule,
     ToastrModule.forRoot()
   ],
-  providers: [ClientService, HsnCodeService,
+  providers: [ClientService, HsnCodeService,VendorService,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })

@@ -3,14 +3,22 @@
     <div class="col-md-12">
       <div class="card card-plain">
         <div class="card-header flex">
-          <button routerLink="/addclient" class="btn btn-icon btn-round align-right"><i
-              class="tim-icons icon-simple-add"></i></button>
+          <button routerLink="/addclient" class="btn btn-icon btn-round align-right">
+            <i class="tim-icons icon-simple-add"></i>
+          </button>
         </div>
         <div class="card-body">
-          <div class=" form-group">
-            <input (keyup)="applyFilter($event)" class="form-control" placeholder="search" type="text" />
-          </div>
           <div class="table-responsive">
+            <div class="row justify" [formGroup]="filterForm">
+              <div class="col-md-11 mr-bottom-remove mr-rigth-remove">
+                <div class="form-group">
+                  <input formControlName="searchText" class="form-control" placeholder="search" type="text" />
+                </div>
+              </div>
+              <div class="col-md-1 mr-left-remove mr-top-remove">
+                <button class="btn btn-fill btn-info" (click)="applyFilter()" type="button">Search</button>
+              </div>
+            </div>
             <table mat-table [dataSource]="clients" multiTemplateDataRows class="table tablesorter" matSort
               matSortActive="created" matSortDisableClear matSortDirection="desc">
               <ng-container matColumnDef="CompanyName">
@@ -79,13 +87,13 @@
               <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr>
               <!-- Row shown when there is no matching data. -->
               <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell" colspan="4">No data matching the filter</td>
+                <td class="mat-cell" [attr.colspan]="displayedColumns.length">No data matching the filter</td>
               </tr>
             </table>
             <app-pagination [pageSize]="pageSize" (pageSizeChange)="onPageSizeChange($event)"
-            (pageNumberChange)="onPageNumberChange($event)" 
-            [pageNumber]="pageNumber" [total]="total"></app-pagination>
-            <!-- <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Select page of users"></mat-paginator> -->
+              (nextButtonClick)="onNextPageClick($event)"  (prevButtonClick)="onPrevPageClick($event)" 
+               [pageNumber]="pageNumber" [total]="total">
+            </app-pagination>
           </div>
         </div>
       </div>

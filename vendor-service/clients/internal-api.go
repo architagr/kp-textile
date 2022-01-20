@@ -1,15 +1,19 @@
 package main
 
 import (
+	commonModels "commonpkg/models"
+	"commonpkg/token"
 	"context"
-	"vendor-service/common"
+	"fmt"
 	"os"
-
+	"time"
+	"vendor-service/common"
 	"vendor-service/router"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,6 +40,20 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 }
 
 func main() {
+	timeNow := time.Now()
+	expireTime := timeNow.AddDate(0, 1, 0)
+	claims := commonModels.JwtClaims{
+		BranchId: "branchId",
+		Username: "Username",
+		Roles:    []int{1},
+		StandardClaims: jwt.StandardClaims{
+			IssuedAt: timeNow.Unix(),
+		},
+	}
+
+	toekenStr, _ := token.GenrateToken(&claims, expireTime)
+
+	fmt.Println(toekenStr)
 	if isLocal == "" {
 		lambda.Start(Handler)
 	} else {

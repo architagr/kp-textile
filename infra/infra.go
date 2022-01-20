@@ -5,7 +5,7 @@ import (
 	common "infra/common"
 	hsncodeinfra "infra/hsn-code-infra"
 	qualityinfra "infra/quality-infra"
-
+	vendorinfra "infra/vendor-infra"
 	"os"
 
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
@@ -58,6 +58,13 @@ func main() {
 		},
 		CommonStackProps: commonStackProps,
 	})
+	vendorinfra.NewVendorStack(app, "VendorStack", &vendorinfra.VendorStackProps{
+		StackProps: awscdk.StackProps{
+			Env: env(),
+		},
+		CommonStackProps: commonStackProps,
+	})
+
 	app.Synth(nil)
 }
 

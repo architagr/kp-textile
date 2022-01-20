@@ -2,6 +2,7 @@ package controller
 
 import (
 	commonModels "commonpkg/models"
+	"fmt"
 	"net/http"
 
 	"vendor-service/service"
@@ -9,62 +10,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AddRequest struct {
-	Code string 
+var vendorCtr *VendorController
+
+type VendorController struct {
+	vendorServiceSvc *service.VendorService
 }
 
-type AddMultipleRequest struct {
-	Codes []string 
-}
-type GetRequest struct {
-	Id string 
-}
-
-var vendorServiceCtr *VendorServiceController
-
-type VendorServiceController struct {
-	vendorServiceSvc *service.VendorServiceService
-}
-
-func InitVendorServiceController() (*VendorServiceController, *commonModels.ErrorDetail) {
-	if vendorServiceCtr == nil {
-		svc, err := service.InitVendorServiceService()
+func InitVendorController() (*VendorController, *commonModels.ErrorDetail) {
+	if vendorCtr == nil {
+		svc, err := service.InitVendorService()
 		if err != nil {
 			return nil, err
 		}
-		vendorServiceCtr = &VendorServiceController{
+		vendorCtr = &VendorController{
 			vendorServiceSvc: svc,
 		}
 	}
-	return vendorServiceCtr, nil
-}
-func (ctrl *VendorServiceController) GetAll(context *gin.Context) {
-	data := ctrl.vendorServiceSvc.GetAll()
-	context.JSON(data.StatusCode, data)
+	return vendorCtr, nil
 }
 
-func (ctrl *VendorServiceController) Get(context *gin.Context) {
-	var getRquest GetRequest
-
-	if err := context.ShouldBindUri(&getRquest); err == nil {
-		data := ctrl.vendorServiceSvc.Get(getRquest.Id)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-	}
-
-}
-
-func (ctrl *VendorServiceController) Add(context *gin.Context) {
-	var addData AddRequest
-
-	var b []byte
-	context.Request.Body.Read(b)
+func (ctrl *VendorController) Add(context *gin.Context) {
+	var addData commonModels.AddVendorRequest
 
 	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.vendorServiceSvc.Add(addData.Code)
+		addData.BranchId = getBranchIdFromContext(context)
+		data := ctrl.vendorServiceSvc.Add(addData)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -73,14 +43,76 @@ func (ctrl *VendorServiceController) Add(context *gin.Context) {
 	}
 }
 
-func (ctrl *VendorServiceController) AddMultiple(context *gin.Context) {
-	var addData AddMultipleRequest
-	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.vendorServiceSvc.AddMultiple(addData.Codes)
+func (ctrl *VendorController) Get(context *gin.Context) {
+	var request commonModels.GetVendorRequestDto
+
+	if err := context.ShouldBindUri(&request); err == nil {
+		request.BranchId = getBranchIdFromContext(context)
+
+		data := ctrl.vendorServiceSvc.GetVendor(request)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
 	}
+}
+
+func (ctrl *VendorController) Delete(context *gin.Context) {
+	var request commonModels.GetVendorRequestDto
+
+	if err := context.ShouldBindUri(&request); err == nil {
+		request.BranchId = getBranchIdFromContext(context)
+
+		data := ctrl.vendorServiceSvc.DeleteVendor(request)
+		context.JSON(data.StatusCode, data)
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+}
+func (ctrl *VendorController) Put(context *gin.Context) {
+	var request commonModels.AddVendorRequest
+
+	if err := context.ShouldBindJSON(&request); err == nil {
+		if err1 := context.ShouldBindUri(&request); err1 == nil {
+			request.BranchId = getBranchIdFromContext(context)
+
+			data := ctrl.vendorServiceSvc.Put(request)
+			context.JSON(data.StatusCode, data)
+		} else {
+			context.JSON(http.StatusBadRequest, gin.H{
+				"error": err1,
+			})
+		}
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+}
+
+func (ctrl *VendorController) GetAll(context *gin.Context) {
+	var getAllRequest commonModels.VendorListRequest
+	if err := context.ShouldBindJSON(&getAllRequest); err == nil {
+		if err1 := context.ShouldBindQuery(&getAllRequest); err1 == nil {
+			getAllRequest.BranchId = getBranchIdFromContext((context))
+			data := ctrl.vendorServiceSvc.GetAll(getAllRequest)
+			context.JSON(data.StatusCode, data)
+		} else {
+			context.JSON(http.StatusBadRequest, gin.H{
+				"error": err1,
+			})
+		}
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+
+}
+
+func getBranchIdFromContext(context *gin.Context) string {
+	return fmt.Sprint(context.Keys[commonModels.ContextKey_BranchId])
 }

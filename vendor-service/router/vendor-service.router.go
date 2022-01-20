@@ -1,6 +1,7 @@
 package router
 
 import (
+	"commonpkg/middlewares"
 	"vendor-service/common"
 	"vendor-service/controller"
 
@@ -8,22 +9,28 @@ import (
 )
 
 func InitRoutes(engine *gin.Engine) {
-	controller, err := controller.InitVendorServiceController()
+	controller, err := controller.InitVendorController()
 	if err != nil {
 		common.WriteLog(1, err.Error())
 		panic(err)
 	}
-	engine.GET("/", func(c *gin.Context) {
-		controller.GetAll(c)
-	})
-	engine.GET("/:id", func(c *gin.Context) {
-		controller.Get(c)
-	})
+	engine.Use(middlewares.CORSMiddleware(), middlewares.ValidateTokenMiddleware())
+
 	engine.POST("/", func(c *gin.Context) {
 		controller.Add(c)
 	})
-	engine.POST("/addmultiple", func(c *gin.Context) {
-		controller.AddMultiple(c)
+
+	engine.GET("/:vendorId", func(c *gin.Context) {
+		controller.Get(c)
+	})
+	engine.DELETE("/:vendorId", func(c *gin.Context) {
+		controller.Delete(c)
+	})
+	engine.PUT("/:vendorId", func(c *gin.Context) {
+		controller.Put(c)
+	})
+
+	engine.POST("/getall", func(c *gin.Context) {
+		controller.GetAll(c)
 	})
 }
-

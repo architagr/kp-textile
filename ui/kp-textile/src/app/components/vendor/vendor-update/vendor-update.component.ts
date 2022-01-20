@@ -2,16 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AddressType, PaymentTerm, PersonType, Status } from 'src/app/models/client-model';
-import { ClientService } from 'src/app/services/client-service';
 import { ToastrService } from 'ngx-toastr';
+import { VendorService } from 'src/app/services/vendor-service';
 
 @Component({
-  selector: 'app-client-update',
-  templateUrl: './client-update.component.html',
-  styleUrls: ['./client-update.component.scss']
+  selector: 'app-vendor-update',
+  templateUrl: './vendor-update.component.html',
+  styleUrls: ['./vendor-update.component.scss']
 })
-export class ClientUpdateComponent implements OnInit {
-  updateClientForm: FormGroup;
+export class VendorUpdateComponent implements OnInit {
+  updateVendorForm: FormGroup;
 
   paymentTermsValues: string[] = [];
   statusValues: string[] = [];
@@ -45,7 +45,7 @@ export class ClientUpdateComponent implements OnInit {
     return this.fb.group({
       branchId: new FormControl(''),
       sortKey: new FormControl(''),
-      clientId: new FormControl(''),
+      vendorId: new FormControl(''),
       contactId: new FormControl(''),
       salutation: new FormControl('', [Validators.required]),
       firstName: new FormControl('', [Validators.required]),
@@ -59,14 +59,14 @@ export class ClientUpdateComponent implements OnInit {
   }
   constructor(
     private route: ActivatedRoute,
-    private clientService: ClientService,
+    private vendorService: VendorService,
     private fb: FormBuilder,
     private toastr: ToastrService
   ) {
-    this.updateClientForm = this.fb.group({
+    this.updateVendorForm = this.fb.group({
       branchId: new FormControl(''),
       sortKey: new FormControl(''),
-      clientId: new FormControl(''),
+      vendorId: new FormControl(''),
       companyName: new FormControl('', [Validators.required]),
       alias: new FormControl(''),
       website: new FormControl('', /*[Validators.pattern('/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi')]*/),
@@ -103,13 +103,13 @@ export class ClientUpdateComponent implements OnInit {
   }
 
   get formControls(): { [key: string]: AbstractControl } {
-    return this.updateClientForm.controls
+    return this.updateVendorForm.controls
   }
   get companyContactInfo(): { [key: string]: AbstractControl } {
-    return (this.updateClientForm.controls['contactInfo'] as FormGroup).controls
+    return (this.updateVendorForm.controls['contactInfo'] as FormGroup).controls
   }
   get addresses(): FormArray {
-    return this.updateClientForm.controls['addresses'] as FormArray
+    return this.updateVendorForm.controls['addresses'] as FormArray
   }
   addAddress() {
     this.addresses.push(this.getAddressFormGroup());
@@ -119,7 +119,7 @@ export class ClientUpdateComponent implements OnInit {
   }
 
   get contactPersons(): FormArray {
-    return this.updateClientForm.controls['contactPersons'] as FormArray
+    return this.updateVendorForm.controls['contactPersons'] as FormArray
   }
   addContactPerson() {
     this.contactPersons.push(this.getContactPersonFormGroup());
@@ -128,12 +128,12 @@ export class ClientUpdateComponent implements OnInit {
     this.contactPersons.removeAt(removeIndex);
   }
   showSpinner = true;
-  clientId: string = '';
+  vendorId: string = '';
 
   ngOnInit(): void {
-    this.clientId = this.route.snapshot.paramMap.get('clientId') ?? ''
+    this.vendorId = this.route.snapshot.paramMap.get('vendorId') ?? ''
 
-    this.clientService.getClientData(this.clientId).subscribe(response => {
+    this.vendorService.getVendorData(this.vendorId).subscribe(response => {
       if(response.data.addresses == undefined || response.data.addresses ==null){
         response.data.addresses = [];
       }
@@ -151,17 +151,17 @@ export class ClientUpdateComponent implements OnInit {
           this.addAddress();
         }
       }
-      this.updateClientForm.patchValue(response.data);
+      this.updateVendorForm.patchValue(response.data);
       this.showSpinner = false;
     })
   }
 
   submitData() {
     this.showSpinner = true;
-    this.clientService.updateClient(this.clientId, this.updateClientForm.value).subscribe({
+    this.vendorService.updateVendor(this.vendorId, this.updateVendorForm.value).subscribe({
       next: (data) => {
 
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Client update.', 'Success', {
+        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Vendor update.', 'Success', {
           disableTimeOut: false,
           timeOut:2000,
           closeButton: true,
@@ -171,7 +171,7 @@ export class ClientUpdateComponent implements OnInit {
         });
         console.log(`response from save `, data)
       }, error: (err) => {
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Client was not updated.', 'Error', {
+        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Vendor was not updated.', 'Error', {
           disableTimeOut: false,
           timeOut:2000,
           closeButton: true,
@@ -183,7 +183,7 @@ export class ClientUpdateComponent implements OnInit {
         console.log(`error from save `, err)
       }, complete: () => {
         this.showSpinner = false;
-        console.log(`save over`, this.updateClientForm.value)
+        console.log(`save over`, this.updateVendorForm.value)
       }
     })
   }

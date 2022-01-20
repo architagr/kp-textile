@@ -5,142 +5,267 @@ import (
 	"fmt"
 	"net/http"
 
+	"vendor-service/common"
 	"vendor-service/persistance"
+
+	uuid "github.com/iris-contrib/go.uuid"
 )
 
-var VendorServiceObj *VendorServiceService
+var VendorServiceObj *VendorService
 
-type VendorServiceService struct {
-	vendorServiceRepo *persistance.VendorServicePersistance
+type VendorService struct {
+	vendorServiceRepo *persistance.VendorPersistance
 }
 
-func InitVendorServiceService() (*VendorServiceService, *commonModels.ErrorDetail) {
+func InitVendorService() (*VendorService, *commonModels.ErrorDetail) {
 	if VendorServiceObj == nil {
-		repo, err := persistance.InitVendorServicePersistance()
+		repo, err := persistance.InitVendorPersistance()
 		if err != nil {
 			return nil, err
 		}
-		VendorServiceObj = &VendorServiceService{
+		VendorServiceObj = &VendorService{
 			vendorServiceRepo: repo,
 		}
 	}
 	return VendorServiceObj, nil
 }
 
-func (service *VendorServiceService) GetAll() commonModels.VendorServiceListResponse {
-	allCodes, err := service.vendorServiceRepo.GetAll()
+func (service *VendorService) Add(vendor commonModels.AddVendorRequest) commonModels.AddVendorResponse {
+	vendorid, _ := uuid.NewV1()
+	vendor.VendorId = vendorid.String()
+	vendor.SortKey = common.GetVendorSortKey(vendor.VendorId)
+
+	_, err := service.vendorServiceRepo.UpsertVendor(vendor.VendorDto, true)
+	if err != nil {
+		return commonModels.AddVendorResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: fmt.Sprintf("could not add vendor - %s", vendor.CompanyName),
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+		}
+	}
+	errors := make([]commonModels.ErrorDetail, 0)
+	vendorContacts := make([]commonModels.VendorContactPersonDto, len(vendor.ContactPersons))
+	for i, contact := range vendor.ContactPersons {
+		contactId, _ := uuid.NewV1()
+		contact.ContactId = contactId.String()
+		contact.VendorId = vendor.VendorId
+		contact.BranchId = vendor.BranchId
+		contact.SortKey = common.GetVendorContactSortKey(vendor.VendorId, contact.ContactId)
+		_, err := service.vendorServiceRepo.UpsertVendorContact(contact)
+
+		if err != nil {
+			errors = append(errors, *err)
+		}
+		vendorContacts[i] = contact
+	}
+	vendor.ContactPersons = vendorContacts
+
+	var status int = http.StatusCreated
+	if len(errors) > 0 {
+		status = http.StatusPartialContent
+	}
+	return commonModels.AddVendorResponse{
+		CommonResponse: commonModels.CommonResponse{
+			StatusCode: status,
+			Errors:     errors,
+		},
+		Data: vendor,
+	}
+}
+
+func (service *VendorService) Put(vendor commonModels.AddVendorRequest) commonModels.AddVendorResponse {
+	vendor.SortKey = common.GetVendorSortKey(vendor.VendorId)
+
+	_, err := service.vendorServiceRepo.UpsertVendor(vendor.VendorDto, false)
+	if err != nil {
+		return commonModels.AddVendorResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: fmt.Sprintf("could no update vendor - %s", vendor.CompanyName),
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+		}
+	}
+	errors := make([]commonModels.ErrorDetail, 0)
+	vendorContacts := make([]commonModels.VendorContactPersonDto, len(vendor.ContactPersons))
+
+	errDelete := deleteVendorContact(vendor.BranchId, vendor.VendorId, vendor.ContactPersons)
+	if errDelete != nil {
+		return commonModels.AddVendorResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: fmt.Sprintf("could no delete contact person data vendor id - %s that were rermoved", vendor.VendorId),
+				Errors: []commonModels.ErrorDetail{
+					*errDelete,
+				},
+			},
+		}
+	}
+	for i, contact := range vendor.ContactPersons {
+		if contact.ContactId == "" {
+			contactId, _ := uuid.NewV1()
+			contact.ContactId = contactId.String()
+		}
+		contact.VendorId = vendor.VendorId
+		contact.BranchId = vendor.BranchId
+		contact.SortKey = common.GetVendorContactSortKey(vendor.VendorId, contact.ContactId)
+		_, err := service.vendorServiceRepo.UpsertVendorContact(contact)
+
+		if err != nil {
+			errors = append(errors, *err)
+		}
+		vendorContacts[i] = contact
+	}
+	vendor.ContactPersons = vendorContacts
+
+	var status int = http.StatusOK
+	if len(errors) > 0 {
+		status = http.StatusPartialContent
+	}
+	return commonModels.AddVendorResponse{
+		CommonResponse: commonModels.CommonResponse{
+			StatusCode: status,
+			Errors:     errors,
+		},
+		Data: vendor,
+	}
+}
+func deleteVendorContact(branchId, vendorId string, contactPersons []commonModels.VendorContactPersonDto) *commonModels.ErrorDetail {
+	existingContact, err := VendorServiceObj.vendorServiceRepo.GetPersonByVendorId(commonModels.GetVendorRequestDto{
+		BranchId: branchId,
+		VendorId: vendorId,
+	})
 
 	if err != nil {
+		return err
+	}
+	for _, exVendorPerson := range existingContact {
+		found := false
+		for _, person := range contactPersons {
+			if person.ContactId == exVendorPerson.ContactId {
+				found = true
+			}
+		}
+		if !found {
+			deleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendorContact(branchId, vendorId, exVendorPerson.ContactId)
+			if deleteErr != nil {
+				return deleteErr
+			}
+		}
+	}
+	return nil
+}
+func (service *VendorService) DeleteVendor(request commonModels.GetVendorRequestDto) commonModels.CommonResponse {
+	existingContact, err := VendorServiceObj.vendorServiceRepo.GetPersonByVendorId(commonModels.GetVendorRequestDto{
+		BranchId: request.BranchId,
+		VendorId: request.VendorId,
+	})
+	if err != nil {
+		return commonModels.CommonResponse{
+			ErrorMessage: fmt.Sprintf("error in getting contacts for vendor id %s", request.VendorId),
+			StatusCode:   http.StatusBadRequest,
+			Errors: []commonModels.ErrorDetail{
+				*err,
+			},
+		}
+	}
+	for _, exVendorPerson := range existingContact {
+		deleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendorContact(request.BranchId, request.VendorId, exVendorPerson.ContactId)
+		if deleteErr != nil {
+			return commonModels.CommonResponse{
+				ErrorMessage: fmt.Sprintf("error in deleting vendor contact id - %s for vendor id %s", exVendorPerson.ContactId, request.VendorId),
+				StatusCode:   http.StatusBadRequest,
+				Errors: []commonModels.ErrorDetail{
+					*deleteErr,
+				},
+			}
+		}
+	}
+	vendorDeleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendor(request.BranchId, request.VendorId)
+	if vendorDeleteErr != nil {
+		return commonModels.CommonResponse{
+			ErrorMessage: fmt.Sprintf("error in deleting vendor id %s", request.VendorId),
+			StatusCode:   http.StatusBadRequest,
+			Errors: []commonModels.ErrorDetail{
+				*vendorDeleteErr,
+			},
+		}
+	}
+	return commonModels.CommonResponse{
+		StatusCode: http.StatusOK,
+	}
+}
+func (service *VendorService) GetVendor(request commonModels.GetVendorRequestDto) commonModels.AddVendorResponse {
+	vendor, err := service.vendorServiceRepo.GetVendor(request)
+	if err != nil {
+		return commonModels.AddVendorResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: fmt.Sprintf("could not get vendor with vendor id  - %s", request.VendorId),
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+		}
+	}
+	vendorPersons, err := service.vendorServiceRepo.GetPersonByVendorId(request)
+	if err != nil {
+		return commonModels.AddVendorResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: fmt.Sprintf("could not get vendor with vendor id  - %s", request.VendorId),
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+		}
+	}
+	return commonModels.AddVendorResponse{
+		CommonResponse: commonModels.CommonResponse{
+			StatusCode: http.StatusOK,
+		},
+		Data: commonModels.AddVendorRequest{
+			VendorDto:      vendor,
+			ContactPersons: vendorPersons,
+		},
+	}
+}
 
-		return commonModels.VendorServiceListResponse{
+func (service *VendorService) GetAll(request commonModels.VendorListRequest) commonModels.VendorListResponse {
+
+	vendor, lastEvaluationKey, err := service.vendorServiceRepo.GetVendorByFilter(request)
+	if err != nil {
+		return commonModels.VendorListResponse{
 			CommonListResponse: commonModels.CommonListResponse{
 				CommonResponse: commonModels.CommonResponse{
 					StatusCode:   http.StatusBadRequest,
-					ErrorMessage: "could not get All VendorService",
+					ErrorMessage: "could not get vendors",
 					Errors: []commonModels.ErrorDetail{
 						*err,
 					},
 				},
 			},
 		}
-	} else {
-		return commonModels.VendorServiceListResponse{
-			CommonListResponse: commonModels.CommonListResponse{
-				CommonResponse: commonModels.CommonResponse{
-					StatusCode: http.StatusOK,
-				},
-				Start:    0,
-				Total:    len(allCodes),
-				PageSize: len(allCodes),
-			},
-			Data: allCodes,
-		}
 	}
-}
-
-func (service *VendorServiceService) Get(id string) commonModels.VendorServiceResponse {
-	vendorService, err := service.vendorServiceRepo.Get(id)
-	if err != nil {
-		return commonModels.VendorServiceResponse{
-			CommonResponse: commonModels.CommonResponse{
-				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("Could not get HSN Code for id: %s", id),
-				Errors: []commonModels.ErrorDetail{
-					*err,
-				},
-			},
-		}
-	} else {
-		return commonModels.VendorServiceResponse{
+	request.LastEvalutionKey = nil
+	//request.PageSize = 100
+	count, _ := service.vendorServiceRepo.GetVendorTotalByFilter(request)
+	fmt.Println("count", count)
+	return commonModels.VendorListResponse{
+		CommonListResponse: commonModels.CommonListResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode: http.StatusOK,
 			},
-			Data: *vendorService,
-		}
-	}
-}
-
-func (service *VendorServiceService) Add(code string) commonModels.VendorServiceResponse {
-	vendorService, err := service.vendorServiceRepo.Add(code)
-
-	if err != nil {
-		return commonModels.VendorServiceResponse{
-			CommonResponse: commonModels.CommonResponse{
-				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("could not add HSN Code - %s", code),
-				Errors: []commonModels.ErrorDetail{
-					*err,
-				},
-			},
-		}
-	} else {
-		return commonModels.VendorServiceResponse{
-			CommonResponse: commonModels.CommonResponse{
-				StatusCode: http.StatusCreated,
-			},
-			Data: *vendorService,
-		}
-	}
-}
-
-func (service *VendorServiceService) AddMultiple(codes []string) commonModels.VendorServiceListResponse {
-	allCodes, err := service.vendorServiceRepo.AddMultiple(codes)
-
-	if err != nil {
-
-		if len(allCodes) > 0 && len(codes) > len(allCodes) {
-			return commonModels.VendorServiceListResponse{
-				CommonListResponse: commonModels.CommonListResponse{
-					CommonResponse: commonModels.CommonResponse{
-						StatusCode:   http.StatusPartialContent,
-						ErrorMessage: "could not add All VendorService",
-						Errors:       err,
-					},
-				},
-				Data: allCodes,
-			}
-		} else {
-			return commonModels.VendorServiceListResponse{
-				CommonListResponse: commonModels.CommonListResponse{
-					CommonResponse: commonModels.CommonResponse{
-						StatusCode:   http.StatusBadRequest,
-						ErrorMessage: "could not add All VendorService",
-						Errors:       err,
-					},
-				},
-			}
-		}
-	} else {
-		return commonModels.VendorServiceListResponse{
-			CommonListResponse: commonModels.CommonListResponse{
-				Start:    0,
-				Total:    len(allCodes),
-				PageSize: len(allCodes),
-				CommonResponse: commonModels.CommonResponse{
-					StatusCode: http.StatusCreated,
-				},
-			},
-			Data: allCodes,
-		}
+			LastEvalutionKey: lastEvaluationKey,
+			PageSize:         request.PageSize,
+			Total:            count,
+		},
+		Data: vendor,
 	}
 }

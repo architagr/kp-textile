@@ -16,7 +16,9 @@ export class PaginationComponent implements OnInit {
   @Output('pageSizeChange') pageSizeChange: EventEmitter<number> = new EventEmitter<number>();
 
   @Input('pageNumber') pageNumber: number = 1;
-  @Output('pageNumberChange') pageNumberChange: EventEmitter<number> = new EventEmitter<number>();
+  @Output('nextButtonClick') nextButtonClick: EventEmitter<number> = new EventEmitter<number>();
+  @Output('prevButtonClick') prevButtonClick: EventEmitter<number> = new EventEmitter<number>();
+
 
   constructor() {
     this.form = new FormGroup({
@@ -43,10 +45,10 @@ export class PaginationComponent implements OnInit {
   }
   onNextClick() {
     this.pageNumber++;
-    this.pageNumberChange.emit(this.pageNumber);
+    this.nextButtonClick.emit(this.pageNumber);
   }
   onPreviousClick() {
     this.pageNumber--;
-    this.pageNumberChange.emit(this.pageNumber);
+    this.prevButtonClick.emit(this.pageNumber);
   }
 }

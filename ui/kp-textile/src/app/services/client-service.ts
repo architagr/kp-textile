@@ -8,28 +8,32 @@ import { CommonResponse } from "../models/genric-model";
     providedIn: 'root',
 })
 export class ClientService {
-    baseUrl:string = "http://localhost:8080/"
+    baseUrl: string = "http://localhost:8080/"
     constructor(
         private httpClient: HttpClient
     ) { }
 
 
-    getAllClient(pageSize: number, lastEvalutionKey: any| null): Observable<ClientListResponse> {
-        return this.httpClient.post<ClientListResponse>(`${this.baseUrl}getall?pageSize=${pageSize}`, {lastEvalutionKey: lastEvalutionKey});
+    getAllClient(pageSize: number, searchText: string, lastEvalutionKey: any | null): Observable<ClientListResponse> {
+        let url = `${this.baseUrl}getall?pageSize=${pageSize}`
+        if (searchText.length > 0) {
+            url += `&companyName=${searchText}`
+        }
+        return this.httpClient.post<ClientListResponse>(url, { lastEvalutionKey: lastEvalutionKey });
     }
 
-    addClient(client: AddClientRequest): Observable<AddClientResponse>{
+    addClient(client: AddClientRequest): Observable<AddClientResponse> {
         return this.httpClient.post<AddClientResponse>(`${this.baseUrl}`, client);
     }
 
-    getClientData(clientId: string): Observable<AddClientResponse>{
+    getClientData(clientId: string): Observable<AddClientResponse> {
         return this.httpClient.get<AddClientResponse>(`${this.baseUrl}${clientId}`);
     }
 
-    updateClient(clientId: string, data: AddClientResponse): Observable<AddClientResponse>{
+    updateClient(clientId: string, data: AddClientResponse): Observable<AddClientResponse> {
         return this.httpClient.put<AddClientResponse>(`${this.baseUrl}${clientId}`, data);
     }
-    deleteClient(clientId: string):Observable<CommonResponse>{
+    deleteClient(clientId: string): Observable<CommonResponse> {
         return this.httpClient.delete<CommonResponse>(`${this.baseUrl}${clientId}`);
     }
 }

@@ -3,24 +3,25 @@ package persistance
 import (
 	commonModels "commonpkg/models"
 	"fmt"
+	"log"
 	"vendor-service/common"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	uuid "github.com/iris-contrib/go.uuid"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
-var vendorServicePersistanceObj *VendorServicePersistance
+var vendorPersistanceObj *VendorPersistance
 
-type VendorServicePersistance struct {
-	db        *dynamodb.DynamoDB
-	tableName string
+type VendorPersistance struct {
+	db              *dynamodb.DynamoDB
+	vendorTableName string
 }
 
-func InitVendorServicePersistance() (*VendorServicePersistance, *commonModels.ErrorDetail) {
-	if vendorServicePersistanceObj == nil {
+func InitVendorPersistance() (*VendorPersistance, *commonModels.ErrorDetail) {
+	if vendorPersistanceObj == nil {
 		dbSession, err := session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
 		})
@@ -33,148 +34,290 @@ func InitVendorServicePersistance() (*VendorServicePersistance, *commonModels.Er
 		}
 		dynamoDbSession := session.Must(dbSession, err)
 
-		vendorServicePersistanceObj = &VendorServicePersistance{
-			db:        dynamodb.New(dynamoDbSession),
-			tableName: common.EnvValues.TableName,
+		vendorPersistanceObj = &VendorPersistance{
+			db:              dynamodb.New(dynamoDbSession),
+			vendorTableName: common.EnvValues.VendorTableName,
 		}
 	}
 
-	return vendorServicePersistanceObj, nil
+	return vendorPersistanceObj, nil
 }
 
-func (repo *VendorServicePersistance) GetAll() ([]commonModels.VendorServiceDto, *commonModels.ErrorDetail) {
+func (repo *VendorPersistance) GetPersonByVendorId(request commonModels.GetVendorRequestDto) ([]commonModels.VendorContactPersonDto, *commonModels.ErrorDetail) {
+	keyCondition := expression.KeyAnd(
+		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
+		expression.Key("sortKey").BeginsWith(common.GetVendorContactSortKey(request.VendorId, "")),
+	)
 
-	result, err := repo.db.Scan(&dynamodb.ScanInput{
-		TableName: &repo.tableName,
-		Limit:     aws.Int64(100),
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("Got error building expression: %s", err.Error()))
+	}
+
+	result, err := repo.db.Query(&dynamodb.QueryInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		TableName:                 aws.String(repo.vendorTableName),
+	})
+
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("get person for vendor %s call failed: %s", request.VendorId, err.Error()))
+	}
+
+	vendorPersons := make([]commonModels.VendorContactPersonDto, len(result.Items))
+
+	for i, val := range result.Items {
+		vendorPerson := commonModels.VendorContactPersonDto{}
+
+		err = dynamodbattribute.UnmarshalMap(val, &vendorPerson)
+
+		if err != nil {
+			log.Fatalf("Got error unmarshalling: %s", err)
+		}
+		vendorPersons[i] = vendorPerson
+	}
+	return vendorPersons, nil
+}
+
+func (repo *VendorPersistance) GetVendor(request commonModels.GetVendorRequestDto) (commonModels.VendorDto, *commonModels.ErrorDetail) {
+
+	keyCondition := expression.KeyAnd(
+		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
+		expression.Key("sortKey").Equal(expression.Value(common.GetVendorSortKey(request.VendorId))),
+	)
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("Got error building expression: %s", err.Error()))
+	}
+
+	result, err := repo.db.Query(&dynamodb.QueryInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		TableName:                 aws.String(repo.vendorTableName),
+	})
+
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("get vendor call failed: %s", err.Error()))
+	}
+
+	vendor := commonModels.VendorDto{}
+	if len(result.Items) > 0 {
+		err = dynamodbattribute.UnmarshalMap(result.Items[0], &vendor)
+
+		if err != nil {
+			log.Fatalf("Got error unmarshalling: %s", err)
+		}
+	}
+	return vendor, nil
+}
+
+func buildFilterExpression(filterData commonModels.VendorListRequest, projection *expression.ProjectionBuilder) (*expression.Expression, *commonModels.ErrorDetail) {
+
+	filter := expression.Name("branchId").Equal(expression.Value(filterData.BranchId)).And(expression.Name("sortKey").BeginsWith(common.VendorSortKey))
+
+	if len(filterData.Alias) > 0 {
+		filter = filter.And(expression.Name("alias").Contains(filterData.Alias).Or(expression.Name("alias").Equal(expression.Value(filterData.Alias))).Or(expression.Name("alias").BeginsWith(filterData.Alias)))
+	}
+
+	if len(filterData.CompanyName) > 0 {
+		filter = filter.And(expression.Name("companyName").Contains(filterData.CompanyName).Or(expression.Name("companyName").Equal(expression.Value(filterData.CompanyName))).Or(expression.Name("companyName").BeginsWith(filterData.CompanyName)))
+	}
+
+	if len(filterData.Email) > 0 {
+		filter = filter.And(expression.Name("contactInfo.email").Contains(filterData.Email))
+	}
+
+	if len(filterData.ContactPersonFirstName) > 0 {
+		filter = filter.And(expression.Name("contactPersons.firstName").Contains(filterData.ContactPersonFirstName))
+	}
+
+	if len(filterData.ContactPersonFirstName) > 0 {
+		filter = filter.And(expression.Name("contactPersons.lastName").Contains(filterData.ContactPersonFirstName))
+	}
+
+	if len(filterData.PaymentTerm) > 0 {
+		filter = filter.And(expression.Name("paymentTerm").Contains(filterData.PaymentTerm))
+	}
+	builder := expression.NewBuilder().WithFilter(filter)
+
+	if projection != nil {
+		builder.WithProjection(*projection)
+	}
+	expr, err := builder.Build()
+
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("Got error building expression: %s", err.Error()))
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorInvalidRequestParam,
+			ErrorMessage: "Error building filter",
+		}
+	}
+
+	return &expr, nil
+}
+
+func (repo *VendorPersistance) GetVendorTotalByFilter(filterData commonModels.VendorListRequest) (int64, *commonModels.ErrorDetail) {
+	var count int64
+	proj := expression.NamesList(expression.Name("branchId"))
+	expr, errorDetails := buildFilterExpression(filterData, &proj)
+	if errorDetails != nil {
+		return count, errorDetails
+	}
+
+	var result *dynamodb.ScanOutput
+	var err error
+
+	result, err = repo.db.Scan(&dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		TableName:                 aws.String(repo.vendorTableName),
+		ExclusiveStartKey:         filterData.LastEvalutionKey,
+		Limit:                     aws.Int64(filterData.PageSize),
 	})
 	if err != nil {
-		common.WriteLog(1, err.Error())
-		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorNoDataFound,
-			ErrorMessage: err.Error(),
-		}
+		common.WriteLog(1, fmt.Sprintf("filter vendor call failed: %s", err.Error()))
 	}
-	if result.Items == nil {
-		message := "Could not find VendorServices"
-		common.WriteLog(5, message)
-
-		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorNoDataFound,
-			ErrorMessage: message,
-		}
-	}
-
-	items := make([]commonModels.VendorServiceDto, 0)
-	tempItem, errorDetails := buildVendorServices(result.Items)
-	if errorDetails != nil {
-		return nil, errorDetails
-	}
-	items = append(items, tempItem...)
-
-	for result.LastEvaluatedKey != nil {
+	filterData.LastEvalutionKey = result.LastEvaluatedKey
+	count = count + int64(len(result.Items))
+	for len(result.Items) > 0 && result.LastEvaluatedKey != nil {
 		result, err = repo.db.Scan(&dynamodb.ScanInput{
-			TableName:         &repo.tableName,
-			Limit:             aws.Int64(100),
-			ExclusiveStartKey: result.LastEvaluatedKey,
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			FilterExpression:          expr.Filter(),
+			TableName:                 aws.String(repo.vendorTableName),
+			ExclusiveStartKey:         filterData.LastEvalutionKey,
+			Limit:                     aws.Int64(filterData.PageSize),
 		})
 		if err != nil {
-			common.WriteLog(1, err.Error())
-			return nil, &commonModels.ErrorDetail{
-				ErrorCode:    commonModels.ErrorNoDataFound,
-				ErrorMessage: err.Error(),
-			}
+			common.WriteLog(1, fmt.Sprintf("filter vendor call failed: %s", err.Error()))
 		}
-
-		if result.Items != nil {
-			tempItem, errorDetails = buildVendorServices(result.Items)
-			if errorDetails != nil {
-				return nil, errorDetails
-			}
-			items = append(items, tempItem...)
-		}
+		filterData.LastEvalutionKey = result.LastEvaluatedKey
+		count = count + int64(len(result.Items))
 	}
-	return items, nil
+	return count, nil
 }
 
-func buildVendorServices(dbItems []map[string]*dynamodb.AttributeValue) ([]commonModels.VendorServiceDto, *commonModels.ErrorDetail) {
-	items := make([]commonModels.VendorServiceDto, 0)
-
-	for _, val := range dbItems {
-		item := commonModels.VendorServiceDto{}
-		err := dynamodbattribute.UnmarshalMap(val, &item)
-		if err != nil {
-			common.WriteLog(1, err.Error())
-			return nil, &commonModels.ErrorDetail{
-				ErrorCode:    commonModels.ErrorNoDataFound,
-				ErrorMessage: err.Error(),
-			}
-		}
-		items = append(items, item)
-	}
-	return items, nil
-}
-
-func (repo *VendorServicePersistance) Get(id string) (*commonModels.VendorServiceDto, *commonModels.ErrorDetail) {
-	var hnsCode *commonModels.VendorServiceDto
-	result, err := repo.db.Query(&dynamodb.QueryInput{
-		TableName: &repo.tableName,
-		KeyConditions: map[string]*dynamodb.Condition{
-			"id": {
-				ComparisonOperator: aws.String("EQ"),
-				AttributeValueList: []*dynamodb.AttributeValue{
-					{
-						S: aws.String(id),
-					},
-				},
-			},
-		},
+func (repo *VendorPersistance) scanVendor(expr *expression.Expression, filterdata *commonModels.VendorListRequest) (*dynamodb.ScanOutput, *commonModels.ErrorDetail) {
+	result, err := repo.db.Scan(&dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		TableName:                 aws.String(repo.vendorTableName),
+		ExclusiveStartKey:         filterdata.LastEvalutionKey,
+		Limit:                     aws.Int64(filterdata.PageSize),
 	})
-
 	if err != nil {
-		common.WriteLog(1, err.Error())
+		common.WriteLog(1, fmt.Sprintf("filter vendor call failed: %s", err.Error()))
 		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorNoDataFound,
+			ErrorCode:    commonModels.ErrorServer,
 			ErrorMessage: err.Error(),
 		}
 	}
-	if result.Items == nil || len(result.Items) == 0 {
-		message := fmt.Sprintf("Could not find VendorServices for id %s", id)
-		common.WriteLog(3, message)
-		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorNoDataFound,
-			ErrorMessage: message,
+	return result, nil
+}
+
+func parseVendorScanResult(reultItem []map[string]*dynamodb.AttributeValue) []commonModels.VendorDto {
+	vendors := make([]commonModels.VendorDto, 0)
+	if len(reultItem) > 0 {
+		for _, val := range reultItem {
+			vendor := commonModels.VendorDto{}
+
+			err := dynamodbattribute.UnmarshalMap(val, &vendor)
+
+			if err != nil {
+				log.Fatalf("Got error unmarshalling: %s", err)
+			}
+			vendors = append(vendors, vendor)
 		}
 	}
-	if len(result.Items) > 0 {
+	return vendors
+}
 
-		err = dynamodbattribute.UnmarshalMap(result.Items[0], &hnsCode)
-		if err != nil {
-			common.WriteLog(1, err.Error())
+func (repo *VendorPersistance) GetVendorByFilter(filterData commonModels.VendorListRequest) ([]commonModels.VendorDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
+
+	expr, errorDetails := buildFilterExpression(filterData, nil)
+	if errorDetails != nil {
+		return nil, nil, errorDetails
+	}
+
+	result, errorDetails := repo.scanVendor(expr, &filterData)
+
+	if errorDetails != nil {
+		return nil, nil, errorDetails
+	}
+	filterData.LastEvalutionKey = result.LastEvaluatedKey
+	vendors := parseVendorScanResult(result.Items)
+
+	for len(vendors) < int(filterData.PageSize) && filterData.LastEvalutionKey != nil {
+
+		result, errorDetails = repo.scanVendor(expr, &filterData)
+		if errorDetails != nil {
+			return nil, nil, errorDetails
+		}
+
+		vendorsTemp := parseVendorScanResult(result.Items)
+		if len(vendorsTemp) > 0 {
+			vendors = append(vendors, vendorsTemp...)
+		}
+		filterData.LastEvalutionKey = result.LastEvaluatedKey
+	}
+
+	return vendors, filterData.LastEvalutionKey, nil
+}
+
+func (repo *VendorPersistance) UpsertVendor(vendor commonModels.VendorDto, isNew bool) (*commonModels.VendorDto, *commonModels.ErrorDetail) {
+	existigClients, _, errorDetails := repo.GetVendorByFilter(commonModels.VendorListRequest{
+		VendorFilterDto: commonModels.VendorFilterDto{
+			BranchId:    vendor.BranchId,
+			CompanyName: vendor.CompanyName,
+			Alias:       vendor.Alias,
+			Email:       vendor.ContactInfo.Email,
+		},
+		PageSize: 10,
+	})
+
+	if errorDetails != nil {
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: fmt.Sprintf("Error in validating exiting vendor, error: %s", errorDetails.Error()),
+		}
+	}
+	if len(existigClients) > 0 {
+		flag := true
+		if !isNew {
+			flag = false
+			for _, val := range existigClients {
+				if val.VendorId != vendor.VendorId {
+					flag = true
+				}
+			}
+		}
+		if flag {
 			return nil, &commonModels.ErrorDetail{
-				ErrorCode:    commonModels.ErrorNoDataFound,
-				ErrorMessage: "VendorService not is correct format",
+				ErrorCode:    commonModels.ErrorInsert,
+				ErrorMessage: "similar vendor already exists",
 			}
 		}
 	}
-	return hnsCode, nil
-}
-
-func (repo *VendorServicePersistance) Add(code string) (*commonModels.VendorServiceDto, *commonModels.ErrorDetail) {
-	id, _ := uuid.NewV1()
-	newVendorService := commonModels.VendorServiceDto{Id: id.String(), VendorService: code}
-
-	av, err := dynamodbattribute.MarshalMap(newVendorService)
+	av, err := dynamodbattribute.MarshalMap(vendor)
 	if err != nil {
 		common.WriteLog(1, err.Error())
 
 		return nil, &commonModels.ErrorDetail{
 			ErrorCode:    commonModels.ErrorServer,
-			ErrorMessage: fmt.Sprintf("Got error marshalling new VendorService item: %s", err),
+			ErrorMessage: fmt.Sprintf("Got error marshalling vendor details item, vendor name - %s, vendor id - %s, err: %s", vendor.CompanyName, vendor.VendorId, err),
 		}
 	}
 	_, err = repo.db.PutItem(&dynamodb.PutItemInput{
-		TableName: &repo.tableName,
+		TableName: &repo.vendorTableName,
 		Item:      av,
 	})
 
@@ -183,27 +326,81 @@ func (repo *VendorServicePersistance) Add(code string) (*commonModels.VendorServ
 
 		return nil, &commonModels.ErrorDetail{
 			ErrorCode:    commonModels.ErrorInsert,
-			ErrorMessage: fmt.Sprintf("Error in adding VendorService %s, error message; %s", code, err.Error()),
+			ErrorMessage: fmt.Sprintf("Error in adding/updating vendor %s, vendor id %s, error message; %s", vendor.CompanyName, vendor.VendorId, err.Error()),
 		}
 	}
-
-	return &newVendorService, nil
+	return &vendor, nil
 }
 
-func (repo *VendorServicePersistance) AddMultiple(codes []string) ([]commonModels.VendorServiceDto, []commonModels.ErrorDetail) {
-	var newVendorServices []commonModels.VendorServiceDto
-	var errors = make([]commonModels.ErrorDetail, 0)
-	for _, val := range codes {
-		newVendorService, err := repo.Add(val)
-		if err != nil {
-			common.WriteLog(1, err.Error())
-			errors = append(errors, *err)
-		} else {
-			newVendorServices = append(newVendorServices, *newVendorService)
+func (repo *VendorPersistance) UpsertVendorContact(vendorContact commonModels.VendorContactPersonDto) (*commonModels.VendorContactPersonDto, *commonModels.ErrorDetail) {
+	fmt.Println("adding contact - ", vendorContact)
+
+	av, err := dynamodbattribute.MarshalMap(vendorContact)
+	if err != nil {
+		common.WriteLog(1, err.Error())
+
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: fmt.Sprintf("Got error marshalling new vendor Contact detailes clinet id: %s, err: %s", vendorContact.VendorId, err.Error()),
 		}
 	}
-	if len(errors) > 0 {
-		return nil, errors
+	_, err = repo.db.PutItem(&dynamodb.PutItemInput{
+		TableName: &repo.vendorTableName,
+		Item:      av,
+	})
+
+	if err != nil {
+		common.WriteLog(1, err.Error())
+
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorInsert,
+			ErrorMessage: fmt.Sprintf("Error in adding vendor contact (%s) for vendor id %s, error message; %s", vendorContact.FirstName, vendorContact.VendorId, err.Error()),
+		}
 	}
-	return newVendorServices, nil
+	return &vendorContact, nil
+}
+
+func (repo *VendorPersistance) DeleteVendorContact(branchId, vendorId, contactId string) *commonModels.ErrorDetail {
+	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &repo.vendorTableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"branchId": {
+				S: aws.String(branchId),
+			},
+			"sortKey": {
+				S: aws.String(common.GetVendorContactSortKey(vendorId, contactId)),
+			},
+		},
+	})
+	if err != nil {
+		common.WriteLog(1, err.Error())
+
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in deleting vendor contact id (%s) for vendor id %s, error message; %s", contactId, vendorId, err.Error()),
+		}
+	}
+	return nil
+}
+
+func (repo *VendorPersistance) DeleteVendor(branchId, vendorId string) *commonModels.ErrorDetail {
+	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &repo.vendorTableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"branchId": {
+				S: aws.String(branchId),
+			},
+			"sortKey": {
+				S: aws.String(common.GetVendorSortKey(vendorId)),
+			},
+		},
+	})
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in deleting vendor id %s, error message; %s", vendorId, err.Error()),
+		}
+	}
+	return nil
 }

@@ -1,4 +1,4 @@
-package clientinfra
+package vendorinfra
 
 import (
 	common "infra/common"
@@ -11,23 +11,23 @@ import (
 	jsii "github.com/aws/jsii-runtime-go"
 )
 
-type ClientStackProps struct {
+type VendorStackProps struct {
 	common.CommonStackProps
 	awscdk.StackProps
 }
 
-func NewClientStack(scope constructs.Construct, id string, props *ClientStackProps) awscdk.Stack {
+func NewVendorStack(scope constructs.Construct, id string, props *VendorStackProps) awscdk.Stack {
 	var sprops awscdk.StackProps
 	if props != nil {
 		sprops = props.StackProps
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	clientTable := buildTable(stack, props)
-	buildLambda(stack, clientTable)
+	vendorTable := buildTable(stack, props)
+	buildLambda(stack, vendorTable)
 	return stack
 }
-func buildTable(stack awscdk.Stack, props *ClientStackProps) dynamodb.Table {
+func buildTable(stack awscdk.Stack, props *VendorStackProps) dynamodb.Table {
 	var removalPolicy awscdk.RemovalPolicy = awscdk.RemovalPolicy_RETAIN
 
 	if props.IsLocal == "" {
@@ -37,8 +37,8 @@ func buildTable(stack awscdk.Stack, props *ClientStackProps) dynamodb.Table {
 
 	}
 
-	return dynamodb.NewTable(stack, jsii.String("ClientTable"), &dynamodb.TableProps{
-		TableName: jsii.String("client-table"),
+	return dynamodb.NewTable(stack, jsii.String("VendorTable"), &dynamodb.TableProps{
+		TableName: jsii.String("vendor-table"),
 		PartitionKey: &dynamodb.Attribute{
 			Name: jsii.String("branchId"),
 			Type: dynamodb.AttributeType_STRING,
@@ -51,19 +51,19 @@ func buildTable(stack awscdk.Stack, props *ClientStackProps) dynamodb.Table {
 		RemovalPolicy: removalPolicy,
 	})
 }
-func buildLambda(stack awscdk.Stack, clientTable dynamodb.Table) {
+func buildLambda(stack awscdk.Stack, vendorTable dynamodb.Table) {
 
 	env := make(map[string]*string)
-	env["ClientTable"] = clientTable.TableName()
+	env["VendorTable"] = vendorTable.TableName()
 	env["GIN_MODE"] = jsii.String("release")
 
-	function := lambda.NewFunction(stack, jsii.String("client-lambda"), &lambda.FunctionProps{
+	function := lambda.NewFunction(stack, jsii.String("vendor-lambda"), &lambda.FunctionProps{
 		Environment:  &env,
 		Runtime:      lambda.Runtime_GO_1_X(),
 		Handler:      jsii.String("internal-api"),
-		Code:         lambda.Code_FromAsset(jsii.String("./../client-service/main.zip"), &awss3assets.AssetOptions{}),
-		FunctionName: jsii.String("client-int-lambda-fn"),
+		Code:         lambda.Code_FromAsset(jsii.String("./../vendor-service/main.zip"), &awss3assets.AssetOptions{}),
+		FunctionName: jsii.String("vendor-int-lambda-fn"),
 	})
 
-	clientTable.GrantFullAccess(function)
+	vendorTable.GrantFullAccess(function)
 }

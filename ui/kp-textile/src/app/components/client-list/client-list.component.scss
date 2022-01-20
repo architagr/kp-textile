@@ -40,3 +40,23 @@ tr.example-detail-row {
 .pointer-cursor{
   cursor: pointer;
 }
+
+.row{
+  &.justify{
+    align-items: center;
+    width: 100%;
+    justify-content: center;
+  }
+  .mr-bottom-remove{
+    margin-bottom: -5px;
+  }
+  .mr-top-remove{
+    margin-top: -5px;
+  }
+  .mr-left-remove{
+    margin-left: -15px;
+  }
+  .mr-rigth-remove{
+    margin-right: -15px;
+  }
+}

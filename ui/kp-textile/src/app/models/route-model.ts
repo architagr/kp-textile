@@ -42,6 +42,20 @@ export const ROUTES: RouteInfo[] = [
     showMenu:true
   },
   {
+    path: "/addvendor",
+    title: "Add new vendor",
+    icon: "icon-bank",
+    class: "",
+    showMenu:false
+  },
+  {
+    path: "/updatevendor",
+    title: "Update Vendor",
+    icon: "icon-bank",
+    class: "",
+    showMenu:false
+  },
+  {
     path: "/transpoter",
     title: "Transporters",
     icon: "icon-delivery-fast",

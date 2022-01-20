@@ -16,9 +16,8 @@ import (
 var clientServicePersistanceObj *ClientServicePersistance
 
 type ClientServicePersistance struct {
-	db               *dynamodb.DynamoDB
-	clientTableName  string
-	contactTableName string
+	db              *dynamodb.DynamoDB
+	clientTableName string
 }
 
 func InitClientServicePersistance() (*ClientServicePersistance, *commonModels.ErrorDetail) {
@@ -36,9 +35,8 @@ func InitClientServicePersistance() (*ClientServicePersistance, *commonModels.Er
 		dynamoDbSession := session.Must(dbSession, err)
 
 		clientServicePersistanceObj = &ClientServicePersistance{
-			db:               dynamodb.New(dynamoDbSession),
-			clientTableName:  common.EnvValues.ClientTableName,
-			contactTableName: common.EnvValues.ContactTableName,
+			db:              dynamodb.New(dynamoDbSession),
+			clientTableName: common.EnvValues.ClientTableName,
 		}
 	}
 
@@ -125,11 +123,11 @@ func buildFilterExpression(filterData commonModels.ClientListRequest, projection
 	filter := expression.Name("branchId").Equal(expression.Value(filterData.BranchId)).And(expression.Name("sortKey").BeginsWith(common.ClientSortKey))
 
 	if len(filterData.Alias) > 0 {
-		filter = filter.And(expression.Name("alias").Contains(filterData.Alias).Or(expression.Name("alias").Equal(expression.Value(filterData.Alias))).Or(expression.Name("alias").BeginsWith(filterData.Alias)))
+		filter = filter.And(expression.Name("alias").Contains(filterData.Alias))
 	}
 
 	if len(filterData.CompanyName) > 0 {
-		filter = filter.And(expression.Name("companyName").Contains(filterData.CompanyName).Or(expression.Name("companyName").Equal(expression.Value(filterData.CompanyName))).Or(expression.Name("companyName").BeginsWith(filterData.CompanyName)))
+		filter = filter.And(expression.Name("companyName").Contains(filterData.CompanyName))
 	}
 
 	if len(filterData.Email) > 0 {
@@ -206,42 +204,70 @@ func (repo *ClientServicePersistance) GetClientTotalByFilter(filterData commonMo
 	}
 	return count, nil
 }
+func (repo *ClientServicePersistance) scanClient(expr *expression.Expression, filterdata *commonModels.ClientListRequest) (*dynamodb.ScanOutput, *commonModels.ErrorDetail) {
+	result, err := repo.db.Scan(&dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		TableName:                 aws.String(repo.clientTableName),
+		ExclusiveStartKey:         filterdata.LastEvalutionKey,
+		Limit:                     aws.Int64(filterdata.PageSize),
+	})
+	if err != nil {
+		common.WriteLog(1, fmt.Sprintf("filter client call failed: %s", err.Error()))
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: err.Error(),
+		}
+	}
+	return result, nil
+}
+
+func parseClientScanResult(reultItem []map[string]*dynamodb.AttributeValue) []commonModels.ClientDto {
+	clients := make([]commonModels.ClientDto, 0)
+	if len(reultItem) > 0 {
+		for _, val := range reultItem {
+			client := commonModels.ClientDto{}
+
+			err := dynamodbattribute.UnmarshalMap(val, &client)
+
+			if err != nil {
+				log.Fatalf("Got error unmarshalling: %s", err)
+			}
+			clients = append(clients, client)
+		}
+	}
+	return clients
+}
 func (repo *ClientServicePersistance) GetClientByFilter(filterData commonModels.ClientListRequest) ([]commonModels.ClientDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
 
 	expr, errorDetails := buildFilterExpression(filterData, nil)
 	if errorDetails != nil {
 		return nil, nil, errorDetails
 	}
+	result, errorDetails := repo.scanClient(expr, &filterData)
 
-	result, err := repo.db.Scan(&dynamodb.ScanInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-		TableName:                 aws.String(repo.clientTableName),
-		ExclusiveStartKey:         filterData.LastEvalutionKey,
-		Limit:                     aws.Int64(filterData.PageSize),
-	})
-	if err != nil {
-		common.WriteLog(1, fmt.Sprintf("filter client call failed: %s", err.Error()))
+	if errorDetails != nil {
+		return nil, nil, errorDetails
 	}
+	filterData.LastEvalutionKey = result.LastEvaluatedKey
+	clients := parseClientScanResult(result.Items)
 
-	clients := make([]commonModels.ClientDto, len(result.Items))
-	for i, val := range result.Items {
-		client := commonModels.ClientDto{}
+	for len(clients) < int(filterData.PageSize) && filterData.LastEvalutionKey != nil {
 
-		err = dynamodbattribute.UnmarshalMap(val, &client)
-
-		if err != nil {
-			log.Fatalf("Got error unmarshalling: %s", err)
+		result, errorDetails = repo.scanClient(expr, &filterData)
+		if errorDetails != nil {
+			return nil, nil, errorDetails
 		}
-		clients[i] = client
+
+		clientsTemp := parseClientScanResult(result.Items)
+		if len(clientsTemp) > 0 {
+			clients = append(clients, clientsTemp...)
+		}
+		filterData.LastEvalutionKey = result.LastEvaluatedKey
 	}
 
-	if len(result.Items) > 0 {
-		return clients, result.LastEvaluatedKey, nil
-	} else {
-		return clients, nil, nil
-	}
+	return clients, filterData.LastEvalutionKey, nil
 }
 
 func (repo *ClientServicePersistance) UpsertClient(client commonModels.ClientDto, isNew bool) (*commonModels.ClientDto, *commonModels.ErrorDetail) {
@@ -260,7 +286,6 @@ func (repo *ClientServicePersistance) UpsertClient(client commonModels.ClientDto
 			ErrorMessage: fmt.Sprintf("Error in validating exiting client, error: %s", errorDetails.Error()),
 		}
 	}
-	fmt.Printf("isNew %v, existing clients %+v\n", isNew, existigClients)
 	if len(existigClients) > 0 {
 		flag := true
 		if !isNew {
@@ -304,7 +329,6 @@ func (repo *ClientServicePersistance) UpsertClient(client commonModels.ClientDto
 }
 
 func (repo *ClientServicePersistance) UpsertClientContact(clientContact commonModels.ContactPersonDto) (*commonModels.ContactPersonDto, *commonModels.ErrorDetail) {
-	fmt.Println("adding contact - ", clientContact)
 
 	av, err := dynamodbattribute.MarshalMap(clientContact)
 	if err != nil {
