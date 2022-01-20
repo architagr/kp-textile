@@ -1,25 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { AddressType, PaymentTerm, PersonType, Status } from 'src/app/models/client-model';
-import { ToastrService } from 'ngx-toastr';
-import { VendorService } from 'src/app/services/vendor-service';
 import { coutries } from 'src/app/models/country-city';
+import { TransporterService } from 'src/app/services/transporter-service';
 
 @Component({
-  selector: 'app-vendor-update',
-  templateUrl: './vendor-update.component.html',
-  styleUrls: ['./vendor-update.component.scss']
+  selector: 'app-transporter-add',
+  templateUrl: './transporter-add.component.html',
+  styleUrls: ['./transporter-add.component.scss']
 })
-export class VendorUpdateComponent implements OnInit {
-  updateVendorForm: FormGroup;
+export class TransporterAddComponent implements OnInit {
+  addTransporterForm: FormGroup;
 
   paymentTermsValues: string[] = [];
   statusValues: string[] = [];
   addressTypeValues: string[] = [];
   personTypeValues: string[] = [];
-  countries = coutries
+  countries = coutries;
   countriesKey: string[] = []
+  
   private getContactInfoFormGroup(): FormGroup {
     return this.fb.group({
       email: new FormControl('', [Validators.email]),
@@ -45,10 +45,6 @@ export class VendorUpdateComponent implements OnInit {
 
   private getContactPersonFormGroup(): FormGroup {
     return this.fb.group({
-      branchId: new FormControl(''),
-      sortKey: new FormControl(''),
-      vendorId: new FormControl(''),
-      contactId: new FormControl(''),
       salutation: new FormControl('', [Validators.required]),
       firstName: new FormControl('', [Validators.required]),
       lastName: new FormControl(''),
@@ -60,15 +56,11 @@ export class VendorUpdateComponent implements OnInit {
     })
   }
   constructor(
-    private route: ActivatedRoute,
-    private vendorService: VendorService,
-    private fb: FormBuilder,
-    private toastr: ToastrService
-  ) {
-    this.updateVendorForm = this.fb.group({
-      branchId: new FormControl(''),
-      sortKey: new FormControl(''),
-      vendorId: new FormControl(''),
+    private router: Router,
+    private transporterService: TransporterService,
+    private fb: FormBuilder
+  ) { 
+    this.addTransporterForm = this.fb.group({
       companyName: new FormControl('', [Validators.required]),
       alias: new FormControl(''),
       website: new FormControl('', /*[Validators.pattern('/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi')]*/),
@@ -88,8 +80,7 @@ export class VendorUpdateComponent implements OnInit {
     this.statusValues = Object.values(Status);
     this.addressTypeValues = Object.values(AddressType);
     this.personTypeValues = Object.values(PersonType);
-    this.countriesKey = Object.keys(this.countries);
-
+    this.countriesKey = Object.keys(this.countries)
   }
 
   getAddressControl(index: number): { [key: string]: AbstractControl } {
@@ -107,13 +98,13 @@ export class VendorUpdateComponent implements OnInit {
   }
 
   get formControls(): { [key: string]: AbstractControl } {
-    return this.updateVendorForm.controls
+    return this.addTransporterForm.controls
   }
   get companyContactInfo(): { [key: string]: AbstractControl } {
-    return (this.updateVendorForm.controls['contactInfo'] as FormGroup).controls
+    return (this.addTransporterForm.controls['contactInfo'] as FormGroup).controls
   }
   get addresses(): FormArray {
-    return this.updateVendorForm.controls['addresses'] as FormArray
+    return this.addTransporterForm.controls['addresses'] as FormArray
   }
   addAddress() {
     this.addresses.push(this.getAddressFormGroup());
@@ -123,7 +114,7 @@ export class VendorUpdateComponent implements OnInit {
   }
 
   get contactPersons(): FormArray {
-    return this.updateVendorForm.controls['contactPersons'] as FormArray
+    return this.addTransporterForm.controls['contactPersons'] as FormArray
   }
   addContactPerson() {
     this.contactPersons.push(this.getContactPersonFormGroup());
@@ -131,64 +122,22 @@ export class VendorUpdateComponent implements OnInit {
   removeContactPerson(removeIndex: number) {
     this.contactPersons.removeAt(removeIndex);
   }
-  showSpinner = true;
-  vendorId: string = '';
 
   ngOnInit(): void {
-    this.vendorId = this.route.snapshot.paramMap.get('vendorId') ?? ''
 
-    this.vendorService.getVendorData(this.vendorId).subscribe(response => {
-      if(response.data.addresses == undefined || response.data.addresses ==null){
-        response.data.addresses = [];
-      }
-      if(response.data.contactPersons == undefined || response.data.contactPersons ==null){
-        response.data.contactPersons = [];
-      }
-      if(response.data.contactPersons.length>1){
-        for (let index = 1; index < response.data.contactPersons.length; index++){
-          this.addContactPerson();
-        }
-      }
-
-      if(response.data.addresses.length>1){
-        for (let index = 1; index < response.data.addresses.length; index++){
-          this.addAddress();
-        }
-      }
-      this.updateVendorForm.patchValue(response.data);
-      this.showSpinner = false;
-    })
   }
 
   submitData() {
-    this.showSpinner = true;
-    this.vendorService.updateVendor(this.vendorId, this.updateVendorForm.value).subscribe({
+    this.transporterService.addTransporter(this.addTransporterForm.value).subscribe({
       next: (data) => {
-
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Vendor update.', 'Success', {
-          disableTimeOut: false,
-          timeOut:2000,
-          closeButton: true,
-          enableHtml: true,
-          toastClass: "alert alert-success alert-with-icon",
-          positionClass: 'toast-top-right'
-        });
         console.log(`response from save `, data)
+        this.router.navigate(['/transpoter']);
       }, error: (err) => {
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Vendor was not updated.', 'Error', {
-          disableTimeOut: false,
-          timeOut:2000,
-          closeButton: true,
-          enableHtml: true,
-          toastClass: "alert alert-danger alert-with-icon",
-          positionClass: 'toast-top-right'
-        });
-
         console.log(`error from save `, err)
       }, complete: () => {
-        this.showSpinner = false;
-        console.log(`save over`, this.updateVendorForm.value)
+        console.log(`save over`, this.addTransporterForm.value)
       }
     })
   }
+
 }

@@ -166,9 +166,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (titlee.charAt(0) === "#") {
       titlee = titlee.slice(1);
     }
-
     for (var item = 0; item < this.listTitles.length; item++) {
-      if (this.listTitles[item].path === titlee) {
+      if (titlee.indexOf(this.listTitles[item].path)>-1) {
         return this.listTitles[item].title;
       }
     }

@@ -1,0 +1,62 @@
+.btn-round {
+    margin-right: 5px;
+  }
+  tr.example-detail-row {
+    height: 0;
+  }
+  .example-element-detail {
+    overflow: hidden;
+    display: flex;
+  }
+  
+  .card-header {
+    &.flex {
+      display: flex;
+    }
+    .align-right {
+      align-items: flex-end;
+      margin-left: auto;
+    }
+  }
+  .badge {
+    padding: 5px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 12px;
+    color: #1d1d2c;
+    min-width: 4rem;
+    &.active-status {
+      background-color: #00bf9a;
+    }
+  
+    &.inactive-status {
+      background-color: #ff9f89;
+    }
+  
+    &.blocked-status {
+      background-color: #fd77a4;
+    }
+  }
+  .pointer-cursor{
+    cursor: pointer;
+  }
+  
+  .row{
+    &.justify{
+      align-items: center;
+      width: 100%;
+      justify-content: center;
+    }
+    .mr-bottom-remove{
+      margin-bottom: -5px;
+    }
+    .mr-top-remove{
+      margin-top: -5px;
+    }
+    .mr-left-remove{
+      margin-left: -15px;
+    }
+    .mr-rigth-remove{
+      margin-right: -15px;
+    }
+  }

@@ -7,6 +7,9 @@ import { HomeComponent } from './components/home/home.component';
 import { HsnCodeAddComponent } from './components/hsn-code-add/hsn-code-add.component';
 import { HsnCodeListComponent } from './components/hsn-code-list/hsn-code-list.component';
 import { SalesComponent } from './components/sales/sales.component';
+import { TransporterAddComponent } from './components/transporter/transporter-add/transporter-add.component';
+import { TransporterListComponent } from './components/transporter/transporter-list/transporter-list.component';
+import { TransporterUpdateComponent } from './components/transporter/transporter-update/transporter-update.component';
 import { VendorAddComponent } from './components/vendor/vendor-add/vendor-add.component';
 import { VendorListComponent } from './components/vendor/vendor-list/vendor-list.component';
 import { VendorUpdateComponent } from './components/vendor/vendor-update/vendor-update.component';
@@ -45,12 +48,20 @@ const routes: Routes = [
     component:VendorUpdateComponent
   },
   {
-    path:"hsncode",
-    component: HsnCodeListComponent
+    path:"transpoter",
+    component:TransporterListComponent
   },
   {
-    path:"addhsncode",
-    component: HsnCodeAddComponent
+    path:"addtranspoter",
+    component:TransporterAddComponent
+  },
+  {
+    path:"updatetranspoter/:transpoterId",
+    component:TransporterUpdateComponent
+  },
+  {
+    path:"hsncode",
+    component: HsnCodeListComponent
   },
   {
     path:'sales',

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"commonpkg/middlewares"
 	"transportor-service/common"
 	"transportor-service/controller"
 
@@ -8,22 +9,28 @@ import (
 )
 
 func InitRoutes(engine *gin.Engine) {
-	controller, err := controller.InitTransportorServiceController()
+	controller, err := controller.InitTransporterController()
 	if err != nil {
 		common.WriteLog(1, err.Error())
 		panic(err)
 	}
-	engine.GET("/", func(c *gin.Context) {
-		controller.GetAll(c)
-	})
-	engine.GET("/:id", func(c *gin.Context) {
-		controller.Get(c)
-	})
+	engine.Use(middlewares.CORSMiddleware(), middlewares.ValidateTokenMiddleware())
+
 	engine.POST("/", func(c *gin.Context) {
 		controller.Add(c)
 	})
-	engine.POST("/addmultiple", func(c *gin.Context) {
-		controller.AddMultiple(c)
+
+	engine.GET("/:transporterId", func(c *gin.Context) {
+		controller.Get(c)
+	})
+	engine.DELETE("/:transporterId", func(c *gin.Context) {
+		controller.Delete(c)
+	})
+	engine.PUT("/:transporterId", func(c *gin.Context) {
+		controller.Put(c)
+	})
+
+	engine.POST("/getall", func(c *gin.Context) {
+		controller.GetAll(c)
 	})
 }
-

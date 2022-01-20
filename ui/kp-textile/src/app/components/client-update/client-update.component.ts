@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AddressType, PaymentTerm, PersonType, Status } from 'src/app/models/client-model';
 import { ClientService } from 'src/app/services/client-service';
 import { ToastrService } from 'ngx-toastr';
+import { coutries } from 'src/app/models/country-city';
 
 @Component({
   selector: 'app-client-update',
@@ -17,7 +18,9 @@ export class ClientUpdateComponent implements OnInit {
   statusValues: string[] = [];
   addressTypeValues: string[] = [];
   personTypeValues: string[] = [];
-
+  countries = coutries
+  countriesKey: string[] = []
+  
   private getContactInfoFormGroup(): FormGroup {
     return this.fb.group({
       email: new FormControl('', [Validators.email]),
@@ -86,6 +89,8 @@ export class ClientUpdateComponent implements OnInit {
     this.statusValues = Object.values(Status);
     this.addressTypeValues = Object.values(AddressType);
     this.personTypeValues = Object.values(PersonType);
+    this.countriesKey = Object.keys(this.countries)
+
   }
 
   getAddressControl(index: number): { [key: string]: AbstractControl } {
@@ -147,7 +152,7 @@ export class ClientUpdateComponent implements OnInit {
       }
 
       if(response.data.addresses.length>1){
-        for (let index = 1; index < response.data.contactPersons.length; index++){
+        for (let index = 1; index < response.data.addresses.length; index++){
           this.addAddress();
         }
       }

@@ -2,6 +2,7 @@ package controller
 
 import (
 	commonModels "commonpkg/models"
+	"fmt"
 	"net/http"
 
 	"transportor-service/service"
@@ -9,62 +10,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AddRequest struct {
-	Code string 
+var transporterCtr *TransporterController
+
+type TransporterController struct {
+	transporterServiceSvc *service.TransporterService
 }
 
-type AddMultipleRequest struct {
-	Codes []string 
-}
-type GetRequest struct {
-	Id string 
-}
-
-var transportorServiceCtr *TransportorServiceController
-
-type TransportorServiceController struct {
-	transportorServiceSvc *service.TransportorServiceService
-}
-
-func InitTransportorServiceController() (*TransportorServiceController, *commonModels.ErrorDetail) {
-	if transportorServiceCtr == nil {
-		svc, err := service.InitTransportorServiceService()
+func InitTransporterController() (*TransporterController, *commonModels.ErrorDetail) {
+	if transporterCtr == nil {
+		svc, err := service.InitTransporterService()
 		if err != nil {
 			return nil, err
 		}
-		transportorServiceCtr = &TransportorServiceController{
-			transportorServiceSvc: svc,
+		transporterCtr = &TransporterController{
+			transporterServiceSvc: svc,
 		}
 	}
-	return transportorServiceCtr, nil
-}
-func (ctrl *TransportorServiceController) GetAll(context *gin.Context) {
-	data := ctrl.transportorServiceSvc.GetAll()
-	context.JSON(data.StatusCode, data)
+	return transporterCtr, nil
 }
 
-func (ctrl *TransportorServiceController) Get(context *gin.Context) {
-	var getRquest GetRequest
-
-	if err := context.ShouldBindUri(&getRquest); err == nil {
-		data := ctrl.transportorServiceSvc.Get(getRquest.Id)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-	}
-
-}
-
-func (ctrl *TransportorServiceController) Add(context *gin.Context) {
-	var addData AddRequest
-
-	var b []byte
-	context.Request.Body.Read(b)
+func (ctrl *TransporterController) Add(context *gin.Context) {
+	var addData commonModels.AddTransporterRequest
 
 	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.transportorServiceSvc.Add(addData.Code)
+		addData.BranchId = getBranchIdFromContext(context)
+		data := ctrl.transporterServiceSvc.Add(addData)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -73,14 +43,76 @@ func (ctrl *TransportorServiceController) Add(context *gin.Context) {
 	}
 }
 
-func (ctrl *TransportorServiceController) AddMultiple(context *gin.Context) {
-	var addData AddMultipleRequest
-	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.transportorServiceSvc.AddMultiple(addData.Codes)
+func (ctrl *TransporterController) Get(context *gin.Context) {
+	var request commonModels.GetTransporterRequestDto
+
+	if err := context.ShouldBindUri(&request); err == nil {
+		request.BranchId = getBranchIdFromContext(context)
+
+		data := ctrl.transporterServiceSvc.GetTransporter(request)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
 	}
+}
+
+func (ctrl *TransporterController) Delete(context *gin.Context) {
+	var request commonModels.GetTransporterRequestDto
+
+	if err := context.ShouldBindUri(&request); err == nil {
+		request.BranchId = getBranchIdFromContext(context)
+
+		data := ctrl.transporterServiceSvc.DeleteTransporter(request)
+		context.JSON(data.StatusCode, data)
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+}
+func (ctrl *TransporterController) Put(context *gin.Context) {
+	var request commonModels.AddTransporterRequest
+
+	if err := context.ShouldBindJSON(&request); err == nil {
+		if err1 := context.ShouldBindUri(&request); err1 == nil {
+			request.BranchId = getBranchIdFromContext(context)
+
+			data := ctrl.transporterServiceSvc.Put(request)
+			context.JSON(data.StatusCode, data)
+		} else {
+			context.JSON(http.StatusBadRequest, gin.H{
+				"error": err1,
+			})
+		}
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+}
+
+func (ctrl *TransporterController) GetAll(context *gin.Context) {
+	var getAllRequest commonModels.TransporterListRequest
+	if err := context.ShouldBindJSON(&getAllRequest); err == nil {
+		if err1 := context.ShouldBindQuery(&getAllRequest); err1 == nil {
+			getAllRequest.BranchId = getBranchIdFromContext((context))
+			data := ctrl.transporterServiceSvc.GetAll(getAllRequest)
+			context.JSON(data.StatusCode, data)
+		} else {
+			context.JSON(http.StatusBadRequest, gin.H{
+				"error": err1,
+			})
+		}
+	} else {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+	}
+
+}
+
+func getBranchIdFromContext(context *gin.Context) string {
+	return fmt.Sprint(context.Keys[commonModels.ContextKey_BranchId])
 }

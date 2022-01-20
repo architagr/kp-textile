@@ -3,6 +3,7 @@ import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Valida
 import { AddressType, PaymentTerm, PersonType, Status } from 'src/app/models/client-model';
 import { ClientService } from 'src/app/services/client-service';
 import { Router } from '@angular/router';
+import { coutries } from 'src/app/models/country-city';
 @Component({
   selector: 'app-client-add',
   templateUrl: './client-add.component.html',
@@ -15,7 +16,8 @@ export class ClientAddComponent implements OnInit {
   statusValues: string[] = [];
   addressTypeValues: string[] = [];
   personTypeValues: string[] = [];
-
+  countries = coutries
+  countriesKey: string[] = []
   private getContactInfoFormGroup(): FormGroup {
     return this.fb.group({
       email: new FormControl('', [Validators.email]),
@@ -76,6 +78,7 @@ export class ClientAddComponent implements OnInit {
     this.statusValues = Object.values(Status);
     this.addressTypeValues = Object.values(AddressType);
     this.personTypeValues = Object.values(PersonType);
+    this.countriesKey = Object.keys(this.countries)
   }
 
   getAddressControl(index: number): { [key: string]: AbstractControl } {

@@ -12,6 +12,7 @@
     <ul class="nav">
       <li
         routerLinkActive="active"
+        [ngClass]="{'active': addActiveClass(menuItem)}"
         *ngFor="let menuItem of menuItems"
         class="{{ menuItem.class }} nav-item"
       >

@@ -39,6 +39,9 @@ import { VendorListComponent } from './components/vendor/vendor-list/vendor-list
 import { VendorAddComponent } from './components/vendor/vendor-add/vendor-add.component';
 import { VendorUpdateComponent } from './components/vendor/vendor-update/vendor-update.component';
 import { VendorService } from './services/vendor-service';
+import { TransporterListComponent } from './components/transporter/transporter-list/transporter-list.component';
+import { TransporterAddComponent } from './components/transporter/transporter-add/transporter-add.component';
+import { TransporterUpdateComponent } from './components/transporter/transporter-update/transporter-update.component';
 
 @NgModule({
   declarations: [
@@ -59,7 +62,10 @@ import { VendorService } from './services/vendor-service';
     PaginationComponent,
     VendorListComponent,
     VendorAddComponent,
-    VendorUpdateComponent
+    VendorUpdateComponent,
+    TransporterListComponent,
+    TransporterAddComponent,
+    TransporterUpdateComponent
   ],
   imports: [
     BrowserModule,

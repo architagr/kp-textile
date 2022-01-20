@@ -1,0 +1,32 @@
+export const coutries = {
+    India: [
+        "Maharashtra",
+        "Delhi",
+        "Karnataka",
+        "Telangana",
+        "Gujarat",
+        "Tamil Nadu",
+        "West Bengal",
+        "Gujarat",
+        "Rajasthan",
+        "Uttar Pradesh",
+        "Madhya Pradesh",
+        "Andhra Pradesh",
+        "Bihar",
+        "Punjab",
+        "Jharkhand",
+        "Haryana",
+        "Jammu and Kashmir",
+        "Assam",
+        "Odisha",
+        "Kerala",
+        "Tripura",
+        "Chhattisgarh",
+        "Puducherry",
+        "Mizoram",
+        "Manipur",
+        "Andaman and Nicobar Islands UT",
+        "Sikkim",
+        "Goa"
+    ]
+}

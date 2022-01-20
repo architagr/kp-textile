@@ -146,8 +146,7 @@
                                         <div class="form-group">
                                             <label> Remark </label>
                                             <textarea formControlName="remark" class="form-control" cols="80"
-                                                placeholder="Here we can add any remark about the client" rows="4"
-                                                value="Mike"></textarea>
+                                                placeholder="Here we can add any remark about the client" rows="4"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -236,7 +235,7 @@
                                                             [ngClass]="{'error': addClientForm.dirty &&  getAddressControl(i)['country'].errors}"
                                                             class="form-control">
                                                             <option value="">Select Country</option>
-                                                            <option value="India">India</option>
+                                                            <option *ngFor="let country of countriesKey" [value]="country">{{country}}</option>
                                                         </select>
                                                         <div *ngIf="getAddressControl(i)['country'].errors">
                                                             <p class=" text-danger">
@@ -470,7 +469,7 @@
                                                                 [ngClass]="{'error': addClientForm.dirty &&  getContactPersonAddressControl(i)['country'].errors}"
                                                                 formControlName="country" class="form-control">
                                                                 <option value="">Select Country</option>
-                                                                <option value="India">India</option>
+                                                                <option *ngFor="let country of countriesKey" [value]="country">{{country}}</option>
                                                             </select>
                                                             <div
                                                                 *ngIf="getContactPersonAddressControl(i)['country'].errors">

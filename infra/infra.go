@@ -5,6 +5,7 @@ import (
 	common "infra/common"
 	hsncodeinfra "infra/hsn-code-infra"
 	qualityinfra "infra/quality-infra"
+	transporterinfra "infra/transportor-infra"
 	vendorinfra "infra/vendor-infra"
 	"os"
 
@@ -64,7 +65,12 @@ func main() {
 		},
 		CommonStackProps: commonStackProps,
 	})
-
+	transporterinfra.NewTransporterStack(app, "TransporterStack", &transporterinfra.TransporterStackProps{
+		StackProps: awscdk.StackProps{
+			Env: env(),
+		},
+		CommonStackProps: commonStackProps,
+	})
 	app.Synth(nil)
 }
 

@@ -1,8 +1,10 @@
-declare interface RouteInfo {
+export declare interface RouteInfo {
   path: string;
   title: string;
   icon: string;
   class: string;
+  parentPath: string;
+  childRoutes:string[];
   showMenu: boolean
 }
 export const ROUTES: RouteInfo[] = [
@@ -11,6 +13,8 @@ export const ROUTES: RouteInfo[] = [
     title: "Dashboard",
     icon: "icon-chart-pie-36",
     class: "",
+    parentPath:"",
+    childRoutes:[],
     showMenu:true
   },
   {
@@ -18,6 +22,8 @@ export const ROUTES: RouteInfo[] = [
     title: "Client List",
     icon: "icon-bank",
     class: "",
+    parentPath:"",
+    childRoutes:['updateclient','addclient'],
     showMenu:true
   },
   {
@@ -25,6 +31,8 @@ export const ROUTES: RouteInfo[] = [
     title: "Add new Client",
     icon: "icon-bank",
     class: "",
+    parentPath:"client",
+    childRoutes:[],
     showMenu:false
   },
   {
@@ -32,6 +40,8 @@ export const ROUTES: RouteInfo[] = [
     title: "Update Client",
     icon: "icon-bank",
     class: "",
+    parentPath:"client",
+    childRoutes:[],
     showMenu:false
   },
   {
@@ -39,20 +49,26 @@ export const ROUTES: RouteInfo[] = [
     title: "Vendor",
     icon: "icon-bus-front-12",
     class: "",
+    parentPath:"",
+    childRoutes:['addvendor','updatevendor'],
     showMenu:true
   },
   {
     path: "/addvendor",
     title: "Add new vendor",
-    icon: "icon-bank",
+    icon: "icon-bus-front-12",
     class: "",
+    parentPath:"vendor",
+    childRoutes:[],
     showMenu:false
   },
   {
     path: "/updatevendor",
     title: "Update Vendor",
-    icon: "icon-bank",
+    icon: "icon-bus-front-12",
     class: "",
+    parentPath:"vendor",
+    childRoutes:[],
     showMenu:false
   },
   {
@@ -60,13 +76,35 @@ export const ROUTES: RouteInfo[] = [
     title: "Transporters",
     icon: "icon-delivery-fast",
     class: "",
+    parentPath:"",
+    childRoutes:['addtranspoter','updatetranspoter'],
     showMenu:true
+  },
+  {
+    path: "/addtranspoter",
+    title: "Add new Transporter",
+    icon: "icon-delivery-fast",
+    class: "",
+    parentPath:"transpoter",
+    childRoutes:[],
+    showMenu:false
+  },
+  {
+    path: "/updatetranspoter",
+    title: "Update Transporter",
+    icon: "icon-delivery-fast",
+    class: "",
+    parentPath:"transpoter",
+    childRoutes:[],
+    showMenu:false
   },
   {
     path: "/quality",
     title: "Quality",
     icon: "icon-scissors",
     class: "",
+    parentPath:"",
+    childRoutes:[],
     showMenu:true
   },
   {
@@ -74,6 +112,8 @@ export const ROUTES: RouteInfo[] = [
     title: "HSN Code",
     icon: "icon-molecule-40",
     class: "",
+    parentPath:"",
+    childRoutes:[],
     showMenu:true
   },
   {
@@ -81,6 +121,8 @@ export const ROUTES: RouteInfo[] = [
     title: "Purcahse",
     icon: "icon-cart",
     class: "",
+    parentPath:"",
+    childRoutes:[],
     showMenu:true
   },
 
@@ -89,6 +131,8 @@ export const ROUTES: RouteInfo[] = [
     title: "Sales",
     icon: "icon-coins",
     class: "",
+    parentPath:"",
+    childRoutes:[],
     showMenu:true
   }
 ];

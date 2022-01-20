@@ -3,8 +3,8 @@ package common
 import "os"
 
 type Env struct {
-	TableName  string
-	PortNumber string
+	TransporterTableName string
+	PortNumber           string
 }
 
 var EnvValues Env
@@ -12,13 +12,13 @@ var EnvValues Env
 func InitEnv(isLocal string) {
 	if isLocal == "" {
 		EnvValues = Env{
-			TableName:  os.Getenv("TransportorService"),
-			PortNumber: "0",
+			TransporterTableName: os.Getenv("TransporterTable"),
+			PortNumber:           "0",
 		}
 	} else {
 		EnvValues = Env{
-			TableName:  "transportor-service",
-			PortNumber: ":8080",
+			TransporterTableName: "transporter-table",
+			PortNumber:           ":8083",
 		}
 	}
 }

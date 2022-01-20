@@ -10,7 +10,7 @@ var logginObj customLog.ILogger
 
 func InitLogger() {
 	var err error
-	logginObj, err = customLog.Init(1, ":client-service: ", os.Stdout)
+	logginObj, err = customLog.Init(1, ":vendor-service: ", os.Stdout)
 
 	if err != nil {
 		log.Fatal("logger not initilized")
