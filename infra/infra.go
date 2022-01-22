@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	clientinfra "infra/client-infra"
 	common "infra/common"
 	hsncodeinfra "infra/hsn-code-infra"
@@ -10,66 +11,69 @@ import (
 	"os"
 
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
-	constructs "github.com/aws/constructs-go/constructs/v10"
+	apigateway "github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	jsii "github.com/aws/jsii-runtime-go"
 )
 
-type InfraEnv struct {
-	StackNamePrefix string
-}
+const baseDomain = "inventory-management.click"
 
-type InfraStackProps struct {
-	awscdk.StackProps
-}
-
-var customEnv InfraEnv = InfraEnv{
-	StackNamePrefix: "kp-textile",
-}
-
-func NewInfraStack(scope constructs.Construct, id string, props *InfraStackProps) awscdk.Stack {
-	var sprops awscdk.StackProps
-	if props != nil {
-		sprops = props.StackProps
-	}
-	stack := awscdk.NewStack(scope, &id, &sprops)
-
-	return stack
+var infraStackProps = common.InfraStackProps{
+	StackProps: awscdk.StackProps{
+		Env: env(),
+	},
+	InfraEnv: common.InfraEnv{
+		HostedZoneId:    "Z00125422MSTTNZDZ5PRV",
+		CertificateArn:  "arn:aws:acm:ap-south-1:675174225340:certificate/4995bc1a-da1b-42b1-b8d8-504ad0b9826b",
+		StackNamePrefix: "kp-textile",
+		Domains: common.Domain{
+			BaseApi: baseDomain,
+			ClientApiDomain: common.DomainDetails{
+				RecordName: "client-api",
+				Url:        fmt.Sprintf("client-api.%s", baseDomain),
+			},
+			VendorApiDomain: common.DomainDetails{
+				RecordName: "vendor-api",
+				Url:        fmt.Sprintf("vendor-api.%s", baseDomain),
+			},
+			TransporterApiDomain: common.DomainDetails{
+				RecordName: "transporter-api",
+				Url:        fmt.Sprintf("transporter-api.%s", baseDomain),
+			},
+			HsnCodeApiDomain: common.DomainDetails{
+				RecordName: "hsncode-api",
+				Url:        fmt.Sprintf("hsncode-api.%s", baseDomain),
+			},
+			QualityApiDomain: common.DomainDetails{
+				RecordName: "quality-api",
+				Url:        fmt.Sprintf("quality-api.%s", baseDomain),
+			},
+		},
+		CommonStackProps: common.CommonStackProps{
+			IsLocal: os.Getenv("isLocal"),
+			Stage: &apigateway.StageOptions{
+				StageName: jsii.String("Dev"),
+			},
+		},
+	},
 }
 
 func main() {
 	app := awscdk.NewApp(nil)
-	commonStackProps := common.CommonStackProps{
-		IsLocal: os.Getenv("isLocal"),
-	}
+
 	hsncodeinfra.NewHsnCodeStack(app, "HsnCodeStack", &hsncodeinfra.HsnCodeStackProps{
-		StackProps: awscdk.StackProps{
-			Env: env(),
-		},
-		CommonStackProps: commonStackProps,
+		InfraStackProps: infraStackProps,
 	})
 	qualityinfra.NewQualityStack(app, "QualityStack", &qualityinfra.QualityStackProps{
-		StackProps: awscdk.StackProps{
-			Env: env(),
-		},
-		CommonStackProps: commonStackProps,
+		InfraStackProps: infraStackProps,
 	})
 	clientinfra.NewClientStack(app, "ClientStack", &clientinfra.ClientStackProps{
-		StackProps: awscdk.StackProps{
-			Env: env(),
-		},
-		CommonStackProps: commonStackProps,
+		InfraStackProps: infraStackProps,
 	})
 	vendorinfra.NewVendorStack(app, "VendorStack", &vendorinfra.VendorStackProps{
-		StackProps: awscdk.StackProps{
-			Env: env(),
-		},
-		CommonStackProps: commonStackProps,
+		InfraStackProps: infraStackProps,
 	})
 	transporterinfra.NewTransporterStack(app, "TransporterStack", &transporterinfra.TransporterStackProps{
-		StackProps: awscdk.StackProps{
-			Env: env(),
-		},
-		CommonStackProps: commonStackProps,
+		InfraStackProps: infraStackProps,
 	})
 	app.Synth(nil)
 }

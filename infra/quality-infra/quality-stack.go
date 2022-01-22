@@ -12,8 +12,7 @@ import (
 )
 
 type QualityStackProps struct {
-	common.CommonStackProps
-	awscdk.StackProps
+	common.InfraStackProps
 }
 
 func NewQualityStack(scope constructs.Construct, id string, props *QualityStackProps) awscdk.Stack {

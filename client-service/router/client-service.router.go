@@ -15,22 +15,21 @@ func InitRoutes(engine *gin.Engine) {
 		panic(err)
 	}
 	engine.Use(middlewares.CORSMiddleware(), middlewares.ValidateTokenMiddleware())
-
-	engine.POST("/", func(c *gin.Context) {
+	clientGroup := engine.Group("/client")
+	clientGroup.POST("/", func(c *gin.Context) {
 		controller.Add(c)
 	})
 
-	engine.GET("/:clientId", func(c *gin.Context) {
+	clientGroup.GET("/:clientId", func(c *gin.Context) {
 		controller.Get(c)
 	})
-	engine.DELETE("/:clientId", func(c *gin.Context) {
+	clientGroup.DELETE("/:clientId", func(c *gin.Context) {
 		controller.Delete(c)
 	})
-	engine.PUT("/:clientId", func(c *gin.Context) {
+	clientGroup.PUT("/:clientId", func(c *gin.Context) {
 		controller.Put(c)
 	})
-
-	engine.POST("/getall", func(c *gin.Context) {
+	clientGroup.POST("/getall", func(c *gin.Context) {
 		controller.GetAll(c)
 	})
 }

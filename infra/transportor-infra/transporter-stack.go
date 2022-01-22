@@ -12,8 +12,7 @@ import (
 )
 
 type TransporterStackProps struct {
-	common.CommonStackProps
-	awscdk.StackProps
+	common.InfraStackProps
 }
 
 func NewTransporterStack(scope constructs.Construct, id string, props *TransporterStackProps) awscdk.Stack {

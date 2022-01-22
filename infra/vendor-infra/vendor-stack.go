@@ -4,16 +4,18 @@ import (
 	common "infra/common"
 
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
+	apigateway "github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	dynamodb "github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	lambda "github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	route53 "github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
+	route53targets "github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
 	awss3assets "github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
 	constructs "github.com/aws/constructs-go/constructs/v10"
 	jsii "github.com/aws/jsii-runtime-go"
 )
 
 type VendorStackProps struct {
-	common.CommonStackProps
-	awscdk.StackProps
+	common.InfraStackProps
 }
 
 func NewVendorStack(scope constructs.Construct, id string, props *VendorStackProps) awscdk.Stack {
@@ -24,7 +26,7 @@ func NewVendorStack(scope constructs.Construct, id string, props *VendorStackPro
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	vendorTable := buildTable(stack, props)
-	buildLambda(stack, vendorTable)
+	buildLambda(stack, vendorTable, props)
 	return stack
 }
 func buildTable(stack awscdk.Stack, props *VendorStackProps) dynamodb.Table {
@@ -51,13 +53,13 @@ func buildTable(stack awscdk.Stack, props *VendorStackProps) dynamodb.Table {
 		RemovalPolicy: removalPolicy,
 	})
 }
-func buildLambda(stack awscdk.Stack, vendorTable dynamodb.Table) {
+func buildLambda(stack awscdk.Stack, vendorTable dynamodb.Table, props *VendorStackProps) {
 
 	env := make(map[string]*string)
 	env["VendorTable"] = vendorTable.TableName()
 	env["GIN_MODE"] = jsii.String("release")
 
-	function := lambda.NewFunction(stack, jsii.String("vendor-lambda"), &lambda.FunctionProps{
+	vendorFunction := lambda.NewFunction(stack, jsii.String("vendor-lambda"), &lambda.FunctionProps{
 		Environment:  &env,
 		Runtime:      lambda.Runtime_GO_1_X(),
 		Handler:      jsii.String("internal-api"),
@@ -65,5 +67,40 @@ func buildLambda(stack awscdk.Stack, vendorTable dynamodb.Table) {
 		FunctionName: jsii.String("vendor-int-lambda-fn"),
 	})
 
-	vendorTable.GrantFullAccess(function)
+	vendorTable.GrantFullAccess(vendorFunction)
+
+	clientApi := apigateway.NewLambdaRestApi(stack, jsii.String("VendorApi"), &apigateway.LambdaRestApiProps{
+		DeployOptions:             props.Stage,
+		Handler:                   vendorFunction,
+		RestApiName:               jsii.String("VendorRestApi"),
+		Proxy:                     jsii.Bool(false),
+		Deploy:                    jsii.Bool(true),
+		DisableExecuteApiEndpoint: jsii.Bool(false),
+		EndpointTypes:             &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+		DomainName: &apigateway.DomainNameOptions{
+			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
+			DomainName:  jsii.String(props.Domains.VendorApiDomain.Url),
+		},
+	})
+
+	apis := clientApi.Root().AddResource(jsii.String("vendor"), &apigateway.ResourceOptions{})
+	apis.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+
+	api := apis.AddResource(jsii.String("{vendorId}"), &apigateway.ResourceOptions{})
+
+	api.AddMethod(jsii.String("GET"), clientApi.Root().DefaultIntegration(), nil)
+	api.AddMethod(jsii.String("DELETE"), clientApi.Root().DefaultIntegration(), nil)
+	api.AddMethod(jsii.String("PUT"), clientApi.Root().DefaultIntegration(), nil)
+
+	api2 := apis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{})
+	api2.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+
+	hostedZone := common.GetHostedZone(stack, jsii.String("vendorHostedZone"), props.InfraEnv)
+
+	route53.NewARecord(stack, jsii.String("vendorArecord"), &route53.ARecordProps{
+		RecordName: jsii.String(props.Domains.VendorApiDomain.RecordName),
+		Zone:       hostedZone,
+		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(clientApi)),
+	})
+
 }

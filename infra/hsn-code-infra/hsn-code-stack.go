@@ -12,8 +12,7 @@ import (
 )
 
 type HsnCodeStackProps struct {
-	common.CommonStackProps
-	awscdk.StackProps
+	common.InfraStackProps
 }
 
 func NewHsnCodeStack(scope constructs.Construct, id string, props *HsnCodeStackProps) awscdk.Stack {
