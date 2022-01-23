@@ -56,11 +56,8 @@ func (repo *ClientServicePersistance) GetPersonByClientId(request commonModels.G
 	}
 
 	result, err := repo.db.Query(&dynamodb.QueryInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-		KeyConditionExpression:    expr.KeyCondition(),
-		TableName:                 aws.String(repo.clientTableName),
+		KeyConditionExpression: expr.KeyCondition(),
+		TableName:              aws.String(repo.clientTableName),
 	})
 
 	if err != nil {

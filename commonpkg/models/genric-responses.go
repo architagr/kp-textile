@@ -8,11 +8,12 @@ import (
 
 const (
 	// db error codes start from 10--
-	ErrorDbConnection = "KP1001"
-	ErrorNoDataFound  = "KP1002"
-	ErrorInsert       = "KP1003"
-	ErrorUpdate       = "KP1004"
-	ErrorDelete       = "KP1005"
+	ErrorDbConnection  = "KP1001"
+	ErrorNoDataFound   = "KP1002"
+	ErrorInsert        = "KP1003"
+	ErrorUpdate        = "KP1004"
+	ErrorDelete        = "KP1005"
+	ErrorAlreadyExists = "KP1006"
 
 	// request param validation error codes start from 11--
 	ErrorNoRequestData              = "KP1101"

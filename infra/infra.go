@@ -5,6 +5,7 @@ import (
 	clientinfra "infra/client-infra"
 	common "infra/common"
 	hsncodeinfra "infra/hsn-code-infra"
+	iteminfra "infra/item-infra"
 	qualityinfra "infra/quality-infra"
 	transporterinfra "infra/transportor-infra"
 	vendorinfra "infra/vendor-infra"
@@ -73,6 +74,9 @@ func main() {
 		InfraStackProps: infraStackProps,
 	})
 	transporterinfra.NewTransporterStack(app, "TransporterStack", &transporterinfra.TransporterStackProps{
+		InfraStackProps: infraStackProps,
+	})
+	iteminfra.NewItemStack(app, "ItemStack", &iteminfra.ItemStackProps{
 		InfraStackProps: infraStackProps,
 	})
 	app.Synth(nil)
