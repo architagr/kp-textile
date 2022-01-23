@@ -42,7 +42,7 @@ func salesRoutes(engine *gin.Engine) {
 	}
 	salesApiGroup := engine.Group("/sales")
 
-	salesApiGroup.GET("/", func(c *gin.Context) {
+	salesApiGroup.POST("/getall", func(c *gin.Context) {
 		salesControllerObj.GetAllSalesOrders(c)
 	})
 

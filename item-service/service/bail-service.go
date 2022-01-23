@@ -60,7 +60,7 @@ func (svc *BailService) GetBailInfo(request commonModels.BailInfoReuest) commonM
 		}
 	}
 
-	salesDetailes, salesErr := svc.bailRepo.GetSalesBailDetail(request.BranchId, request.BailNo)
+	salesDetailes, salesErr := svc.bailRepo.GetSalesBailDetail(request.BranchId, request.BailNo, "")
 	if salesErr != nil && salesErr.ErrorCode != commonModels.ErrorNoDataFound {
 		return commonModels.BailInfoResponse{
 			CommonResponse: commonModels.CommonResponse{

@@ -104,7 +104,7 @@ func (svc *PurchaseService) GetPurchaseBillDetails(request commonModels.Inventor
 }
 
 func (svc *PurchaseService) UpdatePurchaseBillDetails(request commonModels.InventoryDto) commonModels.InventoryResponse {
-	err, bailstoBeDeleted := validUpsertrequest(request, false)
+	err, bailstoBeDeleted := validPurchaseUpsertrequest(request, false)
 	if err != nil {
 		return commonModels.InventoryResponse{
 			CommonResponse: commonModels.CommonResponse{
@@ -125,7 +125,7 @@ func (svc *PurchaseService) UpdatePurchaseBillDetails(request commonModels.Inven
 }
 
 func (svc *PurchaseService) AddPurchaseBillDetails(request commonModels.InventoryDto) commonModels.InventoryResponse {
-	err, _ := validUpsertrequest(request, true)
+	err, _ := validPurchaseUpsertrequest(request, true)
 	if err != nil {
 		return commonModels.InventoryResponse{
 			CommonResponse: commonModels.CommonResponse{
@@ -217,7 +217,7 @@ func upsertPurchaseBill(request commonModels.InventoryDto, isAdd bool) commonMod
 				},
 			}
 		}
-		_, err = purchaseServiceObj.bailRepo.UpsertPurchaseBailDetail(val)
+		_, err = purchaseServiceObj.bailRepo.UpsertBailDetail(val)
 		if err != nil {
 			return commonModels.InventoryResponse{
 				CommonResponse: commonModels.CommonResponse{
@@ -237,7 +237,7 @@ func upsertPurchaseBill(request commonModels.InventoryDto, isAdd bool) commonMod
 		Data: request,
 	}
 }
-func validUpsertrequest(request commonModels.InventoryDto, isNew bool) (*commonModels.ErrorDetail, []string) {
+func validPurchaseUpsertrequest(request commonModels.InventoryDto, isNew bool) (*commonModels.ErrorDetail, []string) {
 	oldPurchaseBill, err := purchaseServiceObj.purchaseRepo.GetPurchaseBillDetails(commonModels.InventoryFilterDto{
 		BranchId:           request.BranchId,
 		PurchaseBillNumber: request.BillNo,
@@ -246,7 +246,7 @@ func validUpsertrequest(request commonModels.InventoryDto, isNew bool) (*commonM
 	if err != nil && err.ErrorCode != commonModels.ErrorNoDataFound {
 		return &commonModels.ErrorDetail{
 			ErrorCode:    commonModels.ErrorServer,
-			ErrorMessage: fmt.Sprintf("could not add details for purchase bill no %s", request.BillNo),
+			ErrorMessage: fmt.Sprintf("could not add/update details for purchase bill no %s", request.BillNo),
 		}, nil
 	}
 	if isNew && oldPurchaseBill != nil {

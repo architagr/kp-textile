@@ -4,6 +4,7 @@ import (
 	commonModels "commonpkg/models"
 	"fmt"
 	"item-service/common"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -46,7 +47,7 @@ func InitSalesPersistance() (*SalesPersistance, *commonModels.ErrorDetail) {
 	return salesPersistanceObj, nil
 }
 
-func (repo *SalesPersistance) GetAllSalesOrders(request commonModels.InventoryListRequest) ([]commonModels.InventoryDto, *commonModels.ErrorDetail) {
+func (repo *SalesPersistance) GetAllSalesOrders(request commonModels.InventoryListRequest) ([]commonModels.InventoryDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
 	keyCondition := expression.KeyAnd(
 		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
 		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey("")),
@@ -57,36 +58,36 @@ func (repo *SalesPersistance) GetAllSalesOrders(request commonModels.InventoryLi
 	if err != nil {
 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
 		common.WriteLog(1, errMessage)
-		return nil, &commonModels.ErrorDetail{
+		return nil, nil, &commonModels.ErrorDetail{
 			ErrorCode:    commonModels.ErrorServer,
 			ErrorMessage: errMessage,
 		}
 	}
 	result, getInventoryDetailError := getInventoryDetails(expr, request)
 	if getInventoryDetailError != nil {
-		return nil, getInventoryDetailError
+		return nil, nil, getInventoryDetailError
 	}
 
 	request.LastEvalutionKey = result.LastEvaluatedKey
 	inventoryDetails, inventoryListParseErr := parseDbItemsToInventoryList(result.Items)
 	if inventoryListParseErr != nil {
-		return nil, inventoryListParseErr
+		return nil, nil, inventoryListParseErr
 	}
 	for len(inventoryDetails) < int(request.PageSize) && request.LastEvalutionKey != nil {
 		result, getInventoryDetailError = getInventoryDetails(expr, request)
 		if getInventoryDetailError != nil {
-			return nil, getInventoryDetailError
+			return nil, nil, getInventoryDetailError
 		}
 		request.LastEvalutionKey = result.LastEvaluatedKey
 		inventoryDetailsTemp, inventoryListParseErr := parseDbItemsToInventoryList(result.Items)
 		if inventoryListParseErr != nil {
-			return nil, inventoryListParseErr
+			return nil, nil, inventoryListParseErr
 		}
 		inventoryDetails = append(inventoryDetails, inventoryDetailsTemp...)
 
 	}
 
-	return inventoryDetails, nil
+	return inventoryDetails, result.LastEvaluatedKey, nil
 }
 
 func (repo *SalesPersistance) GetTotalSalesOrders(request commonModels.InventoryListRequest) (int64, *commonModels.ErrorDetail) {
@@ -94,7 +95,7 @@ func (repo *SalesPersistance) GetTotalSalesOrders(request commonModels.Inventory
 	proj := expression.NamesList(expression.Name("branchId"))
 	keyCondition := expression.KeyAnd(
 		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey("	")),
+		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey("")),
 	)
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).WithProjection(proj).Build()
@@ -107,6 +108,7 @@ func (repo *SalesPersistance) GetTotalSalesOrders(request commonModels.Inventory
 			ErrorMessage: errMessage,
 		}
 	}
+	request.PageSize = 100
 	result, getInventoryDetailError := getInventoryDetails(expr, request)
 	if getInventoryDetailError != nil {
 		return 0, getInventoryDetailError
@@ -192,7 +194,7 @@ func (repo *SalesPersistance) UpsertSalesOrder(data commonModels.InventoryDto) (
 }
 
 func (repo *SalesPersistance) DeleteSalesBillDetails(branchId, billno string) *commonModels.ErrorDetail {
-	purchanseDetails, getSalesDetailErr := repo.GetSalesBillDetails(commonModels.InventoryFilterDto{
+	salesDetails, getSalesDetailErr := repo.GetSalesBillDetails(commonModels.InventoryFilterDto{
 		BranchId:        branchId,
 		SalesBillNumber: billno,
 	})
@@ -207,7 +209,7 @@ func (repo *SalesPersistance) DeleteSalesBillDetails(branchId, billno string) *c
 				S: aws.String(branchId),
 			},
 			"inventorySortKey": {
-				S: aws.String(purchanseDetails.InventorySortKey),
+				S: aws.String(salesDetails.InventorySortKey),
 			},
 		},
 	})
@@ -217,12 +219,13 @@ func (repo *SalesPersistance) DeleteSalesBillDetails(branchId, billno string) *c
 
 		return &commonModels.ErrorDetail{
 			ErrorCode:    commonModels.ErrorDelete,
-			ErrorMessage: fmt.Sprintf("Error in deleting bill no: %s for branchId: %s, error: %s", billno, branchId, err.Error()),
+			ErrorMessage: fmt.Sprintf("Error in deleting sales bill no: %s for branchId: %s, error: %s", billno, branchId, err.Error()),
 		}
 	}
 
-	purchanseDetails.InventorySortKey = common.GetInventoryDeleteSortKey(billno)
-	_, updateError := repo.UpsertSalesOrder(*purchanseDetails)
+	timeNow := time.Now().UTC().Unix()
+	salesDetails.InventorySortKey = fmt.Sprintf("%s|%s|%d", common.GetInventoryDeleteSortKey(billno), common.SORTKEY_INVENTORY_SALES, timeNow)
+	_, updateError := repo.UpsertSalesOrder(*salesDetails)
 	if updateError != nil {
 		return updateError
 	}

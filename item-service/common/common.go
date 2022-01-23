@@ -41,8 +41,8 @@ func GetBailInfoDeleteSortKey(bailNo string) string {
 func GetBailDetailPurchanseSortKey(quality, bailNo string) string {
 	return fmt.Sprintf("%s|%s|%s", SORTKEY_BAILDETAILS_PURCHASE, quality, bailNo)
 }
-func GetBailDetailSalesSortKey(quality, bailNo string) string {
-	return fmt.Sprintf("%s|%s|%s", SORTKEY_BAILDETAILS_SALES, quality, bailNo)
+func GetBailDetailSalesSortKey(quality, bailNo, salesBillNumber string) string {
+	return fmt.Sprintf("%s|%s|%s|%s", SORTKEY_BAILDETAILS_SALES, quality, bailNo, salesBillNumber)
 }
 func GetBailDetailOutOfStockSortKey(quality, bailNo string) string {
 	return fmt.Sprintf("%s|%s|%s", SORTKEY_BAILDETAILS_OUTOFSTOCK, quality, bailNo)
