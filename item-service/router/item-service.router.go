@@ -26,15 +26,11 @@ func bailInfo(engine *gin.Engine) {
 	bailInfoApiGroup := engine.Group("/bailInfo")
 
 	bailInfoApiGroup.GET("/quality/:quality", func(c *gin.Context) {
-		bailControllerObj.GetBailInfo(c)
+		bailControllerObj.GetBailsByQuantity(c)
 	})
 
 	bailInfoApiGroup.GET("/:bailNo", func(c *gin.Context) {
 		bailControllerObj.GetBailInfo(c)
-	})
-
-	bailInfoApiGroup.GET("/check/:bailNo", func(c *gin.Context) {
-		bailControllerObj.CheckBailNumber(c)
 	})
 }
 

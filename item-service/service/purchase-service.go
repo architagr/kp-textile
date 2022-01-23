@@ -121,7 +121,7 @@ func (svc *PurchaseService) UpdatePurchaseBillDetails(request commonModels.Inven
 		svc.bailRepo.DeleteBailInfo(request.BranchId, val)
 
 	}
-	return upsertPurchaseBill(request)
+	return upsertPurchaseBill(request, false)
 }
 
 func (svc *PurchaseService) AddPurchaseBillDetails(request commonModels.InventoryDto) commonModels.InventoryResponse {
@@ -137,7 +137,7 @@ func (svc *PurchaseService) AddPurchaseBillDetails(request commonModels.Inventor
 			},
 		}
 	}
-	return upsertPurchaseBill(request)
+	return upsertPurchaseBill(request, true)
 }
 
 func (svc *PurchaseService) DeletePurchaseBillDetails(request commonModels.InventoryFilterDto) commonModels.InventoryResponse {
@@ -168,7 +168,7 @@ func (svc *PurchaseService) DeletePurchaseBillDetails(request commonModels.Inven
 	}
 }
 
-func upsertPurchaseBill(request commonModels.InventoryDto) commonModels.InventoryResponse {
+func upsertPurchaseBill(request commonModels.InventoryDto, isAdd bool) commonModels.InventoryResponse {
 	request.InventorySortKey = common.GetInventoryPurchanseSortKey(request.BillNo)
 	_, err := purchaseServiceObj.purchaseRepo.UpsertPurchaseOrder(request)
 	if err != nil {
@@ -188,6 +188,9 @@ func upsertPurchaseBill(request commonModels.InventoryDto) commonModels.Inventor
 		val.BranchId = request.BranchId
 		val.BillNo = request.BillNo
 		val.PurchaseDate = request.PurchaseDate
+		if isAdd {
+			val.PendingQuantity = val.BilledQuantity
+		}
 		val.SortKey = common.GetBailDetailPurchanseSortKey(val.Quality, val.BailNo)
 		if val.ReceivedQuantity > 0 && val.ReceivedQuantity-val.BilledQuantity > 0 {
 			islongation = true

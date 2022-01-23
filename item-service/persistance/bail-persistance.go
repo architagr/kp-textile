@@ -135,7 +135,57 @@ func (repo *BailPersistance) GetBailInfoDetail(branchId, bailNo string) (*common
 		ErrorMessage: fmt.Sprintf("no bail found for bail number %s", bailNo),
 	}
 }
+func (repo *BailPersistance) GetPurchasedBailDetailByQuanlity(branchId, quality string) ([]commonModels.BailDetailsDto, *commonModels.ErrorDetail) {
+	var lastEvalutionKey map[string]*dynamodb.AttributeValue
+	keyCondition := expression.KeyAnd(
+		expression.Key("branchId").Equal(expression.Value(branchId)),
+		expression.Key("sortKey").BeginsWith(common.GetBailDetailPurchanseSortKey(quality, "")),
+	)
 
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	result, getBailDetailError := getBailDetailsDetails(expr, lastEvalutionKey, 100)
+
+	if getBailDetailError != nil {
+		return nil, getBailDetailError
+	}
+
+	lastEvalutionKey = result.LastEvaluatedKey
+
+	bailInfoDetails, parseListError := parseDbItemsToBailDetailList(result.Items)
+	if parseListError != nil {
+		return nil, parseListError
+	}
+	for len(result.Items) > 0 && result.LastEvaluatedKey != nil {
+		result, getBailDetailError = getBailDetailsDetails(expr, lastEvalutionKey, 100)
+		if getBailDetailError != nil {
+			return nil, getBailDetailError
+		}
+		lastEvalutionKey = result.LastEvaluatedKey
+		bailInfoDetailsTemp, inventoryListParseErr := parseDbItemsToBailDetailList(result.Items)
+		if inventoryListParseErr != nil {
+			return nil, inventoryListParseErr
+		}
+		bailInfoDetails = append(bailInfoDetails, bailInfoDetailsTemp...)
+
+	}
+	if len(bailInfoDetails) == 0 {
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorNoDataFound,
+			ErrorMessage: fmt.Sprintf("no bail found for quality %s", quality),
+		}
+
+	} else {
+		return bailInfoDetails, nil
+	}
+}
 func (repo *BailPersistance) GetPurchasedBailDetail(branchId, bailNo string) (*commonModels.BailDetailsDto, *commonModels.ErrorDetail) {
 	bailInfo, gerBailInfoError := repo.GetBailInfoDetail(branchId, bailNo)
 	if gerBailInfoError != nil {
@@ -157,7 +207,7 @@ func (repo *BailPersistance) GetPurchasedBailDetail(branchId, bailNo string) (*c
 			ErrorMessage: errMessage,
 		}
 	}
-	result, getBailDetailError := getBailDetailsDetails(expr)
+	result, getBailDetailError := getBailDetailsDetails(expr, nil, 0)
 
 	if getBailDetailError != nil {
 		return nil, getBailDetailError
@@ -198,7 +248,7 @@ func (repo *BailPersistance) GetSalesBailDetail(branchId, bailNo string) ([]comm
 			ErrorMessage: errMessage,
 		}
 	}
-	result, getbailDetailError := getBailDetailsDetails(expr)
+	result, getbailDetailError := getBailDetailsDetails(expr, nil, 0)
 	if getbailDetailError != nil {
 		return nil, getbailDetailError
 	}
@@ -209,14 +259,14 @@ func (repo *BailPersistance) GetSalesBailDetail(branchId, bailNo string) ([]comm
 		return nil, inventoryListParseErr
 	}
 	for len(bailDetails) < int(pageSize) && lastEvalutionKey != nil {
-		result, getbailDetailError = getBailDetailsDetails(expr)
+		result, getbailDetailError = getBailDetailsDetails(expr, nil, 0)
 		if getbailDetailError != nil {
 			return nil, getbailDetailError
 		}
 		lastEvalutionKey = result.LastEvaluatedKey
-		bailDetailsTemp, inventoryListParseErr := parseDbItemsToBailDetailList(result.Items)
-		if inventoryListParseErr != nil {
-			return nil, inventoryListParseErr
+		bailDetailsTemp, bailListParseErr := parseDbItemsToBailDetailList(result.Items)
+		if bailListParseErr != nil {
+			return nil, bailListParseErr
 		}
 		bailDetails = append(bailDetails, bailDetailsTemp...)
 	}
@@ -241,7 +291,7 @@ func (repo *BailPersistance) GetPurchasedBailDetailDetailByQuanlity(branchId, qu
 			ErrorMessage: errMessage,
 		}
 	}
-	result, getbailDetailError := getBailDetailsDetails(expr)
+	result, getbailDetailError := getBailDetailsDetails(expr, nil, 0)
 	if getbailDetailError != nil {
 		return nil, getbailDetailError
 	}
@@ -252,7 +302,7 @@ func (repo *BailPersistance) GetPurchasedBailDetailDetailByQuanlity(branchId, qu
 		return nil, inventoryListParseErr
 	}
 	for len(bailDetails) < int(pageSize) && lastEvalutionKey != nil {
-		result, getbailDetailError = getBailDetailsDetails(expr)
+		result, getbailDetailError = getBailDetailsDetails(expr, nil, 0)
 		if getbailDetailError != nil {
 			return nil, getbailDetailError
 		}
@@ -372,14 +422,21 @@ func parseDbItemToBailInfo(item map[string]*dynamodb.AttributeValue) (*commonMod
 	return &bailInfo, nil
 }
 
-func getBailDetailsDetails(expr expression.Expression) (*dynamodb.QueryOutput, *commonModels.ErrorDetail) {
-	result, err := purchansePersistanceObj.db.Query(&dynamodb.QueryInput{
+func getBailDetailsDetails(expr expression.Expression, lastEvalutionKey map[string]*dynamodb.AttributeValue, pageSize int64) (*dynamodb.QueryOutput, *commonModels.ErrorDetail) {
+	var queryInput = dynamodb.QueryInput{
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		FilterExpression:          expr.Filter(),
 		KeyConditionExpression:    expr.KeyCondition(),
+		ExclusiveStartKey:         lastEvalutionKey,
 		TableName:                 aws.String(purchansePersistanceObj.itemTable),
-	})
+	}
+
+	if pageSize > 0 {
+		queryInput.Limit = &pageSize
+	}
+
+	result, err := purchansePersistanceObj.db.Query(&queryInput)
 
 	if err != nil {
 		errMessage := fmt.Sprintf("get bail info for, call failed err: %s", err.Error())

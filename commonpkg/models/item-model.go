@@ -26,10 +26,9 @@ type BailDetailsDto struct {
 }
 
 type BailInfoDto struct {
-	BranchId        string `json:"branchId,omitempty"`
-	BailInfoSortKey string `json:"bailInfoSortKey,omitempty"` /// Info | bailNo | Quality
-	BailNo          string `json:"bailNo,omitempty"`
-
+	BranchId         string `json:"branchId,omitempty"`
+	BailInfoSortKey  string `json:"bailInfoSortKey,omitempty"` /// Info | bailNo | Quality
+	BailNo           string `json:"bailNo,omitempty"`
 	ReceivedQuantity int32  `json:"receivedQuantity,omitempty"`
 	BilledQuantity   int32  `json:"billedQuantity,omitempty"`
 	IsLongation      bool   `json:"isLongation,omitempty"`
@@ -70,4 +69,16 @@ type InventoryListResponse struct {
 type InventoryResponse struct {
 	CommonResponse
 	Data InventoryDto `json:"data,omitempty"`
+}
+
+type BailInfoReuest struct {
+	BranchId string
+	BailNo   string `uri:"bailNo,omitempty"`
+	Quality  string `uri:"quality,omitempty"`
+}
+
+type BailInfoResponse struct {
+	CommonResponse
+	Purchase []BailDetailsDto `json:"purchase,omitempty"`
+	Sales    []BailDetailsDto `json:"sales,omitempty"`
 }
