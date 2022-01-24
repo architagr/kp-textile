@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	jsii "github.com/aws/jsii-runtime-go"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -47,7 +48,43 @@ func InitBailPersistance() (*BailPersistance, *commonModels.ErrorDetail) {
 
 	return bailPersistanceObj, nil
 }
+func (repo *BailPersistance) UpdateBailDetailQuantity(data commonModels.BailDetailsDto) (*commonModels.BailDetailsDto, *commonModels.ErrorDetail) {
+	updateItemInput := dynamodb.UpdateItemInput{
+		TableName: &repo.itemTable,
+		Key: map[string]*dynamodb.AttributeValue{
+			"branchId": {
+				S: aws.String(data.BranchId),
+			},
+			"sortKey": {
+				S: aws.String(data.SortKey),
+			},
+		},
+		UpdateExpression: jsii.String("SET receivedQuantity= :receivedQuantity, billedQuantity= :billedQuantity, pendingQuantity= :pendingQuantity"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":receivedQuantity": {
+				N: jsii.String(fmt.Sprintf("%d", data.ReceivedQuantity)),
+			},
+			":billedQuantity": {
+				N: jsii.String(fmt.Sprintf("%d", data.BilledQuantity)),
+			},
+			":pendingQuantity": {
+				N: jsii.String(fmt.Sprintf("%d", data.PendingQuantity)),
+			},
+		},
+	}
+	_, err := repo.db.UpdateItem(&updateItemInput)
 
+	if err != nil {
+		common.WriteLog(1, err.Error())
+
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorInsert,
+			ErrorMessage: fmt.Sprintf("Error in updating item quantities for bail no %s, branch id %s, error message; %s", data.BailNo, data.BranchId, err.Error()),
+		}
+	}
+	return &data, nil
+
+}
 func (repo *BailPersistance) UpsertBailDetail(data commonModels.BailDetailsDto) (*commonModels.BailDetailsDto, *commonModels.ErrorDetail) {
 	av, err := dynamodbattribute.MarshalMap(data)
 	if err != nil {
@@ -186,6 +223,47 @@ func (repo *BailPersistance) GetPurchasedBailDetailByQuanlity(branchId, quality 
 		return bailInfoDetails, nil
 	}
 }
+
+func (repo *BailPersistance) GetOutofStockBailDetail(branchId, bailNo string) (*commonModels.BailDetailsDto, *commonModels.ErrorDetail) {
+	bailInfo, gerBailInfoError := repo.GetBailInfoDetail(branchId, bailNo)
+	if gerBailInfoError != nil {
+		return nil, gerBailInfoError
+	}
+
+	keyCondition := expression.KeyAnd(
+		expression.Key("branchId").Equal(expression.Value(branchId)),
+		expression.Key("sortKey").BeginsWith(common.GetBailDetailOutOfStockSortKey(bailInfo.Quality, bailInfo.BailNo)),
+	)
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	result, getBailDetailError := getBailDetailsDetails(expr, nil, 0)
+
+	if getBailDetailError != nil {
+		return nil, getBailDetailError
+	}
+
+	if len(result.Items) > 0 {
+		bailInfo, err := parseDbItemToBailDetails(result.Items[0])
+		if err != nil {
+			return nil, err
+		}
+		return bailInfo, nil
+	}
+	return nil, &commonModels.ErrorDetail{
+		ErrorCode:    commonModels.ErrorNoDataFound,
+		ErrorMessage: fmt.Sprintf("no bail found for bail number %s", bailNo),
+	}
+}
+
 func (repo *BailPersistance) GetPurchasedBailDetail(branchId, bailNo string) (*commonModels.BailDetailsDto, *commonModels.ErrorDetail) {
 	bailInfo, gerBailInfoError := repo.GetBailInfoDetail(branchId, bailNo)
 	if gerBailInfoError != nil {
@@ -368,6 +446,72 @@ func (repo *BailPersistance) DeleteBailDetails(branchId, bailno string) *commonM
 	}
 	timeNow := time.Now().UTC().Unix()
 	itemInfo.SortKey = fmt.Sprintf("%s|%d", common.GetBailDetailDeleteSortKey(itemInfo.Quality, itemInfo.BailNo), timeNow)
+	_, updateError := repo.UpsertBailDetail(*itemInfo)
+	if updateError != nil {
+		return updateError
+	}
+
+	return nil
+}
+func (repo *BailPersistance) RegenrateOutofStockBail(data commonModels.BailDetailsDto) *commonModels.ErrorDetail {
+	itemInfo, getBailInfoErr := repo.GetOutofStockBailDetail(data.BranchId, data.BailNo)
+	if getBailInfoErr != nil {
+		return getBailInfoErr
+	}
+	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &repo.itemTable,
+		Key: map[string]*dynamodb.AttributeValue{
+			"branchId": {
+				S: aws.String(data.BranchId),
+			},
+			"sortKey": {
+				S: aws.String(itemInfo.SortKey),
+			},
+		},
+	})
+
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in deleting bail no: %s for branchId: %s, error; %s", data.BailNo, data.BranchId, err.Error()),
+		}
+	}
+	itemInfo.SortKey = common.GetBailDetailPurchanseSortKey(itemInfo.Quality, itemInfo.BailNo)
+	itemInfo.PendingQuantity = data.PendingQuantity
+	_, updateError := repo.UpsertBailDetail(*itemInfo)
+	if updateError != nil {
+		return updateError
+	}
+
+	return nil
+}
+func (repo *BailPersistance) UpdateBailDetailsOutofStock(branchId, bailno string) *commonModels.ErrorDetail {
+	itemInfo, getBailInfoErr := repo.GetPurchasedBailDetail(branchId, bailno)
+	if getBailInfoErr != nil {
+		return getBailInfoErr
+	}
+	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &repo.itemTable,
+		Key: map[string]*dynamodb.AttributeValue{
+			"branchId": {
+				S: aws.String(branchId),
+			},
+			"sortKey": {
+				S: aws.String(itemInfo.SortKey),
+			},
+		},
+	})
+
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in deleting bail no: %s for branchId: %s, error; %s", bailno, branchId, err.Error()),
+		}
+	}
+	itemInfo.SortKey = common.GetBailDetailOutOfStockSortKey(itemInfo.Quality, itemInfo.BailNo)
+	itemInfo.PendingQuantity = 0
 	_, updateError := repo.UpsertBailDetail(*itemInfo)
 	if updateError != nil {
 		return updateError

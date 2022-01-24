@@ -125,6 +125,7 @@ func (svc *SalesService) AddSalesBillDetails(request commonModels.InventoryDto) 
 func (svc *SalesService) UpdateSalesBillDetails(request commonModels.InventoryDto) commonModels.InventoryResponse {
 	err, bailstoBeDeleted := validSalesUpsertrequest(request, false)
 	if err != nil {
+		fmt.Println("update validation ")
 		return commonModels.InventoryResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
@@ -136,6 +137,11 @@ func (svc *SalesService) UpdateSalesBillDetails(request commonModels.InventoryDt
 		}
 	}
 	for _, val := range bailstoBeDeleted {
+		details, _ := svc.bailRepo.GetSalesBailDetail(request.BranchId, val, request.BillNo)
+		if len(details) > 0 {
+			updatePurchaseBailRemainingQuantity(request.BranchId, val, -details[0].BilledQuantity, request.BillNo)
+		}
+
 		svc.bailRepo.DeleteSalesBailDetails(request.BranchId, val, request.BillNo)
 	}
 	return upsertSalesBill(request, false)
@@ -181,51 +187,89 @@ func (svc *SalesService) DeleteSalesBillDetails(request commonModels.InventoryFi
 	}
 
 }
+func updatePurchaseBailRemainingQuantity(branchId, bailNo string, reduceQuantity int32, deleingBailSalesBillNo string) *commonModels.ErrorDetail {
+	purchaseBail, err := salesServiceObj.bailRepo.GetPurchasedBailDetail(branchId, bailNo)
+	if err != nil && err.ErrorCode != commonModels.ErrorNoDataFound {
+		return err
+	}
+	if purchaseBail != nil {
+		purchaseBail.PendingQuantity = purchaseBail.BilledQuantity - reduceQuantity
+
+		if purchaseBail.PendingQuantity <= 0 {
+			err = salesServiceObj.bailRepo.UpdateBailDetailsOutofStock(branchId, bailNo)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = salesServiceObj.bailRepo.UpdateBailDetailQuantity(*purchaseBail)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+
+		outofStockBail, err := salesServiceObj.bailRepo.GetOutofStockBailDetail(branchId, bailNo)
+		if err != nil {
+			return err
+		}
+
+		salesDetailes, _ := salesServiceObj.bailRepo.GetSalesBailDetail(branchId, bailNo, "")
+		var total int32 = 0
+
+		for _, val := range salesDetailes {
+			if len(deleingBailSalesBillNo) == 0 || (len(deleingBailSalesBillNo) > 0 && val.BillNo != deleingBailSalesBillNo) {
+				total = total + val.BilledQuantity
+			}
+		}
+
+		outofStockBail.PendingQuantity = outofStockBail.BilledQuantity - total
+
+		err = salesServiceObj.bailRepo.RegenrateOutofStockBail(*outofStockBail)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func updateRemainingQuantityForBail(branchId string, bailDetails []commonModels.BailDetailsDto) *commonModels.ErrorDetail {
+	for _, val := range bailDetails {
+		salesbails, err := salesServiceObj.bailRepo.GetSalesBailDetail(branchId, val.BailNo, "")
+		if err != nil && err.ErrorCode != commonModels.ErrorNoDataFound {
+			return err
+		}
+
+		var totalSales int32 = 0
+		for _, salesBail := range salesbails {
+			totalSales = totalSales + salesBail.BilledQuantity
+		}
+		err = updatePurchaseBailRemainingQuantity(branchId, val.BailNo, totalSales, "")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func updateRemainingQuantity(branchId, salesBillNo string) *commonModels.ErrorDetail {
 	data, err := salesServiceObj.salesRepo.GetSalesBillDetails(commonModels.InventoryFilterDto{
 		BranchId:        branchId,
 		SalesBillNumber: salesBillNo,
 	})
 
-	if err != nil {
+	if err != nil && err.ErrorCode != commonModels.ErrorNoDataFound {
 		return err
 	}
-
-	for _, val := range data.BailDetails {
-		salesbails, err := salesServiceObj.bailRepo.GetSalesBailDetail(branchId, val.BailNo, salesBillNo)
-		fmt.Printf("sales bails %+v \n", salesbails)
-		if err != nil {
-			return err
-		}
-		var totalSales int32 = 0
-		for _, salesBail := range salesbails {
-			totalSales = totalSales + salesBail.BilledQuantity
-		}
-		purchaseBail, err := salesServiceObj.bailRepo.GetPurchasedBailDetail(branchId, val.BailNo)
-		if err != nil {
-			return err
-		}
-		purchaseBail.PendingQuantity = purchaseBail.BilledQuantity - totalSales
-		if purchaseBail.PendingQuantity <= 0 {
-			purchaseBail.SortKey = common.GetBailDetailOutOfStockSortKey(purchaseBail.Quality, purchaseBail.BailNo)
-			// err = salesServiceObj.bailRepo.DeleteBailDetails(branchId, val.BailNo)
-			fmt.Printf("out of stock purchaseBail %+v,\n", purchaseBail)
-			// if err != nil {
-			// 	return err
-			// }
-		}
-		fmt.Printf("purchaseBail %+v", purchaseBail)
-		err = salesServiceObj.bailRepo.DeleteBailDetails(branchId, val.BailNo)
-		if err != nil {
-			return err
-		}
-
-		_, err = salesServiceObj.bailRepo.UpsertBailDetail(*purchaseBail)
+	if err != nil && err.ErrorCode == commonModels.ErrorNoDataFound {
+		data, err = salesServiceObj.salesRepo.GetDeletedSalesBillDetails(commonModels.InventoryFilterDto{
+			BranchId:        branchId,
+			SalesBillNumber: salesBillNo,
+		})
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+
+	return updateRemainingQuantityForBail(branchId, data.BailDetails)
 }
 func upsertSalesBill(request commonModels.InventoryDto, isAdd bool) commonModels.InventoryResponse {
 	request.InventorySortKey = common.GetInventorySalesSortKey(request.BillNo)
@@ -285,8 +329,8 @@ func upsertSalesBill(request commonModels.InventoryDto, isAdd bool) commonModels
 }
 func validSalesUpsertrequest(request commonModels.InventoryDto, isNew bool) (*commonModels.ErrorDetail, []string) {
 	oldSalesBill, err := salesServiceObj.salesRepo.GetSalesBillDetails(commonModels.InventoryFilterDto{
-		BranchId:           request.BranchId,
-		PurchaseBillNumber: request.BillNo,
+		BranchId:        request.BranchId,
+		SalesBillNumber: request.BillNo,
 	})
 
 	if err != nil && err.ErrorCode != commonModels.ErrorNoDataFound {
@@ -305,14 +349,31 @@ func validSalesUpsertrequest(request commonModels.InventoryDto, isNew bool) (*co
 	errlist := make([]string, 0)
 	for _, val := range request.BailDetails {
 		oldBailInfo, err := salesServiceObj.bailRepo.GetPurchasedBailDetail(request.BranchId, val.BailNo)
-		if err != nil {
+		if err != nil && !isNew && err.ErrorCode != commonModels.ErrorNoDataFound {
 			return &commonModels.ErrorDetail{
 				ErrorCode:    commonModels.ErrorServer,
 				ErrorMessage: fmt.Sprintf("could not add details for sales bill no %s, err: %s", request.BillNo, err.Error()),
 			}, nil
 		}
-		if oldBailInfo.PendingQuantity < val.BilledQuantity {
-			errlist = append(errlist, val.BailNo)
+
+		if !isNew {
+			if oldBailInfo == nil {
+				oldBailInfo, err = salesServiceObj.bailRepo.GetOutofStockBailDetail(request.BranchId, val.BailNo)
+				if err != nil {
+					return &commonModels.ErrorDetail{
+						ErrorCode:    commonModels.ErrorServer,
+						ErrorMessage: fmt.Sprintf("could not add details for sales bill no %s, err: %s", request.BillNo, err.Error()),
+					}, nil
+				}
+			}
+			oldSalesBailInfo, _ := salesServiceObj.bailRepo.GetSalesBailDetail(request.BranchId, val.BailNo, request.BillNo)
+			if len(oldSalesBailInfo) > 0 && oldBailInfo.PendingQuantity < val.BilledQuantity-oldSalesBailInfo[0].BilledQuantity {
+				errlist = append(errlist, val.BailNo)
+			}
+		} else {
+			if oldBailInfo.PendingQuantity < val.BilledQuantity {
+				errlist = append(errlist, val.BailNo)
+			}
 		}
 
 	}

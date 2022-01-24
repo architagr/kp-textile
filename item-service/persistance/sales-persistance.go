@@ -167,6 +167,46 @@ func (repo *SalesPersistance) GetSalesBillDetails(request commonModels.Inventory
 	}
 }
 
+func (repo *SalesPersistance) GetDeletedSalesBillDetails(request commonModels.InventoryFilterDto) (*commonModels.InventoryDto, *commonModels.ErrorDetail) {
+
+	var inventorySortKey = fmt.Sprintf("%s|%s|", common.GetInventoryDeleteSortKey(request.SalesBillNumber), common.SORTKEY_INVENTORY_SALES)
+	keyCondition := expression.KeyAnd(
+		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
+		expression.Key("inventorySortKey").BeginsWith(inventorySortKey),
+	)
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	result, getInventoryDetailError := getInventoryDetails(expr, commonModels.InventoryListRequest{
+		InventoryFilterDto: request,
+	})
+
+	if getInventoryDetailError != nil {
+		return nil, getInventoryDetailError
+	}
+
+	if len(result.Items) > 0 {
+		inventory, err := parseDbItemToInventory(result.Items[0])
+		if err != nil {
+			return nil, err
+		}
+		return inventory, nil
+	}
+
+	return nil, &commonModels.ErrorDetail{
+		ErrorCode:    commonModels.ErrorNoDataFound,
+		ErrorMessage: fmt.Sprintf("No deleted Sales order found by the order no %s", request.SalesBillNumber),
+	}
+}
+
 func (repo *SalesPersistance) UpsertSalesOrder(data commonModels.InventoryDto) (*commonModels.InventoryDto, *commonModels.ErrorDetail) {
 	av, err := dynamodbattribute.MarshalMap(data)
 	if err != nil {
