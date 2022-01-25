@@ -162,6 +162,11 @@ func (svc *SalesService) DeleteSalesBillDetails(request commonModels.InventoryFi
 	}
 
 	for _, val := range data.BailDetails {
+		details, _ := svc.bailRepo.GetSalesBailDetail(request.BranchId, val.BailNo, request.SalesBillNumber)
+		if len(details) > 0 {
+			updatePurchaseBailRemainingQuantity(request.BranchId, val.BailNo, -details[0].BilledQuantity, request.SalesBillNumber)
+		}
+
 		svc.bailRepo.DeleteSalesBailDetails(request.BranchId, val.BailNo, request.SalesBillNumber)
 	}
 	svc.salesRepo.DeleteSalesBillDetails(request.BranchId, request.SalesBillNumber)

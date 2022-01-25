@@ -39,12 +39,13 @@ type InventoryDto struct {
 	BranchId         string           `json:"branchId,omitempty"`
 	InventorySortKey string           `json:"inventorySortKey,omitempty"` /// Inventory | <Purchase or Sales>| Bill No
 	BillNo           string           `json:"billNo,omitempty"`
-	BailDetails      []BailDetailsDto `json:"bailInfo,omitempty"`
+	BailDetails      []BailDetailsDto `json:"bailDetails,omitempty"`
 	PurchaseDate     time.Time        `json:"purchaseDate,omitempty" time_format:"2006-01-02"`
 	SalesDate        time.Time        `json:"salesDate,omitempty" time_format:"unix"`
 	TransporterId    string           `json:"transporterId,omitempty"`
 	LrNo             string           `json:"lrNo,omitempty"`
 	ChallanNo        string           `json:"challanNo,omitempty"`
+	HsnCode          string           `json:"hsnCode,omitempty"`
 }
 
 type InventoryFilterDto struct {

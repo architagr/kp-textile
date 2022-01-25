@@ -60,9 +60,6 @@ func (ctrl *QualityController) Get(context *gin.Context) {
 func (ctrl *QualityController) Add(context *gin.Context) {
 	var addData AddRequest
 
-	var b []byte
-	context.Request.Body.Read(b)
-
 	if err := context.ShouldBindJSON(&addData); err == nil {
 		data := ctrl.qualitySvc.Add(addData.Code)
 		context.JSON(data.StatusCode, data)

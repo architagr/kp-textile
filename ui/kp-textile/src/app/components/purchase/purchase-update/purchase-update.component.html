@@ -1,0 +1,170 @@
+<div class="content">
+    <div class="row">
+        <div class="col-md-12">
+            <app-spinner *ngIf="showSpinnerCount>0"></app-spinner>
+            <form *ngIf="showSpinnerCount<=0" [formGroup]="addPurchaseForm" (submit)="submitData()">
+                <mat-accordion class="example-headers-align" multi>
+
+                    <mat-expansion-panel expanded="true">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                Basic Purchase order details
+
+                            </mat-panel-title>
+                        </mat-expansion-panel-header>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-5 pr-md-1">
+                                        <div class="form-group">
+                                            <label> Bill Number </label>
+                                            <input class="form-control"
+                                                [ngClass]="{'error': addPurchaseForm.dirty && formControls['billNo'].errors}"
+                                                formControlName="billNo" placeholder="Purchase order bill no"
+                                                type="text" />
+                                            <div *ngIf="formControls['billNo'].errors">
+                                                <p class=" text-danger">
+                                                    Bill No is required
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 px-md-1">
+                                        <div class="form-group">
+                                            <label> Hsn Code </label>
+                                            <select
+                                                [ngClass]="{'error': addPurchaseForm.dirty && formControls['hsnCode'].errors}"
+                                                placeholder="hsnCode" class="form-control" formControlName="hsnCode">
+                                                <option value="">Select Hsn Code</option>
+                                                <option *ngFor="let name of hsnCodes" [value]="name.id">{{name.hnsCode}}
+                                                </option>
+                                            </select>
+
+                                            <div *ngIf="formControls['hsnCode'].errors">
+                                                <p class=" text-danger">
+                                                    Hsn Code is required
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 pl-md-1">
+                                        <div class="form-group">
+                                            <label> Purchase Date </label>
+                                            <input class="form-control"
+                                                [ngClass]="{'error': addPurchaseForm.dirty && formControls['purchaseDate'].errors}"
+                                                formControlName="purchaseDate" placeholder="purchaseDate" type="date" />
+                                            <div *ngIf="formControls['purchaseDate'].errors">
+                                                <p class=" text-danger">
+                                                    Purchase Date is required
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </mat-expansion-panel>
+                    <mat-expansion-panel expanded="true">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                Bail Details
+                            </mat-panel-title>
+
+                        </mat-expansion-panel-header>
+                        <mat-panel-description>
+                            <div *ngIf="formControls['bailDetails'].errors">
+                                <p class=" text-danger">
+                                    Atleast 1 bail is required
+                                </p>
+                            </div>
+                        </mat-panel-description>
+                        <div class="card">
+                            <div class=" card-header"><button type="button" (click)="addBail()"
+                                    class="btn btn-icon btn-round align-right"><i
+                                        class="tim-icons icon-simple-add"></i></button></div>
+                            <div class="card-body">
+                                <ng-container formArrayName="bailDetails">
+                                    <ng-container *ngFor="let bails of bailDetails.controls; let i = index">
+                                        <div [formGroupName]="i" class="sub-form">
+                                            <div class="card-subheading">
+                                                <h4>Bail {{i+1}}</h4>
+
+                                                <button type="button" (click)="removeBail(i)"
+                                                    class="btn btn-icon btn-round align-right"><i
+                                                        class="tim-icons icon-trash-simple"></i></button>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-3 pr-md-1">
+                                                    <div class="form-group">
+                                                        <label> Bail No </label>
+                                                        <input
+                                                            [ngClass]="{'error': addPurchaseForm.dirty &&  getBailControl(i)['bailNo'].errors}"
+                                                            class="form-control" formControlName="bailNo"
+                                                            placeholder="Bail Number" type="text" />
+                                                        <div *ngIf="getBailControl(i)['bailNo'].errors">
+                                                            <p class=" text-danger">
+                                                                Address Label is required
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 pr-md-1">
+                                                    <div class="form-group">
+                                                        <label> Quality </label>
+                                                        <select
+                                                            [ngClass]="{'error': addPurchaseForm.dirty &&  getBailControl(i)['quality'].errors}"
+                                                            placeholder="quality" class="form-control" formControlName="quality">
+                                                            <option value="">Select Quality</option>
+                                                            <option *ngFor="let name of qualities" [value]="name.id">
+                                                                {{name.name}}</option>
+                                                        </select>
+
+                                                        <div *ngIf="getBailControl(i)['quality'].errors">
+                                                            <p class=" text-danger">
+                                                                Quality is required
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 pr-md-1">
+                                                    <div class="form-group">
+                                                        <label> Billed Quantity </label>
+                                                        <input
+                                                            [ngClass]="{'error': addPurchaseForm.dirty &&  getBailControl(i)['billedQuantity'].errors}"
+                                                            class="form-control" formControlName="billedQuantity"
+                                                            placeholder="Billed Quantity" type="number" />
+                                                        <div *ngIf="getBailControl(i)['billedQuantity'].errors">
+                                                            <p class=" text-danger">
+                                                                Billed Quantity is required
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 pr-md-1">
+                                                    <div class="form-group">
+                                                        <label> Received Quantity </label>
+                                                        <input class="form-control" formControlName="receivedQuantity"
+                                                            placeholder="Received Quantity" type="number" />
+
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <mat-divider></mat-divider>
+                                    </ng-container>
+                                </ng-container>
+                                <button class="btn btn-fill btn-primary" [disabled]="!addPurchaseForm.valid"
+                                    type="submit">Save</button>
+                                <button class="btn btn-fill btn-info" [routerLink]="['/purchase']"
+                                    type="button">Cancel</button>
+                            </div>
+                        </div>
+                    </mat-expansion-panel>
+
+                </mat-accordion>
+            </form>
+        </div>
+    </div>
+</div>

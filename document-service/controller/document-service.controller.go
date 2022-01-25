@@ -2,23 +2,12 @@ package controller
 
 import (
 	commonModels "commonpkg/models"
-	"net/http"
+	"time"
 
 	"document-service/service"
 
 	"github.com/gin-gonic/gin"
 )
-
-type AddRequest struct {
-	Code string 
-}
-
-type AddMultipleRequest struct {
-	Codes []string 
-}
-type GetRequest struct {
-	Id string 
-}
 
 var documentServiceCtr *DocumentServiceController
 
@@ -38,49 +27,41 @@ func InitDocumentServiceController() (*DocumentServiceController, *commonModels.
 	}
 	return documentServiceCtr, nil
 }
-func (ctrl *DocumentServiceController) GetAll(context *gin.Context) {
-	data := ctrl.documentServiceSvc.GetAll()
-	context.JSON(data.StatusCode, data)
-}
 
-func (ctrl *DocumentServiceController) Get(context *gin.Context) {
-	var getRquest GetRequest
-
-	if err := context.ShouldBindUri(&getRquest); err == nil {
-		data := ctrl.documentServiceSvc.Get(getRquest.Id)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
+func (ctrl *DocumentServiceController) GetChallan(context *gin.Context) {
+	var data commonModels.InventoryDto = commonModels.InventoryDto{
+		BranchId:         "branchId",
+		InventorySortKey: "Inventory|Deleted|sales01|Inventory|Sales|1643142960",
+		PurchaseDate:     time.Date(2022, 12, 25, 0, 0, 0, 0, nil),
+		SalesDate:        time.Date(2022, 12, 25, 0, 0, 0, 0, nil),
+		BillNo:           "sales01",
+		LrNo:             "123",
+		ChallanNo:        "123",
+		HsnCode:          "sdsdf",
+		BailDetails: []commonModels.BailDetailsDto{
+			{
+				BailNo:         "bail01",
+				BilledQuantity: 1000,
+				Quality:        "4729adb5-7432-11ec-a804-0800275114e0",
+			},
+		},
+		TransporterId: "daac2ed7-7a3f-11ec-bda7-0800275114e0",
 	}
-
-}
-
-func (ctrl *DocumentServiceController) Add(context *gin.Context) {
-	var addData AddRequest
-
-	var b []byte
-	context.Request.Body.Read(b)
-
-	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.documentServiceSvc.Add(addData.Code)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
+	var htmlBody = `<html>
+	<head>
+	<style>
+	@media print
+	{
+	  table { page-break-after:auto }
+	  tr    { page-break-inside:avoid; page-break-after:auto }
+	  td    { page-break-inside:avoid; page-break-after:auto }
+	  thead { display:table-header-group }
+	  tfoot { display:table-footer-group }
 	}
-}
+	</style>
+	</head>
+	
+	<body>`
 
-func (ctrl *DocumentServiceController) AddMultiple(context *gin.Context) {
-	var addData AddMultipleRequest
-	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.documentServiceSvc.AddMultiple(addData.Codes)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-	}
+	htmlBody = htmlBody + `<table>`
 }

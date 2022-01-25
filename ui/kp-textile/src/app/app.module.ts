@@ -27,7 +27,6 @@ import { HsnCodeAddComponent } from './components/hsn-code-add/hsn-code-add.comp
 import { HsnCodeUpdateComponent } from './components/hsn-code-update/hsn-code-update.component';
 import { HsnCodeService } from './services/hsn-code-service';
 import { MatDialogModule } from '@angular/material/dialog';
-import { SalesComponent } from './components/sales/sales.component';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { TokenInterceptor } from './interceptors/token-interceptor';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -42,6 +41,16 @@ import { VendorService } from './services/vendor-service';
 import { TransporterListComponent } from './components/transporter/transporter-list/transporter-list.component';
 import { TransporterAddComponent } from './components/transporter/transporter-add/transporter-add.component';
 import { TransporterUpdateComponent } from './components/transporter/transporter-update/transporter-update.component';
+import { PurchaseListComponent } from './components/purchase/purchase-list/purchase-list.component';
+import { PurchaseAddComponent } from './components/purchase/purchase-add/purchase-add.component';
+import { PurchaseUpdateComponent } from './components/purchase/purchase-update/purchase-update.component';
+import { PurchaseService } from './services/purchase-service';
+import { SalesService } from './services/sales-service';
+import { BailService } from './services/bail-service';
+import { QualityService } from './services/quality-serice';
+import { SalesListComponent } from './components/sales/sales-list/sales-list.component';
+import { SalesAddComponent } from './components/sales/sales-add/sales-add.component';
+import { SalesUpdateComponent } from './components/sales/sales-update/sales-update.component';
 
 @NgModule({
   declarations: [
@@ -56,7 +65,6 @@ import { TransporterUpdateComponent } from './components/transporter/transporter
     HsnCodeListComponent,
     HsnCodeAddComponent,
     HsnCodeUpdateComponent,
-    SalesComponent,
     SpinnerComponent,
     DeleteConfirmationComponent,
     PaginationComponent,
@@ -65,7 +73,13 @@ import { TransporterUpdateComponent } from './components/transporter/transporter
     VendorUpdateComponent,
     TransporterListComponent,
     TransporterAddComponent,
-    TransporterUpdateComponent
+    TransporterUpdateComponent,
+    PurchaseListComponent,
+    PurchaseAddComponent,
+    PurchaseUpdateComponent,
+    SalesListComponent,
+    SalesAddComponent,
+    SalesUpdateComponent
   ],
   imports: [
     BrowserModule,
@@ -86,7 +100,7 @@ import { TransporterUpdateComponent } from './components/transporter/transporter
     MatProgressSpinnerModule,
     ToastrModule.forRoot()
   ],
-  providers: [ClientService, HsnCodeService,VendorService,
+  providers: [ClientService, HsnCodeService,VendorService,PurchaseService, SalesService, BailService,QualityService,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })

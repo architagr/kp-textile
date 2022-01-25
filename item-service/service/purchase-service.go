@@ -137,6 +137,7 @@ func (svc *PurchaseService) AddPurchaseBillDetails(request commonModels.Inventor
 			},
 		}
 	}
+
 	return upsertPurchaseBill(request, true)
 }
 
@@ -259,6 +260,7 @@ func validPurchaseUpsertrequest(request commonModels.InventoryDto, isNew bool) (
 	errlist := make([]string, 0)
 	for _, val := range request.BailDetails {
 		oldBailInfo, err := purchaseServiceObj.bailRepo.GetPurchasedBailDetail(request.BranchId, val.BailNo)
+
 		if isNew && err != nil && err.ErrorCode != commonModels.ErrorNoDataFound {
 			return &commonModels.ErrorDetail{
 				ErrorCode:    commonModels.ErrorServer,

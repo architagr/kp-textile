@@ -122,17 +122,52 @@ export const ROUTES: RouteInfo[] = [
     icon: "icon-cart",
     class: "",
     parentPath:"",
-    childRoutes:[],
+    childRoutes:['addpurchase','updatepurchase'],
     showMenu:true
   },
-
+  {
+    path: "/addpurchase",
+    title: "Add Purcahse",
+    icon: "icon-cart",
+    class: "",
+    parentPath:"purchase",
+    childRoutes:[],
+    showMenu:false
+  },
+  {
+    path: "/updatepurchase",
+    title: "Update Purcahse",
+    icon: "icon-cart",
+    class: "",
+    parentPath:"purchase",
+    childRoutes:[],
+    showMenu:false
+  },
   {
     path: "/sales",
     title: "Sales",
     icon: "icon-coins",
     class: "",
     parentPath:"",
-    childRoutes:[],
+    childRoutes:['updatesales', 'addsales'],
     showMenu:true
+  },
+  {
+    path: "/updatesales",
+    title: "Update Sales Order",
+    icon: "icon-coins",
+    class: "",
+    parentPath:"sales",
+    childRoutes:[],
+    showMenu:false
+  },
+  {
+    path: "/addsales",
+    title: "Add Sales Order",
+    icon: "icon-coins",
+    class: "",
+    parentPath:"sales",
+    childRoutes:[],
+    showMenu:false
   }
 ];

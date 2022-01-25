@@ -29,7 +29,7 @@ export class TransporterListComponent implements OnInit {
   searchText: string = ''
   displayedColumns: string[] = ['CompanyName', 'PaymentTerms', 'Status', 'ContactInfo', 'Action'];
   pageNumber: number = 0;
-  pageSize: number = 1;
+  pageSize: number = 10;
   total: number = 0;
   lastEvalutionKey: any = null
   transporters: TransporterDto[] = []

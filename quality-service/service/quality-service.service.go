@@ -49,9 +49,8 @@ func (service *QualityService) GetAll() commonModels.QualityListResponse {
 				CommonResponse: commonModels.CommonResponse{
 					StatusCode: http.StatusOK,
 				},
-				Start:    0,
-				Total:    len(allCodes),
-				PageSize: len(allCodes),
+				Total:    int64(len(allCodes)),
+				PageSize: int64(len(allCodes)),
 			},
 			Data: allCodes,
 		}
@@ -133,9 +132,8 @@ func (service *QualityService) AddMultiple(codes []string) commonModels.QualityL
 	} else {
 		return commonModels.QualityListResponse{
 			CommonListResponse: commonModels.CommonListResponse{
-				Start:    0,
-				Total:    len(allCodes),
-				PageSize: len(allCodes),
+				Total:    int64(len(allCodes)),
+				PageSize: int64(len(allCodes)),
 				CommonResponse: commonModels.CommonResponse{
 					StatusCode: http.StatusCreated,
 				},
