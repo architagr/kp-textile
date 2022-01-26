@@ -177,7 +177,7 @@ func (ctrl *DocumentServiceController) GetChallan(context *gin.Context) {
 			<div class="header">
 				<div class="top-heading">
 					<div class="left">All Subject to mumbai Juridiction</div>
-					<div class="center">|| Shree Ganeshay Nanaha ||</div>
+					<div class="center">|| Shree Ganeshay Namaha ||</div>
 					<div class="center">Mob: +91 9322 226 411</div>
 				</div>
 				<div class="center-heading">
