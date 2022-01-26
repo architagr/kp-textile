@@ -48,6 +48,7 @@ import { PurchaseService } from './services/purchase-service';
 import { SalesService } from './services/sales-service';
 import { BailService } from './services/bail-service';
 import { QualityService } from './services/quality-serice';
+import { DocumentService } from './services/document-service';
 import { SalesListComponent } from './components/sales/sales-list/sales-list.component';
 import { SalesAddComponent } from './components/sales/sales-add/sales-add.component';
 import { SalesUpdateComponent } from './components/sales/sales-update/sales-update.component';
@@ -100,7 +101,7 @@ import { SalesUpdateComponent } from './components/sales/sales-update/sales-upda
     MatProgressSpinnerModule,
     ToastrModule.forRoot()
   ],
-  providers: [ClientService, HsnCodeService,VendorService,PurchaseService, SalesService, BailService,QualityService,
+  providers: [ClientService, HsnCodeService, VendorService, PurchaseService, SalesService, BailService, QualityService, DocumentService,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })

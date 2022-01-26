@@ -128,7 +128,7 @@ export class SalesListComponent implements OnInit {
         this.sales = data.data
         data.data.forEach(x => {
           x.hsnCode = this.hsnCodes.find(y => y.id === x.hsnCode)!.hnsCode;
-          x.bailDetails.forEach(x=>{
+          x.bailDetails.forEach(x => {
             x.quality = this.qualities.find(y => y.id === x.quality)!.name
           })
         })
@@ -136,7 +136,11 @@ export class SalesListComponent implements OnInit {
         this.lastEvalutionKey = data.lastEvalutionKey
         this.total = data.total;
       },
+      error: (err) => {
+        this.sales = [];
+        this.lastEvalutionKey = null
 
+      }
     });
   }
   addToAllSalesList(data: InventoryDto[]) {

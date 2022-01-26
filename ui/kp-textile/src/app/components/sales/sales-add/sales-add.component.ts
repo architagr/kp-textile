@@ -7,6 +7,7 @@ import { BailDetailsDto, InventoryDto } from 'src/app/models/item-model';
 import { QualityDto } from 'src/app/models/quality-model';
 import { TransporterDto } from 'src/app/models/transporter-model';
 import { BailService } from 'src/app/services/bail-service';
+import { DocumentService } from 'src/app/services/document-service';
 import { HsnCodeService } from 'src/app/services/hsn-code-service';
 import { QualityService } from 'src/app/services/quality-serice';
 import { SalesService } from 'src/app/services/sales-service';
@@ -23,7 +24,7 @@ export class SalesAddComponent implements OnInit {
   hsnCodes: HnsCodeDto[] = [];
   allTransporters: TransporterDto[] = [];
   qualities: QualityDto[] = [];
-  overAllBailInfo:{[propName:string]: BailDetailsDto[]} = {};
+  overAllBailInfo: { [propName: string]: BailDetailsDto[] } = {};
   constructor(
     private router: Router,
     private toastr: ToastrService,
@@ -32,7 +33,8 @@ export class SalesAddComponent implements OnInit {
     private hsnCodeService: HsnCodeService,
     private qualityService: QualityService,
     private transporterService: TransporterService,
-    private bailService: BailService
+    private bailService: BailService,
+    private documentService: DocumentService
   ) {
     this.addPurchaseForm = this.fb.group({
       billNo: new FormControl('', [Validators.required]),
@@ -60,17 +62,17 @@ export class SalesAddComponent implements OnInit {
       }
     });
   }
-  getAllSalableBails(){
+  getAllSalableBails() {
     for (let index = 0; index < this.qualities.length; index++) {
       const element = this.qualities[index];
       this.showSpinnerCount++;
       this.bailService.getBailInfoByQuality(element.id).subscribe({
-        next:(response)=>{
+        next: (response) => {
           this.overAllBailInfo[element.id] = [];
           this.overAllBailInfo[element.id] = response.purchase;
           this.showSpinnerCount--;
         },
-        error:()=>{
+        error: () => {
           this.overAllBailInfo[element.id] = [];
           this.showSpinnerCount--;
         }
@@ -122,7 +124,7 @@ export class SalesAddComponent implements OnInit {
   getBailControl(index: number): { [key: string]: AbstractControl } {
     return (this.bailDetails.controls[index] as FormGroup).controls
   }
-  getBailsDetails(index: number): BailDetailsDto[]{
+  getBailsDetails(index: number): BailDetailsDto[] {
     let qualityId = this.getBailControl(index)['quality'].value
     return this.overAllBailInfo[qualityId]
   }
@@ -132,9 +134,9 @@ export class SalesAddComponent implements OnInit {
     this.getAllTransporter();
   }
   submitData() {
-    let data: InventoryDto = this.addPurchaseForm.value
-    data.salesDate = new Date(data.salesDate)
-    this.salesService.addSales(data).subscribe({
+    let finalData: InventoryDto = this.addPurchaseForm.value
+    finalData.salesDate = new Date(finalData.salesDate)
+    this.salesService.addSales(finalData).subscribe({
       next: (data) => {
         this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Sales order added.', 'Success', {
           disableTimeOut: false,
@@ -144,9 +146,18 @@ export class SalesAddComponent implements OnInit {
           toastClass: "alert alert-success alert-with-icon",
           positionClass: 'toast-top-right'
         });
-        setTimeout(() => {
-          this.router.navigate(['/sales']);
-        }, 2000);
+
+        this.documentService.getChallan(finalData).subscribe({
+          next: (response) => {
+            var w = window.open('about:blank');
+            w!.document.open();
+            w!.document.write(response);
+            this.router.navigate(['/sales']);
+          }
+        })
+        // setTimeout(() => {
+        //   this.router.navigate(['/sales']);
+        // }, 2000);
       },
       error: (err) => {
         let errorMessage = `${err.error.errors[0].errorMessage}`
