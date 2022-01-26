@@ -147,6 +147,12 @@ export class SalesAddComponent implements OnInit {
           positionClass: 'toast-top-right'
         });
 
+        finalData.hsnCode = this.hsnCodes.find(x => x.id === finalData.hsnCode)?.hnsCode ?? ""
+        finalData.transporterId = this.allTransporters.find(x => x.transporterId === finalData.transporterId)?.companyName ?? ""
+        finalData.bailDetails.forEach(element => {
+          element.quality = this.qualities.find(x => x.id === element.quality)?.name ?? ""
+        });
+
         this.documentService.getChallan(finalData).subscribe({
           next: (response) => {
             var w = window.open('about:blank');
