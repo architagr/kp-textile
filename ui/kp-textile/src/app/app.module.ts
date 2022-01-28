@@ -52,6 +52,9 @@ import { DocumentService } from './services/document-service';
 import { SalesListComponent } from './components/sales/sales-list/sales-list.component';
 import { SalesAddComponent } from './components/sales/sales-add/sales-add.component';
 import { SalesUpdateComponent } from './components/sales/sales-update/sales-update.component';
+import { QualityListComponent } from './components/quality/quality-list/quality-list.component';
+import { QualityAddComponent } from './components/quality/quality-add/quality-add.component';
+import { QualityUpdateComponent } from './components/quality/quality-update/quality-update.component';
 
 @NgModule({
   declarations: [
@@ -80,7 +83,10 @@ import { SalesUpdateComponent } from './components/sales/sales-update/sales-upda
     PurchaseUpdateComponent,
     SalesListComponent,
     SalesAddComponent,
-    SalesUpdateComponent
+    SalesUpdateComponent,
+    QualityListComponent,
+    QualityAddComponent,
+    QualityUpdateComponent
   ],
   imports: [
     BrowserModule,

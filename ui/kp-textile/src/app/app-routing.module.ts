@@ -17,6 +17,7 @@ import { PurchaseAddComponent } from './components/purchase/purchase-add/purchas
 import { SalesAddComponent } from './components/sales/sales-add/sales-add.component';
 import { SalesUpdateComponent } from './components/sales/sales-update/sales-update.component';
 import { SalesListComponent } from './components/sales/sales-list/sales-list.component';
+import { QualityListComponent } from './components/quality/quality-list/quality-list.component';
 
 const routes: Routes = [
   {
@@ -90,6 +91,10 @@ const routes: Routes = [
   {
     path: 'addsales',
     component: SalesAddComponent
+  },
+  {
+    path: 'quality',
+    component: QualityListComponent
   },
 ];
 
