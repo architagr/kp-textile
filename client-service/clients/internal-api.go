@@ -41,7 +41,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 
 func main() {
 	timeNow := time.Now()
-	expireTime := timeNow.AddDate(0, 1, 0)
+	expireTime := timeNow.AddDate(0, 2, 0)
 	claims := commonModels.JwtClaims{
 		BranchId: "branchId",
 		Username: "Username",

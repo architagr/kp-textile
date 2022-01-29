@@ -68,36 +68,46 @@ func buildLambda(stack awscdk.Stack, transporterTable dynamodb.Table, props *Tra
 
 	transporterTable.GrantFullAccess(transporterFunction)
 
-	clientApi := apigateway.NewLambdaRestApi(stack, jsii.String("TransporterApi"), &apigateway.LambdaRestApiProps{
-		DeployOptions:             props.Stage,
-		Handler:                   transporterFunction,
-		RestApiName:               jsii.String("TransporterRestApi"),
-		Proxy:                     jsii.Bool(false),
-		Deploy:                    jsii.Bool(true),
-		DisableExecuteApiEndpoint: jsii.Bool(false),
-		EndpointTypes:             &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+	transporterApi := apigateway.NewLambdaRestApi(stack, jsii.String("TransporterApi"), &apigateway.LambdaRestApiProps{
+		DeployOptions:               props.Stage,
+		Handler:                     transporterFunction,
+		RestApiName:                 jsii.String("TransporterRestApi"),
+		Proxy:                       jsii.Bool(false),
+		Deploy:                      jsii.Bool(true),
+		DisableExecuteApiEndpoint:   jsii.Bool(false),
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+		EndpointTypes:               &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
 		DomainName: &apigateway.DomainNameOptions{
 			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
 			DomainName:  jsii.String(props.Domains.TransporterApiDomain.Url),
 		},
 	})
-	apis := clientApi.Root().AddResource(jsii.String("transporter"), &apigateway.ResourceOptions{})
-	apis.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
 
-	api := apis.AddResource(jsii.String("{transporterId}"), &apigateway.ResourceOptions{})
+	integration := apigateway.NewLambdaIntegration(transporterFunction, &apigateway.LambdaIntegrationOptions{})
 
-	api.AddMethod(jsii.String("GET"), clientApi.Root().DefaultIntegration(), nil)
-	api.AddMethod(jsii.String("DELETE"), clientApi.Root().DefaultIntegration(), nil)
-	api.AddMethod(jsii.String("PUT"), clientApi.Root().DefaultIntegration(), nil)
+	apis := transporterApi.Root().AddResource(jsii.String("transporter"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	apis.AddMethod(jsii.String("POST"), integration, nil)
 
-	api2 := apis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{})
-	api2.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+	api := apis.AddResource(jsii.String("{transporterId}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+
+	api.AddMethod(jsii.String("GET"), integration, nil)
+	api.AddMethod(jsii.String("DELETE"), integration, nil)
+	api.AddMethod(jsii.String("PUT"), integration, nil)
+
+	api2 := apis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	api2.AddMethod(jsii.String("POST"), integration, nil)
 
 	hostedZone := common.GetHostedZone(stack, jsii.String("transporterHostedZone"), props.InfraEnv)
 
 	route53.NewARecord(stack, jsii.String("transporterArecord"), &route53.ARecordProps{
 		RecordName: jsii.String(props.Domains.TransporterApiDomain.RecordName),
 		Zone:       hostedZone,
-		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(clientApi)),
+		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(transporterApi)),
 	})
 }

@@ -69,30 +69,38 @@ func buildLambda(stack awscdk.Stack, vendorTable dynamodb.Table, props *VendorSt
 	vendorTable.GrantFullAccess(vendorFunction)
 
 	vendorApi := apigateway.NewLambdaRestApi(stack, jsii.String("VendorApi"), &apigateway.LambdaRestApiProps{
-		DeployOptions:             props.Stage,
-		Handler:                   vendorFunction,
-		RestApiName:               jsii.String("VendorRestApi"),
-		Proxy:                     jsii.Bool(false),
-		Deploy:                    jsii.Bool(true),
-		DisableExecuteApiEndpoint: jsii.Bool(false),
-		EndpointTypes:             &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+		DeployOptions:               props.Stage,
+		Handler:                     vendorFunction,
+		RestApiName:                 jsii.String("VendorRestApi"),
+		Proxy:                       jsii.Bool(false),
+		Deploy:                      jsii.Bool(true),
+		DisableExecuteApiEndpoint:   jsii.Bool(false),
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+		EndpointTypes:               &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
 		DomainName: &apigateway.DomainNameOptions{
 			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
 			DomainName:  jsii.String(props.Domains.VendorApiDomain.Url),
 		},
 	})
+	integration := apigateway.NewLambdaIntegration(vendorFunction, &apigateway.LambdaIntegrationOptions{})
 
-	apis := vendorApi.Root().AddResource(jsii.String("vendor"), &apigateway.ResourceOptions{})
-	apis.AddMethod(jsii.String("POST"), vendorApi.Root().DefaultIntegration(), nil)
+	apis := vendorApi.Root().AddResource(jsii.String("vendor"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	apis.AddMethod(jsii.String("POST"), integration, nil)
 
-	api := apis.AddResource(jsii.String("{vendorId}"), &apigateway.ResourceOptions{})
+	api := apis.AddResource(jsii.String("{vendorId}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
 
-	api.AddMethod(jsii.String("GET"), vendorApi.Root().DefaultIntegration(), nil)
-	api.AddMethod(jsii.String("DELETE"), vendorApi.Root().DefaultIntegration(), nil)
-	api.AddMethod(jsii.String("PUT"), vendorApi.Root().DefaultIntegration(), nil)
+	api.AddMethod(jsii.String("GET"), integration, nil)
+	api.AddMethod(jsii.String("DELETE"), integration, nil)
+	api.AddMethod(jsii.String("PUT"), integration, nil)
 
-	api2 := apis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{})
-	api2.AddMethod(jsii.String("POST"), vendorApi.Root().DefaultIntegration(), nil)
+	api2 := apis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	api2.AddMethod(jsii.String("POST"), integration, nil)
 
 	hostedZone := common.GetHostedZone(stack, jsii.String("vendorHostedZone"), props.InfraEnv)
 

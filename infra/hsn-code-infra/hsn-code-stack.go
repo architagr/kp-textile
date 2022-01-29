@@ -82,15 +82,25 @@ func buildLambda(stack awscdk.Stack, hsnCodeTable dynamodb.Table, props *HsnCode
 			DomainName:  jsii.String(props.Domains.HsnCodeApiDomain.Url),
 		},
 	})
-	apis := hsnCodeApi.Root().AddResource(jsii.String("hsncode"), &apigateway.ResourceOptions{})
-	apis.AddMethod(jsii.String("GET"), hsnCodeApi.Root().DefaultIntegration(), &apigateway.MethodOptions{})
-	apis.AddMethod(jsii.String("POST"), hsnCodeApi.Root().DefaultIntegration(), &apigateway.MethodOptions{})
 
-	api := apis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{})
-	api.AddMethod(jsii.String("GET"), hsnCodeApi.Root().DefaultIntegration(), &apigateway.MethodOptions{})
+	integration := apigateway.NewLambdaIntegration(hsnCodeFunction, &apigateway.LambdaIntegrationOptions{})
 
-	api2 := apis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{})
-	api2.AddMethod(jsii.String("POST"), hsnCodeApi.Root().DefaultIntegration(), &apigateway.MethodOptions{})
+	apis := hsnCodeApi.Root().AddResource(jsii.String("hsncode"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	apis.AddMethod(jsii.String("GET"), integration, &apigateway.MethodOptions{})
+
+	apis.AddMethod(jsii.String("POST"), integration, &apigateway.MethodOptions{})
+
+	api := apis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	api.AddMethod(jsii.String("GET"), integration, &apigateway.MethodOptions{})
+
+	api2 := apis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	api2.AddMethod(jsii.String("POST"), integration, &apigateway.MethodOptions{})
 
 	hostedZone := common.GetHostedZone(stack, jsii.String("hsncodeHostedZone"), props.InfraEnv)
 

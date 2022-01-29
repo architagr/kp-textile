@@ -67,34 +67,44 @@ func buildLambda(stack awscdk.Stack, qualityTable dynamodb.Table, props *Quality
 	})
 
 	qualityTable.GrantFullAccess(qualityFunction)
-	clientApi := apigateway.NewLambdaRestApi(stack, jsii.String("QualityApi"), &apigateway.LambdaRestApiProps{
-		DeployOptions:             props.Stage,
-		Handler:                   qualityFunction,
-		RestApiName:               jsii.String("QualityRestApi"),
-		Proxy:                     jsii.Bool(false),
-		Deploy:                    jsii.Bool(true),
-		DisableExecuteApiEndpoint: jsii.Bool(false),
-		EndpointTypes:             &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+	qualityApi := apigateway.NewLambdaRestApi(stack, jsii.String("QualityApi"), &apigateway.LambdaRestApiProps{
+		DeployOptions:               props.Stage,
+		Handler:                     qualityFunction,
+		RestApiName:                 jsii.String("QualityRestApi"),
+		Proxy:                       jsii.Bool(false),
+		Deploy:                      jsii.Bool(true),
+		DisableExecuteApiEndpoint:   jsii.Bool(false),
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+		EndpointTypes:               &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
 		DomainName: &apigateway.DomainNameOptions{
 			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
 			DomainName:  jsii.String(props.Domains.QualityApiDomain.Url),
 		},
 	})
-	apis := clientApi.Root().AddResource(jsii.String("quality"), &apigateway.ResourceOptions{})
-	apis.AddMethod(jsii.String("GET"), clientApi.Root().DefaultIntegration(), nil)
-	apis.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
 
-	api := apis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{})
-	api.AddMethod(jsii.String("GET"), clientApi.Root().DefaultIntegration(), nil)
+	integration := apigateway.NewLambdaIntegration(qualityFunction, &apigateway.LambdaIntegrationOptions{})
 
-	api2 := apis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{})
-	api2.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+	apis := qualityApi.Root().AddResource(jsii.String("quality"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	apis.AddMethod(jsii.String("GET"), integration, nil)
+	apis.AddMethod(jsii.String("POST"), integration, nil)
+
+	api := apis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	api.AddMethod(jsii.String("GET"), integration, nil)
+
+	api2 := apis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	api2.AddMethod(jsii.String("POST"), integration, nil)
 
 	hostedZone := common.GetHostedZone(stack, jsii.String("qualityHostedZone"), props.InfraEnv)
 
 	route53.NewARecord(stack, jsii.String("qualityArecord"), &route53.ARecordProps{
 		RecordName: jsii.String(props.Domains.QualityApiDomain.RecordName),
 		Zone:       hostedZone,
-		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(clientApi)),
+		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(qualityApi)),
 	})
 }

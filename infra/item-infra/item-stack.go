@@ -106,48 +106,72 @@ func buildLambda(stack awscdk.Stack, itemTable, bailInfoTable, inventoryTable dy
 	inventoryTable.GrantFullAccess(itemFunction)
 
 	itemApi := apigateway.NewLambdaRestApi(stack, jsii.String("ItemApi"), &apigateway.LambdaRestApiProps{
-		DeployOptions:             props.Stage,
-		Handler:                   itemFunction,
-		RestApiName:               jsii.String("ItemRestApi"),
-		Proxy:                     jsii.Bool(false),
-		Deploy:                    jsii.Bool(true),
-		DisableExecuteApiEndpoint: jsii.Bool(false),
-		EndpointTypes:             &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+		DeployOptions:               props.Stage,
+		Handler:                     itemFunction,
+		RestApiName:                 jsii.String("ItemRestApi"),
+		Proxy:                       jsii.Bool(false),
+		Deploy:                      jsii.Bool(true),
+		DisableExecuteApiEndpoint:   jsii.Bool(false),
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+		EndpointTypes:               &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
 		DomainName: &apigateway.DomainNameOptions{
 			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
 			DomainName:  jsii.String(props.Domains.ItemApiDomain.Url),
 		},
 	})
-	bailApis := itemApi.Root().AddResource(jsii.String("bailInfo"), &apigateway.ResourceOptions{})
 
-	bailInfoApi := bailApis.AddResource(jsii.String("{bailNo}"), &apigateway.ResourceOptions{})
-	bailInfoApi.AddMethod(jsii.String("GET"), itemApi.Root().DefaultIntegration(), nil)
+	integration := apigateway.NewLambdaIntegration(itemFunction, &apigateway.LambdaIntegrationOptions{})
 
-	bailInfoQuantityApis := bailApis.AddResource(jsii.String("quality"), &apigateway.ResourceOptions{})
-	bailInfoQuantityApi := bailInfoQuantityApis.AddResource(jsii.String("{quality}"), &apigateway.ResourceOptions{})
-	bailInfoQuantityApi.AddMethod(jsii.String("GET"), itemApi.Root().DefaultIntegration(), nil)
+	bailApis := itemApi.Root().AddResource(jsii.String("bailInfo"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
 
-	salesApis := itemApi.Root().AddResource(jsii.String("sales"), &apigateway.ResourceOptions{})
-	salesApis.AddMethod(jsii.String("POST"), itemApi.Root().DefaultIntegration(), nil)
+	bailInfoApi := bailApis.AddResource(jsii.String("{bailNo}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	bailInfoApi.AddMethod(jsii.String("GET"), integration, nil)
 
-	salesGetAllApi := salesApis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{})
-	salesGetAllApi.AddMethod(jsii.String("POST"), itemApi.Root().DefaultIntegration(), nil)
+	bailInfoQuantityApis := bailApis.AddResource(jsii.String("quality"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	bailInfoQuantityApi := bailInfoQuantityApis.AddResource(jsii.String("{quality}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	bailInfoQuantityApi.AddMethod(jsii.String("GET"), integration, nil)
 
-	salesGetApi := salesApis.AddResource(jsii.String("{salesBillNumber}"), &apigateway.ResourceOptions{})
-	salesGetApi.AddMethod(jsii.String("GET"), itemApi.Root().DefaultIntegration(), nil)
-	salesGetApi.AddMethod(jsii.String("PUT"), itemApi.Root().DefaultIntegration(), nil)
-	salesGetApi.AddMethod(jsii.String("DELETE"), itemApi.Root().DefaultIntegration(), nil)
+	salesApis := itemApi.Root().AddResource(jsii.String("sales"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	salesApis.AddMethod(jsii.String("POST"), integration, nil)
 
-	purchaseGetAllApi := itemApi.Root().AddResource(jsii.String("purchase"), &apigateway.ResourceOptions{})
-	purchaseGetAllApi.AddMethod(jsii.String("POST"), itemApi.Root().DefaultIntegration(), nil)
+	salesGetAllApi := salesApis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	salesGetAllApi.AddMethod(jsii.String("POST"), integration, nil)
 
-	purchaseApis := purchaseGetAllApi.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{})
-	purchaseApis.AddMethod(jsii.String("POST"), itemApi.Root().DefaultIntegration(), nil)
+	salesGetApi := salesApis.AddResource(jsii.String("{salesBillNumber}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	salesGetApi.AddMethod(jsii.String("GET"), integration, nil)
+	salesGetApi.AddMethod(jsii.String("PUT"), integration, nil)
+	salesGetApi.AddMethod(jsii.String("DELETE"), integration, nil)
 
-	purchaseGetApi := purchaseApis.AddResource(jsii.String("{purchaseBillNumber}"), &apigateway.ResourceOptions{})
-	purchaseGetApi.AddMethod(jsii.String("GET"), itemApi.Root().DefaultIntegration(), nil)
-	purchaseGetApi.AddMethod(jsii.String("PUT"), itemApi.Root().DefaultIntegration(), nil)
-	purchaseGetApi.AddMethod(jsii.String("DELETE"), itemApi.Root().DefaultIntegration(), nil)
+	purchaseGetAllApi := itemApi.Root().AddResource(jsii.String("purchase"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	purchaseGetAllApi.AddMethod(jsii.String("POST"), integration, nil)
+
+	purchaseApis := purchaseGetAllApi.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	purchaseApis.AddMethod(jsii.String("POST"), integration, nil)
+
+	purchaseGetApi := purchaseApis.AddResource(jsii.String("{purchaseBillNumber}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	purchaseGetApi.AddMethod(jsii.String("GET"), integration, nil)
+	purchaseGetApi.AddMethod(jsii.String("PUT"), integration, nil)
+	purchaseGetApi.AddMethod(jsii.String("DELETE"), integration, nil)
 
 	hostedZone := common.GetHostedZone(stack, jsii.String("itemHostedZone"), props.InfraEnv)
 

@@ -15,8 +15,8 @@ func InitEnv(isLocal string) {
 	if isLocal == "" {
 		EnvValues = Env{
 			ItemTableName:      os.Getenv("ItemTable"),
-			InventoryTableName: os.Getenv("BailInfoTable"),
-			BailInfoTableName:  os.Getenv("InventoryTable"),
+			BailInfoTableName:  os.Getenv("BailInfoTable"),
+			InventoryTableName: os.Getenv("InventoryTable"),
 			PortNumber:         "0",
 		}
 	} else {

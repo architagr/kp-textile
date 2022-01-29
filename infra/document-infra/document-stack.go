@@ -40,20 +40,25 @@ func buildLambda(stack awscdk.Stack, props *DocumentStackProps) {
 	})
 
 	documentApi := apigateway.NewLambdaRestApi(stack, jsii.String("DocumentApi"), &apigateway.LambdaRestApiProps{
-		DeployOptions:             props.Stage,
-		Handler:                   docuementFunction,
-		RestApiName:               jsii.String("DocumentRestApi"),
-		Proxy:                     jsii.Bool(false),
-		Deploy:                    jsii.Bool(true),
-		DisableExecuteApiEndpoint: jsii.Bool(false),
-		EndpointTypes:             &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+		DeployOptions:               props.Stage,
+		Handler:                     docuementFunction,
+		RestApiName:                 jsii.String("DocumentRestApi"),
+		Proxy:                       jsii.Bool(false),
+		Deploy:                      jsii.Bool(true),
+		DisableExecuteApiEndpoint:   jsii.Bool(false),
+		EndpointTypes:               &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
 		DomainName: &apigateway.DomainNameOptions{
 			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
 			DomainName:  jsii.String(props.Domains.DocumentApiDomain.Url),
 		},
 	})
-	apis := documentApi.Root().AddResource(jsii.String("challan"), &apigateway.ResourceOptions{})
-	apis.AddMethod(jsii.String("POST"), documentApi.Root().DefaultIntegration(), nil)
+	integration := apigateway.NewLambdaIntegration(docuementFunction, &apigateway.LambdaIntegrationOptions{})
+
+	apis := documentApi.Root().AddResource(jsii.String("challan"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	apis.AddMethod(jsii.String("POST"), integration, nil)
 
 	hostedZone := common.GetHostedZone(stack, jsii.String("documentHostedZone"), props.InfraEnv)
 
