@@ -24,8 +24,9 @@ type DomainDetails struct {
 	RecordName, Url string
 }
 type Domain struct {
-	BaseApi                                                                                    string
-	ClientApiDomain, VendorApiDomain, TransporterApiDomain, HsnCodeApiDomain, QualityApiDomain DomainDetails
+	BaseApi                                                                  string
+	ClientApiDomain, VendorApiDomain, TransporterApiDomain, HsnCodeApiDomain DomainDetails
+	QualityApiDomain, ItemApiDomain, DocumentApiDomain                       DomainDetails
 }
 type InfraStackProps struct {
 	awscdk.StackProps
@@ -41,4 +42,27 @@ func GetHostedZone(stack awscdk.Stack, id *string, props InfraEnv) route53.IHost
 		HostedZoneId: jsii.String(props.HostedZoneId),
 		ZoneName:     jsii.String(props.Domains.BaseApi),
 	})
+}
+
+func GetEnv() map[string]*string {
+	env := make(map[string]*string)
+	env["GIN_MODE"] = jsii.String("release")
+
+	return env
+}
+
+func AllowCors() *apigateway.ResourceOptions {
+	return &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: GetCorsPreflightOptions(),
+		DefaultMethodOptions:        &apigateway.MethodOptions{},
+	}
+}
+
+func GetCorsPreflightOptions() *apigateway.CorsOptions {
+	return &apigateway.CorsOptions{
+		AllowOrigins:     apigateway.Cors_ALL_ORIGINS(),
+		AllowMethods:     apigateway.Cors_ALL_METHODS(),
+		AllowHeaders:     jsii.Strings("Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key"),
+		AllowCredentials: jsii.Bool(true),
+	}
 }

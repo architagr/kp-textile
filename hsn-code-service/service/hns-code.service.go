@@ -80,6 +80,8 @@ func (service *HnsCodeService) Get(id string) commonModels.HnsCodeResponse {
 }
 
 func (service *HnsCodeService) Add(code string) commonModels.HnsCodeResponse {
+	fmt.Println("service", code)
+
 	hsnCode, err := service.hnsCodeRepo.Add(code)
 
 	if err != nil {

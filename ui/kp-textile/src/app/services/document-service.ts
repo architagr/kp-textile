@@ -1,14 +1,14 @@
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
-import { InventoryDto, InventoryListRequest, InventoryListResponse, InventoryResponse } from "../models/item-model";
-
+import { InventoryDto } from "../models/item-model";
+import { environment } from "src/environments/environment";
 
 @Injectable({
     providedIn: 'root',
 })
 export class DocumentService {
-    baseUrl: string = "http://localhost:8085/"
+    baseUrl: string = environment.documentBaseUrl
     constructor(
         private httpClient: HttpClient
     ) { }

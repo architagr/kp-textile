@@ -1,1 +1,21 @@
-<p>quality-add works!</p>
+<h1 mat-dialog-title>{{data.id===""? "Add Quality": "Update Quality" }}</h1>
+<form [formGroup]="addQualityForm" (submit)="onNoClick()">
+    <div mat-dialog-content>
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label> Quality name </label>
+                            <input formControlName="name" class="form-control" placeholder="name" type="text" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div mat-dialog-actions>
+        <button class="btn btn-primary" [disabled]="!addQualityForm.valid" type="submit">Save</button>
+        <button class="btn btn-fill btn-info" (click)="onNoClick()" type="button">Cancel</button>
+    </div>
+</form>

@@ -2,13 +2,14 @@ import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
 import { InventoryDto, InventoryListRequest, InventoryListResponse, InventoryResponse } from "../models/item-model";
+import { environment } from "src/environments/environment";
 
 
 @Injectable({
     providedIn: 'root',
 })
 export class SalesService {
-    baseUrl: string = "http://localhost:8084/sales"
+    baseUrl: string = environment.salesBaseUrl;
     constructor(
         private httpClient: HttpClient
     ) { }

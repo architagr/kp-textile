@@ -2,12 +2,13 @@ import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
 import { AddRequest, HnsCodeDto, HnsCodeListResponse, HnsCodeResponse } from "../models/hsn-code-model";
+import { environment } from "src/environments/environment";
 
 @Injectable({
     providedIn: 'root',
 })
 export class HsnCodeService {
-    baseUrl: string = "http://localhost:8081/"
+    baseUrl: string = environment.hsnBaseUrl;
     constructor(
         private httpClient: HttpClient
     ) { }

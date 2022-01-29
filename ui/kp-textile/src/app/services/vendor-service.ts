@@ -3,12 +3,13 @@ import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
 import { CommonResponse } from "../models/genric-model";
 import { AddVendorRequest, AddVendorResponse, VendorListResponse } from "../models/vendor-models";
+import { environment } from "src/environments/environment";
 
 @Injectable({
     providedIn: 'root',
 })
 export class VendorService {
-    baseUrl: string = "http://localhost:8082/"
+    baseUrl: string = environment.vendorBaseUrl;
     constructor(
         private httpClient: HttpClient
     ) { }

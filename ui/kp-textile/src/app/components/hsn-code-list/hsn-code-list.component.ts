@@ -9,7 +9,7 @@ import { HsnCodeAddComponent } from '../hsn-code-add/hsn-code-add.component';
   styleUrls: ['./hsn-code-list.component.scss']
 })
 export class HsnCodeListComponent implements OnInit {
-  displayedColumns: string[] = ['HsnCode', 'Action'];
+  displayedColumns: string[] = ['HsnCode'];
   hsnCodes: HnsCodeDto[] = []
   hsnCodesAll: HnsCodeDto[] = [];
   constructor(
@@ -38,7 +38,7 @@ export class HsnCodeListComponent implements OnInit {
 
   openDialog(hsnCode: HnsCodeDto): void {
     const dialogRef = this.dialog.open(HsnCodeAddComponent, {
-      data: { id: "", hnsCode: "" } as HnsCodeDto,
+      data: hsnCode as HnsCodeDto,
     });
 
     dialogRef.afterClosed().subscribe(result => {

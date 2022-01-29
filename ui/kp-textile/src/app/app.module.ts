@@ -55,6 +55,7 @@ import { SalesUpdateComponent } from './components/sales/sales-update/sales-upda
 import { QualityListComponent } from './components/quality/quality-list/quality-list.component';
 import { QualityAddComponent } from './components/quality/quality-add/quality-add.component';
 import { QualityUpdateComponent } from './components/quality/quality-update/quality-update.component';
+import { BailInfoComponent } from './components/bail-info/bail-info.component';
 
 @NgModule({
   declarations: [
@@ -86,7 +87,8 @@ import { QualityUpdateComponent } from './components/quality/quality-update/qual
     SalesUpdateComponent,
     QualityListComponent,
     QualityAddComponent,
-    QualityUpdateComponent
+    QualityUpdateComponent,
+    BailInfoComponent
   ],
   imports: [
     BrowserModule,

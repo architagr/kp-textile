@@ -17,60 +17,60 @@ export const ROUTES: RouteInfo[] = [
     childRoutes:[],
     showMenu:true
   },
-  {
-    path: "/client",
-    title: "Client List",
-    icon: "icon-bank",
-    class: "",
-    parentPath:"",
-    childRoutes:['updateclient','addclient'],
-    showMenu:true
-  },
-  {
-    path: "/addclient",
-    title: "Add new Client",
-    icon: "icon-bank",
-    class: "",
-    parentPath:"client",
-    childRoutes:[],
-    showMenu:false
-  },
-  {
-    path: "/updateclient",
-    title: "Update Client",
-    icon: "icon-bank",
-    class: "",
-    parentPath:"client",
-    childRoutes:[],
-    showMenu:false
-  },
-  {
-    path: "/vendor",
-    title: "Vendor",
-    icon: "icon-bus-front-12",
-    class: "",
-    parentPath:"",
-    childRoutes:['addvendor','updatevendor'],
-    showMenu:true
-  },
-  {
-    path: "/addvendor",
-    title: "Add new vendor",
-    icon: "icon-bus-front-12",
-    class: "",
-    parentPath:"vendor",
-    childRoutes:[],
-    showMenu:false
-  },
-  {
-    path: "/updatevendor",
-    title: "Update Vendor",
-    icon: "icon-bus-front-12",
-    class: "",
-    parentPath:"vendor",
-    childRoutes:[],
-    showMenu:false
-  },
+  // {
+  //   path: "/client",
+  //   title: "Client List",
+  //   icon: "icon-bank",
+  //   class: "",
+  //   parentPath:"",
+  //   childRoutes:['updateclient','addclient'],
+  //   showMenu:true
+  // },
+  // {
+  //   path: "/addclient",
+  //   title: "Add new Client",
+  //   icon: "icon-bank",
+  //   class: "",
+  //   parentPath:"client",
+  //   childRoutes:[],
+  //   showMenu:false
+  // },
+  // {
+  //   path: "/updateclient",
+  //   title: "Update Client",
+  //   icon: "icon-bank",
+  //   class: "",
+  //   parentPath:"client",
+  //   childRoutes:[],
+  //   showMenu:false
+  // },
+  // {
+  //   path: "/vendor",
+  //   title: "Vendor",
+  //   icon: "icon-bus-front-12",
+  //   class: "",
+  //   parentPath:"",
+  //   childRoutes:['addvendor','updatevendor'],
+  //   showMenu:true
+  // },
+  // {
+  //   path: "/addvendor",
+  //   title: "Add new vendor",
+  //   icon: "icon-bus-front-12",
+  //   class: "",
+  //   parentPath:"vendor",
+  //   childRoutes:[],
+  //   showMenu:false
+  // },
+  // {
+  //   path: "/updatevendor",
+  //   title: "Update Vendor",
+  //   icon: "icon-bus-front-12",
+  //   class: "",
+  //   parentPath:"vendor",
+  //   childRoutes:[],
+  //   showMenu:false
+  // },
   {
     path: "/transpoter",
     title: "Transporters",

@@ -3,12 +3,13 @@ import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
 import { CommonResponse } from "../models/genric-model";
 import { AddTransporterRequest, AddTransporterResponse, TransporterListResponse } from "../models/transporter-model";
+import { environment } from "src/environments/environment";
 
 @Injectable({
     providedIn: 'root',
 })
 export class TransporterService {
-    baseUrl: string = "http://localhost:8083/"
+    baseUrl: string = environment.transporterBaseUrl;
     constructor(
         private httpClient: HttpClient
     ) { }

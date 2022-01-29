@@ -4,8 +4,11 @@ import (
 	common "infra/common"
 
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
+	apigateway "github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	dynamodb "github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	lambda "github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	route53 "github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
+	route53targets "github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
 	awss3assets "github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
 	constructs "github.com/aws/constructs-go/constructs/v10"
 	jsii "github.com/aws/jsii-runtime-go"
@@ -23,7 +26,7 @@ func NewQualityStack(scope constructs.Construct, id string, props *QualityStackP
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	qualityTable := buildTable(stack, props)
-	buildLambda(stack, qualityTable)
+	buildLambda(stack, qualityTable, props)
 	return stack
 }
 func buildTable(stack awscdk.Stack, props *QualityStackProps) dynamodb.Table {
@@ -50,19 +53,48 @@ func buildTable(stack awscdk.Stack, props *QualityStackProps) dynamodb.Table {
 		RemovalPolicy: removalPolicy,
 	})
 }
-func buildLambda(stack awscdk.Stack, qualityTable dynamodb.Table) {
+func buildLambda(stack awscdk.Stack, qualityTable dynamodb.Table, props *QualityStackProps) {
 
-	env := make(map[string]*string)
+	env := common.GetEnv()
 	env["qualityTable"] = qualityTable.TableName()
-	env["GIN_MODE"] = jsii.String("release")
 
-	function := lambda.NewFunction(stack, jsii.String("QualityServiceLambda"), &lambda.FunctionProps{
+	qualityFunction := lambda.NewFunction(stack, jsii.String("QualityServiceLambda"), &lambda.FunctionProps{
 		Environment:  &env,
 		Runtime:      lambda.Runtime_GO_1_X(),
 		Handler:      jsii.String("internal-api"),
 		Code:         lambda.Code_FromAsset(jsii.String("./../quality-service/main.zip"), &awss3assets.AssetOptions{}),
-		FunctionName: jsii.String("quality-service-int-lambda-fn"),
+		FunctionName: jsii.String("quality-service-lambda-fn"),
 	})
 
-	qualityTable.GrantFullAccess(function)
+	qualityTable.GrantFullAccess(qualityFunction)
+	clientApi := apigateway.NewLambdaRestApi(stack, jsii.String("QualityApi"), &apigateway.LambdaRestApiProps{
+		DeployOptions:             props.Stage,
+		Handler:                   qualityFunction,
+		RestApiName:               jsii.String("QualityRestApi"),
+		Proxy:                     jsii.Bool(false),
+		Deploy:                    jsii.Bool(true),
+		DisableExecuteApiEndpoint: jsii.Bool(false),
+		EndpointTypes:             &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+		DomainName: &apigateway.DomainNameOptions{
+			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
+			DomainName:  jsii.String(props.Domains.QualityApiDomain.Url),
+		},
+	})
+	apis := clientApi.Root().AddResource(jsii.String("quality"), &apigateway.ResourceOptions{})
+	apis.AddMethod(jsii.String("GET"), clientApi.Root().DefaultIntegration(), nil)
+	apis.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+
+	api := apis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{})
+	api.AddMethod(jsii.String("GET"), clientApi.Root().DefaultIntegration(), nil)
+
+	api2 := apis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{})
+	api2.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+
+	hostedZone := common.GetHostedZone(stack, jsii.String("qualityHostedZone"), props.InfraEnv)
+
+	route53.NewARecord(stack, jsii.String("qualityArecord"), &route53.ARecordProps{
+		RecordName: jsii.String(props.Domains.QualityApiDomain.RecordName),
+		Zone:       hostedZone,
+		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(clientApi)),
+	})
 }

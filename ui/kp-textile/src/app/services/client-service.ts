@@ -3,12 +3,14 @@ import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
 import { AddClientRequest, AddClientResponse, ClientListResponse } from "../models/client-model";
 import { CommonResponse } from "../models/genric-model";
+import { environment } from "src/environments/environment";
 
 @Injectable({
     providedIn: 'root',
 })
 export class ClientService {
-    baseUrl: string = "http://localhost:8080/"
+    baseUrl: string = environment.clientBaseUrl;
+    
     constructor(
         private httpClient: HttpClient
     ) { }

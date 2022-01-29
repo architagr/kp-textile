@@ -1,0 +1,65 @@
+<h1 mat-dialog-title>{{data.baleName}}</h1>
+<div class="content" mat-dialog-content>
+    <div class="row">
+        <div class="col-md-12">
+            <mat-accordion class="example-headers-align" multi>
+                <mat-expansion-panel expanded="true">
+                    <mat-expansion-panel-header>
+                        <mat-panel-title>
+                            Purchase
+                        </mat-panel-title>
+                    </mat-expansion-panel-header>
+                    <table mat-table [dataSource]="data.info.purchase" multiTemplateDataRows class="table tablesorter"
+                        matSort matSortActive="created" matSortDisableClear matSortDirection="desc">
+                        <ng-container matColumnDef="BillNo">
+                            <th mat-header-cell *matHeaderCellDef>Bill number</th>
+                            <td mat-cell *matCellDef="let client">{{client.billNo}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="Date">
+                            <th mat-header-cell *matHeaderCellDef>Bill Date</th>
+                            <td mat-cell *matCellDef="let client">{{client.purchaseDate | date: 'longDate'}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="BilledQuantity">
+                            <th mat-header-cell *matHeaderCellDef>Billed Quantity</th>
+                            <td mat-cell *matCellDef="let client">{{client.billedQuantity}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="ReceivedQuantity">
+                            <th mat-header-cell *matHeaderCellDef>Received Quantity</th>
+                            <td mat-cell *matCellDef="let client">{{client.receivedQuantity}}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="RemainingQuantity">
+                            <th mat-header-cell *matHeaderCellDef>Pending Quantity</th>
+                            <td mat-cell *matCellDef="let client">{{client.pendingQuantity}}</td>
+                        </ng-container>
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                    </table>
+                </mat-expansion-panel>
+                <mat-expansion-panel expanded="true">
+                    <mat-expansion-panel-header>
+                        <mat-panel-title>
+                            Sales
+                        </mat-panel-title>
+                    </mat-expansion-panel-header>
+                    <table mat-table [dataSource]="data.info.sales" multiTemplateDataRows class="table tablesorter"
+                    matSort matSortActive="created" matSortDisableClear matSortDirection="desc">
+                    <ng-container matColumnDef="BillNo">
+                        <th mat-header-cell *matHeaderCellDef>Bill number</th>
+                        <td mat-cell *matCellDef="let client">{{client.billNo}}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="Date">
+                        <th mat-header-cell *matHeaderCellDef>Bill Date</th>
+                        <td mat-cell *matCellDef="let client">{{client.salesDate | date: 'longDate'}}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="BilledQuantity">
+                        <th mat-header-cell *matHeaderCellDef>Billed Quantity</th>
+                        <td mat-cell *matCellDef="let client">{{client.billedQuantity}}</td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="displayedColumnsSales"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumnsSales;"></tr>
+                </table>
+                </mat-expansion-panel>
+            </mat-accordion>
+        </div>
+    </div>
+</div>

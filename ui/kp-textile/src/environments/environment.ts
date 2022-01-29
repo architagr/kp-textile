@@ -3,7 +3,16 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  clientBaseUrl: "http://localhost:8080/",
+  qualityBaseUrl: "http://localhost:8080/quality/",
+  hsnBaseUrl: "http://localhost:8081/hsncode",
+  vendorBaseUrl: "http://localhost:8082/",
+  transporterBaseUrl: "http://localhost:8083/transporter/",
+  salesBaseUrl: "http://localhost:8084/sales",
+  bailBaseUrl: "http://localhost:8084/bailInfo",
+  purchaseBaseUrl: "http://localhost:8084/purchase",
+  documentBaseUrl: "http://localhost:8085/",
 };
 
 /*

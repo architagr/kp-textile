@@ -55,21 +55,20 @@ func buildTable(stack awscdk.Stack, props *VendorStackProps) dynamodb.Table {
 }
 func buildLambda(stack awscdk.Stack, vendorTable dynamodb.Table, props *VendorStackProps) {
 
-	env := make(map[string]*string)
+	env := common.GetEnv()
 	env["VendorTable"] = vendorTable.TableName()
-	env["GIN_MODE"] = jsii.String("release")
 
 	vendorFunction := lambda.NewFunction(stack, jsii.String("vendor-lambda"), &lambda.FunctionProps{
 		Environment:  &env,
 		Runtime:      lambda.Runtime_GO_1_X(),
 		Handler:      jsii.String("internal-api"),
 		Code:         lambda.Code_FromAsset(jsii.String("./../vendor-service/main.zip"), &awss3assets.AssetOptions{}),
-		FunctionName: jsii.String("vendor-int-lambda-fn"),
+		FunctionName: jsii.String("vendor-lambda-fn"),
 	})
 
 	vendorTable.GrantFullAccess(vendorFunction)
 
-	clientApi := apigateway.NewLambdaRestApi(stack, jsii.String("VendorApi"), &apigateway.LambdaRestApiProps{
+	vendorApi := apigateway.NewLambdaRestApi(stack, jsii.String("VendorApi"), &apigateway.LambdaRestApiProps{
 		DeployOptions:             props.Stage,
 		Handler:                   vendorFunction,
 		RestApiName:               jsii.String("VendorRestApi"),
@@ -83,24 +82,24 @@ func buildLambda(stack awscdk.Stack, vendorTable dynamodb.Table, props *VendorSt
 		},
 	})
 
-	apis := clientApi.Root().AddResource(jsii.String("vendor"), &apigateway.ResourceOptions{})
-	apis.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+	apis := vendorApi.Root().AddResource(jsii.String("vendor"), &apigateway.ResourceOptions{})
+	apis.AddMethod(jsii.String("POST"), vendorApi.Root().DefaultIntegration(), nil)
 
 	api := apis.AddResource(jsii.String("{vendorId}"), &apigateway.ResourceOptions{})
 
-	api.AddMethod(jsii.String("GET"), clientApi.Root().DefaultIntegration(), nil)
-	api.AddMethod(jsii.String("DELETE"), clientApi.Root().DefaultIntegration(), nil)
-	api.AddMethod(jsii.String("PUT"), clientApi.Root().DefaultIntegration(), nil)
+	api.AddMethod(jsii.String("GET"), vendorApi.Root().DefaultIntegration(), nil)
+	api.AddMethod(jsii.String("DELETE"), vendorApi.Root().DefaultIntegration(), nil)
+	api.AddMethod(jsii.String("PUT"), vendorApi.Root().DefaultIntegration(), nil)
 
 	api2 := apis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{})
-	api2.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+	api2.AddMethod(jsii.String("POST"), vendorApi.Root().DefaultIntegration(), nil)
 
 	hostedZone := common.GetHostedZone(stack, jsii.String("vendorHostedZone"), props.InfraEnv)
 
 	route53.NewARecord(stack, jsii.String("vendorArecord"), &route53.ARecordProps{
 		RecordName: jsii.String(props.Domains.VendorApiDomain.RecordName),
 		Zone:       hostedZone,
-		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(clientApi)),
+		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(vendorApi)),
 	})
 
 }

@@ -4,8 +4,11 @@ import (
 	common "infra/common"
 
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
+	apigateway "github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	dynamodb "github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	lambda "github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	route53 "github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
+	route53targets "github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
 	awss3assets "github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
 	constructs "github.com/aws/constructs-go/constructs/v10"
 	jsii "github.com/aws/jsii-runtime-go"
@@ -23,7 +26,7 @@ func NewHsnCodeStack(scope constructs.Construct, id string, props *HsnCodeStackP
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	hsnCodeTable := buildTable(stack, props)
-	buildLambda(stack, hsnCodeTable)
+	buildLambda(stack, hsnCodeTable, props)
 	return stack
 }
 func buildTable(stack awscdk.Stack, props *HsnCodeStackProps) dynamodb.Table {
@@ -50,19 +53,50 @@ func buildTable(stack awscdk.Stack, props *HsnCodeStackProps) dynamodb.Table {
 		RemovalPolicy: removalPolicy,
 	})
 }
-func buildLambda(stack awscdk.Stack, hsnCodeTable dynamodb.Table) {
+func buildLambda(stack awscdk.Stack, hsnCodeTable dynamodb.Table, props *HsnCodeStackProps) {
 
-	env := make(map[string]*string)
+	env := common.GetEnv()
 	env["hsnCodeTable"] = hsnCodeTable.TableName()
-	env["GIN_MODE"] = jsii.String("release")
 
-	function := lambda.NewFunction(stack, jsii.String("hsn-code-lambda"), &lambda.FunctionProps{
+	hsnCodeFunction := lambda.NewFunction(stack, jsii.String("hsn-code-lambda"), &lambda.FunctionProps{
 		Environment:  &env,
 		Runtime:      lambda.Runtime_GO_1_X(),
 		Handler:      jsii.String("internal-api"),
 		Code:         lambda.Code_FromAsset(jsii.String("./../hsn-code-service/main.zip"), &awss3assets.AssetOptions{}),
-		FunctionName: jsii.String("hsn-code-int-lambda-fn"),
+		FunctionName: jsii.String("hsn-code-lambda-fn"),
 	})
 
-	hsnCodeTable.GrantFullAccess(function)
+	hsnCodeTable.GrantFullAccess(hsnCodeFunction)
+
+	hsnCodeApi := apigateway.NewLambdaRestApi(stack, jsii.String("HsnCodeApi"), &apigateway.LambdaRestApiProps{
+		DeployOptions:               props.Stage,
+		Handler:                     hsnCodeFunction,
+		RestApiName:                 jsii.String("HsnCodeRestApi"),
+		Proxy:                       jsii.Bool(false),
+		Deploy:                      jsii.Bool(true),
+		DisableExecuteApiEndpoint:   jsii.Bool(false),
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+		EndpointTypes:               &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+		DomainName: &apigateway.DomainNameOptions{
+			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
+			DomainName:  jsii.String(props.Domains.HsnCodeApiDomain.Url),
+		},
+	})
+	apis := hsnCodeApi.Root().AddResource(jsii.String("hsncode"), &apigateway.ResourceOptions{})
+	apis.AddMethod(jsii.String("GET"), hsnCodeApi.Root().DefaultIntegration(), &apigateway.MethodOptions{})
+	apis.AddMethod(jsii.String("POST"), hsnCodeApi.Root().DefaultIntegration(), &apigateway.MethodOptions{})
+
+	api := apis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{})
+	api.AddMethod(jsii.String("GET"), hsnCodeApi.Root().DefaultIntegration(), &apigateway.MethodOptions{})
+
+	api2 := apis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{})
+	api2.AddMethod(jsii.String("POST"), hsnCodeApi.Root().DefaultIntegration(), &apigateway.MethodOptions{})
+
+	hostedZone := common.GetHostedZone(stack, jsii.String("hsncodeHostedZone"), props.InfraEnv)
+
+	route53.NewARecord(stack, jsii.String("hsncodeArecord"), &route53.ARecordProps{
+		RecordName: jsii.String(props.Domains.HsnCodeApiDomain.RecordName),
+		Zone:       hostedZone,
+		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(hsnCodeApi)),
+	})
 }

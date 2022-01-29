@@ -4,8 +4,11 @@ import (
 	common "infra/common"
 
 	awscdk "github.com/aws/aws-cdk-go/awscdk/v2"
+	apigateway "github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	dynamodb "github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	lambda "github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	route53 "github.com/aws/aws-cdk-go/awscdk/v2/awsroute53"
+	route53targets "github.com/aws/aws-cdk-go/awscdk/v2/awsroute53targets"
 	awss3assets "github.com/aws/aws-cdk-go/awscdk/v2/awss3assets"
 	constructs "github.com/aws/constructs-go/constructs/v10"
 	jsii "github.com/aws/jsii-runtime-go"
@@ -23,7 +26,7 @@ func NewTransporterStack(scope constructs.Construct, id string, props *Transport
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	transporterTable := buildTable(stack, props)
-	buildLambda(stack, transporterTable)
+	buildLambda(stack, transporterTable, props)
 	return stack
 }
 func buildTable(stack awscdk.Stack, props *TransporterStackProps) dynamodb.Table {
@@ -50,19 +53,51 @@ func buildTable(stack awscdk.Stack, props *TransporterStackProps) dynamodb.Table
 		RemovalPolicy: removalPolicy,
 	})
 }
-func buildLambda(stack awscdk.Stack, transporterTable dynamodb.Table) {
+func buildLambda(stack awscdk.Stack, transporterTable dynamodb.Table, props *TransporterStackProps) {
 
-	env := make(map[string]*string)
+	env := common.GetEnv()
 	env["TransporterTable"] = transporterTable.TableName()
-	env["GIN_MODE"] = jsii.String("release")
 
-	function := lambda.NewFunction(stack, jsii.String("transporter-lambda"), &lambda.FunctionProps{
+	transporterFunction := lambda.NewFunction(stack, jsii.String("transporter-lambda"), &lambda.FunctionProps{
 		Environment:  &env,
 		Runtime:      lambda.Runtime_GO_1_X(),
 		Handler:      jsii.String("internal-api"),
 		Code:         lambda.Code_FromAsset(jsii.String("./../transportor-service/main.zip"), &awss3assets.AssetOptions{}),
-		FunctionName: jsii.String("transporter-int-lambda-fn"),
+		FunctionName: jsii.String("transporter-lambda-fn"),
 	})
 
-	transporterTable.GrantFullAccess(function)
+	transporterTable.GrantFullAccess(transporterFunction)
+
+	clientApi := apigateway.NewLambdaRestApi(stack, jsii.String("TransporterApi"), &apigateway.LambdaRestApiProps{
+		DeployOptions:             props.Stage,
+		Handler:                   transporterFunction,
+		RestApiName:               jsii.String("TransporterRestApi"),
+		Proxy:                     jsii.Bool(false),
+		Deploy:                    jsii.Bool(true),
+		DisableExecuteApiEndpoint: jsii.Bool(false),
+		EndpointTypes:             &[]apigateway.EndpointType{apigateway.EndpointType_EDGE},
+		DomainName: &apigateway.DomainNameOptions{
+			Certificate: common.CreateAcmCertificate(stack, &props.InfraEnv),
+			DomainName:  jsii.String(props.Domains.TransporterApiDomain.Url),
+		},
+	})
+	apis := clientApi.Root().AddResource(jsii.String("transporter"), &apigateway.ResourceOptions{})
+	apis.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+
+	api := apis.AddResource(jsii.String("{transporterId}"), &apigateway.ResourceOptions{})
+
+	api.AddMethod(jsii.String("GET"), clientApi.Root().DefaultIntegration(), nil)
+	api.AddMethod(jsii.String("DELETE"), clientApi.Root().DefaultIntegration(), nil)
+	api.AddMethod(jsii.String("PUT"), clientApi.Root().DefaultIntegration(), nil)
+
+	api2 := apis.AddResource(jsii.String("getall"), &apigateway.ResourceOptions{})
+	api2.AddMethod(jsii.String("POST"), clientApi.Root().DefaultIntegration(), nil)
+
+	hostedZone := common.GetHostedZone(stack, jsii.String("transporterHostedZone"), props.InfraEnv)
+
+	route53.NewARecord(stack, jsii.String("transporterArecord"), &route53.ARecordProps{
+		RecordName: jsii.String(props.Domains.TransporterApiDomain.RecordName),
+		Zone:       hostedZone,
+		Target:     route53.RecordTarget_FromAlias(route53targets.NewApiGateway(clientApi)),
+	})
 }

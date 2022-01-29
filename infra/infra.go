@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	clientinfra "infra/client-infra"
+	documentinfra "infra/document-infra"
+
 	common "infra/common"
 	hsncodeinfra "infra/hsn-code-infra"
 	iteminfra "infra/item-infra"
@@ -48,6 +50,14 @@ var infraStackProps = common.InfraStackProps{
 				RecordName: "quality-api",
 				Url:        fmt.Sprintf("quality-api.%s", baseDomain),
 			},
+			ItemApiDomain: common.DomainDetails{
+				RecordName: "item-api",
+				Url:        fmt.Sprintf("item-api.%s", baseDomain),
+			},
+			DocumentApiDomain: common.DomainDetails{
+				RecordName: "doc-api",
+				Url:        fmt.Sprintf("doc-api.%s", baseDomain),
+			},
 		},
 		CommonStackProps: common.CommonStackProps{
 			IsLocal: os.Getenv("isLocal"),
@@ -61,24 +71,29 @@ var infraStackProps = common.InfraStackProps{
 func main() {
 	app := awscdk.NewApp(nil)
 
-	hsncodeinfra.NewHsnCodeStack(app, "HsnCodeStack", &hsncodeinfra.HsnCodeStackProps{
-		InfraStackProps: infraStackProps,
-	})
-	qualityinfra.NewQualityStack(app, "QualityStack", &qualityinfra.QualityStackProps{
-		InfraStackProps: infraStackProps,
-	})
 	clientinfra.NewClientStack(app, "ClientStack", &clientinfra.ClientStackProps{
 		InfraStackProps: infraStackProps,
 	})
-	vendorinfra.NewVendorStack(app, "VendorStack", &vendorinfra.VendorStackProps{
+	documentinfra.NewDocumentStack(app, "DocumentStack", &documentinfra.DocumentStackProps{
 		InfraStackProps: infraStackProps,
 	})
-	transporterinfra.NewTransporterStack(app, "TransporterStack", &transporterinfra.TransporterStackProps{
+	hsncodeinfra.NewHsnCodeStack(app, "HsnCodeStack", &hsncodeinfra.HsnCodeStackProps{
 		InfraStackProps: infraStackProps,
 	})
 	iteminfra.NewItemStack(app, "ItemStack", &iteminfra.ItemStackProps{
 		InfraStackProps: infraStackProps,
 	})
+	qualityinfra.NewQualityStack(app, "QualityStack", &qualityinfra.QualityStackProps{
+		InfraStackProps: infraStackProps,
+	})
+	transporterinfra.NewTransporterStack(app, "TransporterStack", &transporterinfra.TransporterStackProps{
+		InfraStackProps: infraStackProps,
+	})
+
+	vendorinfra.NewVendorStack(app, "VendorStack", &vendorinfra.VendorStackProps{
+		InfraStackProps: infraStackProps,
+	})
+
 	app.Synth(nil)
 }
 

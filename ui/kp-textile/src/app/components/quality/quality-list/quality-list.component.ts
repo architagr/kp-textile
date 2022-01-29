@@ -5,6 +5,9 @@ import { BailService } from 'src/app/services/bail-service';
 import { QualityService } from 'src/app/services/quality-serice';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { catchError, forkJoin, from, map, mergeMap, Observable, of, tap, toArray } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { QualityAddComponent } from '../quality-add/quality-add.component';
+import { BailInfoComponent } from '../../bail-info/bail-info.component';
 
 @Component({
   selector: 'app-quality-list',
@@ -28,19 +31,22 @@ export class QualityListComponent implements OnInit {
   allQuality: QualityListItemDto[] = [];
   qualities: QualityListItemDto[] = [];
   expandedElement: QualityListItemDto | null = null
-  displayedColumns: string[] = ['QualityName', 'RemainingQuantity', 'Action'];
+  displayedColumns: string[] = ['QualityName', 'RemainingQuantity', 'NoBale'];
   pageSize = 10;
   pageNumber = 0;
 
   constructor(
     private qualityService: QualityService,
     private bailService: BailService,
+    public dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
     this.getAllQuality();
   }
   getAllQuality() {
+    this.allQuality = [];
+    this.pageNumber = 0;
     this.showSpinnerCount++;
     this.qualityService.getAllQualities().subscribe({
       next: (data) => {
@@ -56,7 +62,6 @@ export class QualityListComponent implements OnInit {
     this.showSpinnerCount += qualities.length
     from(qualities).pipe(mergeMap((element) =>
       this.bailService.getBailInfoByQuality(element.id).pipe(catchError(error => {
-        console.log(`error: `, { error })
         return of({} as BailInfoResponse)
       }),
       ),
@@ -65,22 +70,22 @@ export class QualityListComponent implements OnInit {
         next: (response) => {
           for (let index = 0; index < qualities.length; index++) {
             const element = qualities[index];
-            const data = response.find(x=>x.statusCode===200 && x.purchase.length>0 && x.purchase[0].quality === element.id);
+            const data = response.find(x => x.statusCode === 200 && x.purchase.length > 0 && x.purchase[0].quality === element.id);
 
             if (data && data!.purchase!.length > 0) {
               let total = 0;
               data!.purchase.forEach(x => total = total + x.pendingQuantity);
-              
+
               this.allQuality.push({ ...element, pendingQuantity: total, bailDetails: data!.purchase } as QualityListItemDto);
             } else {
               this.allQuality.push({ ...element, pendingQuantity: 0, bailDetails: [] } as QualityListItemDto);
             }
           }
-          this.showSpinnerCount -=this.allQuality.length
+          this.showSpinnerCount -= this.allQuality.length
           this.getQualitiesFromLocalList();
         }
       })
-  
+
   }
 
   onPageSizeChange(pageSize: number) {
@@ -110,5 +115,51 @@ export class QualityListComponent implements OnInit {
     for (; startIndex <= endIndex; startIndex++) {
       this.qualities.push(this.allQuality[startIndex])
     }
+  }
+
+  openDialog(quality: QualityDto): void {
+    const dialogRef = this.dialog.open(QualityAddComponent, {
+      data: quality,
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed', result);
+      if (result) {
+        const hsnCode = (result as QualityDto)
+        if (hsnCode.id === "") {
+          this.addQuality(hsnCode);
+        }
+      }
+    });
+  }
+
+  addQuality(quality: QualityDto) {
+    this.qualityService.addQuality(quality).subscribe(response => {
+      console.log(`data added `, response)
+      this.getAllQuality();
+    })
+  }
+
+  showBaleInfo(baleNumber: string) {
+        
+    this.bailService.getBailInfo(baleNumber).subscribe({
+      next: (response) => {
+        this.openBaleInfo(baleNumber, response);
+      },
+      error:(err)=>{
+        console.log(`error in getting bale info `, err)
+      }
+    })
+  }
+
+  openBaleInfo(baleNumber: string, info: BailInfoResponse) {
+    const dialogRef = this.dialog.open(BailInfoComponent, {
+      data: { info: info, baleName: baleNumber },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed', result);
+
+    });
   }
 }

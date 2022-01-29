@@ -3,12 +3,13 @@ import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
 import { AddRequest, HnsCodeDto, HnsCodeListResponse, HnsCodeResponse } from "../models/hsn-code-model";
 import { QualityDto, QualityListResponse, QualityResponse } from "../models/quality-model";
+import { environment } from "src/environments/environment";
 
 @Injectable({
     providedIn: 'root',
 })
 export class QualityService {
-    baseUrl: string = "http://localhost:8080/"
+    baseUrl: string = environment.qualityBaseUrl;
     constructor(
         private httpClient: HttpClient
     ) { }

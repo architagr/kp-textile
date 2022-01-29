@@ -16,7 +16,7 @@ export class HsnCodeAddComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: HnsCodeDto,
   ) {
     this.addHsnCodeForm = new FormGroup({
-      hsnCode:new FormControl(''),
+      hnsCode:new FormControl(''),
       id: new FormControl('')
     })
   }

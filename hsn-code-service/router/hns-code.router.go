@@ -15,16 +15,17 @@ func InitRoutes(engine *gin.Engine) {
 		panic(err)
 	}
 	engine.Use(middlewares.CORSMiddleware(), middlewares.ValidateTokenMiddleware())
-	engine.GET("/", func(c *gin.Context) {
+	hsnCodeGroup := engine.Group("hsncode")
+	hsnCodeGroup.GET("/", func(c *gin.Context) {
 		controller.GetAll(c)
 	})
-	engine.GET("/:id", func(c *gin.Context) {
+	hsnCodeGroup.GET("/:id", func(c *gin.Context) {
 		controller.Get(c)
 	})
-	engine.POST("/", func(c *gin.Context) {
+	hsnCodeGroup.POST("/", func(c *gin.Context) {
 		controller.Add(c)
 	})
-	engine.POST("/addmultiple", func(c *gin.Context) {
+	hsnCodeGroup.POST("/addmultiple", func(c *gin.Context) {
 		controller.AddMultiple(c)
 	})
 }

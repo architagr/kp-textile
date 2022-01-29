@@ -54,16 +54,15 @@ func buildTable(stack awscdk.Stack, props *ClientStackProps) dynamodb.Table {
 }
 func buildLambda(stack awscdk.Stack, clientTable dynamodb.Table, props *ClientStackProps) {
 
-	env := make(map[string]*string)
+	env := common.GetEnv()
 	env["ClientTable"] = clientTable.TableName()
-	env["GIN_MODE"] = jsii.String("release")
 
 	clientFunction := lambda.NewFunction(stack, jsii.String("client-lambda"), &lambda.FunctionProps{
 		Environment:  &env,
 		Runtime:      lambda.Runtime_GO_1_X(),
 		Handler:      jsii.String("internal-api"),
 		Code:         lambda.Code_FromAsset(jsii.String("./../client-service/main.zip"), &awss3assets.AssetOptions{}),
-		FunctionName: jsii.String("client-int-lambda-fn"),
+		FunctionName: jsii.String("client-lambda-fn"),
 	})
 
 	clientTable.GrantFullAccess(clientFunction)
