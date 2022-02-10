@@ -8,31 +8,30 @@ import (
 	"quality-service/persistance"
 )
 
-var QualityServiceObj *QualityService
+var productServiceObj *ProductService
 
-type QualityService struct {
-	qualityRepo *persistance.QualityPersistance
+type ProductService struct {
+	productRepo *persistance.ProductPersistance
 }
 
-func InitQualityService() (*QualityService, *commonModels.ErrorDetail) {
-	if QualityServiceObj == nil {
-		repo, err := persistance.InitQualityPersistance()
+func InitProductService() (*ProductService, *commonModels.ErrorDetail) {
+	if productServiceObj == nil {
+		repo, err := persistance.InitProductPersistance()
 		if err != nil {
 			return nil, err
 		}
-		QualityServiceObj = &QualityService{
-			qualityRepo: repo,
+		productServiceObj = &ProductService{
+			productRepo: repo,
 		}
 	}
-	return QualityServiceObj, nil
+	return productServiceObj, nil
 }
 
-func (service *QualityService) GetAll() commonModels.QualityListResponse {
-	allCodes, err := service.qualityRepo.GetAll()
-
+func (service *ProductService) GetAll() commonModels.ProductListResponse {
+	allProducts, err := service.productRepo.GetAll()
 	if err != nil {
 
-		return commonModels.QualityListResponse{
+		return commonModels.ProductListResponse{
 			CommonListResponse: commonModels.CommonListResponse{
 				CommonResponse: commonModels.CommonResponse{
 					StatusCode:   http.StatusBadRequest,
@@ -44,23 +43,23 @@ func (service *QualityService) GetAll() commonModels.QualityListResponse {
 			},
 		}
 	} else {
-		return commonModels.QualityListResponse{
+		return commonModels.ProductListResponse{
 			CommonListResponse: commonModels.CommonListResponse{
 				CommonResponse: commonModels.CommonResponse{
 					StatusCode: http.StatusOK,
 				},
-				Total:    int64(len(allCodes)),
-				PageSize: int64(len(allCodes)),
+				Total:    int64(len(allProducts)),
+				PageSize: int64(len(allProducts)),
 			},
-			Data: allCodes,
+			Data: allProducts,
 		}
 	}
 }
 
-func (service *QualityService) Get(id string) commonModels.QualityResponse {
-	qualityService, err := service.qualityRepo.Get(id)
+func (service *ProductService) Get(id string) commonModels.ProductResponse {
+	product, err := service.productRepo.Get(id)
 	if err != nil {
-		return commonModels.QualityResponse{
+		return commonModels.ProductResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
 				ErrorMessage: fmt.Sprintf("Could not get Quality for id: %s", id),
@@ -70,45 +69,45 @@ func (service *QualityService) Get(id string) commonModels.QualityResponse {
 			},
 		}
 	} else {
-		return commonModels.QualityResponse{
+		return commonModels.ProductResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode: http.StatusOK,
 			},
-			Data: *qualityService,
+			Data: *product,
 		}
 	}
 }
 
-func (service *QualityService) Add(code string) commonModels.QualityResponse {
-	qualityService, err := service.qualityRepo.Add(code)
+func (service *ProductService) Add(code string) commonModels.ProductResponse {
+	product, err := service.productRepo.Add(code)
 
 	if err != nil {
-		return commonModels.QualityResponse{
+		return commonModels.ProductResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("could not add Quality - %s", code),
+				ErrorMessage: fmt.Sprintf("could not add Product - %s", code),
 				Errors: []commonModels.ErrorDetail{
 					*err,
 				},
 			},
 		}
 	} else {
-		return commonModels.QualityResponse{
+		return commonModels.ProductResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode: http.StatusCreated,
 			},
-			Data: *qualityService,
+			Data: *product,
 		}
 	}
 }
 
-func (service *QualityService) AddMultiple(codes []string) commonModels.QualityListResponse {
-	allCodes, err := service.qualityRepo.AddMultiple(codes)
+func (service *ProductService) AddMultiple(codes []string) commonModels.ProductListResponse {
+	allProducts, err := service.productRepo.AddMultiple(codes)
 
 	if err != nil {
 
-		if len(allCodes) > 0 && len(codes) > len(allCodes) {
-			return commonModels.QualityListResponse{
+		if len(allProducts) > 0 && len(codes) > len(allProducts) {
+			return commonModels.ProductListResponse{
 				CommonListResponse: commonModels.CommonListResponse{
 					CommonResponse: commonModels.CommonResponse{
 						StatusCode:   http.StatusPartialContent,
@@ -116,10 +115,10 @@ func (service *QualityService) AddMultiple(codes []string) commonModels.QualityL
 						Errors:       err,
 					},
 				},
-				Data: allCodes,
+				Data: allProducts,
 			}
 		} else {
-			return commonModels.QualityListResponse{
+			return commonModels.ProductListResponse{
 				CommonListResponse: commonModels.CommonListResponse{
 					CommonResponse: commonModels.CommonResponse{
 						StatusCode:   http.StatusBadRequest,
@@ -130,15 +129,15 @@ func (service *QualityService) AddMultiple(codes []string) commonModels.QualityL
 			}
 		}
 	} else {
-		return commonModels.QualityListResponse{
+		return commonModels.ProductListResponse{
 			CommonListResponse: commonModels.CommonListResponse{
-				Total:    int64(len(allCodes)),
-				PageSize: int64(len(allCodes)),
+				Total:    int64(len(allProducts)),
+				PageSize: int64(len(allProducts)),
 				CommonResponse: commonModels.CommonResponse{
 					StatusCode: http.StatusCreated,
 				},
 			},
-			Data: allCodes,
+			Data: allProducts,
 		}
 	}
 }

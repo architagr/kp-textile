@@ -4,7 +4,10 @@
     </div>
     <div class="main-panel">
         <app-header></app-header>
-        <router-outlet></router-outlet>
+        <div>
+            <router-outlet></router-outlet>
+            <app-spinner *ngIf="spinnerService.count>0"></app-spinner>
+        </div>
         <!-- <app-footer></app-footer> -->
     </div>
 </div>

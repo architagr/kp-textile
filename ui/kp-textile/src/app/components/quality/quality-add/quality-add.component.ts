@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { QualityDto } from 'src/app/models/quality-model';
+import { ProductDto, QualityDto } from 'src/app/models/quality-model';
 
 @Component({
   selector: 'app-quality-add',
@@ -13,19 +13,28 @@ export class QualityAddComponent implements OnInit {
 
   constructor(
     public dialogRef: MatDialogRef<QualityAddComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: QualityDto,
+    @Inject(MAT_DIALOG_DATA) public data: {quality:QualityDto, products: ProductDto[]},
   ) {
     this.addQualityForm = new FormGroup({
-      name:new FormControl(''),
-      id: new FormControl('')
+      name:new FormControl('', [Validators.required]),
+      id: new FormControl(''),
+      hsnCode: new FormControl('', [Validators.required]),
+      productId: new FormControl('', [Validators.required]),
     })
   }
 
   ngOnInit(): void {
-    this.addQualityForm.patchValue(this.data)
+    this.addQualityForm.patchValue(this.data.quality)
   }
 
   onNoClick(): void {
-    this.dialogRef.close(this.addQualityForm.dirty ? this.addQualityForm.value: null);
+    this.dialogRef.close(null);
+  }
+
+  submit(): void{
+    this.dialogRef.close(this.addQualityForm.value);
+  }
+  get formControls(): { [key: string]: AbstractControl } {
+    return this.addQualityForm.controls
   }
 }

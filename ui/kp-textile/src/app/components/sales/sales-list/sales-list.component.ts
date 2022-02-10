@@ -170,14 +170,6 @@ export class SalesListComponent implements OnInit {
   delete(purchaseBillNo: string) {
     this.salesService.deleteSales(purchaseBillNo).subscribe({
       next: (data) => {
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Sales order deleted.', 'Success', {
-          disableTimeOut: false,
-          timeOut: 2000,
-          closeButton: true,
-          enableHtml: true,
-          toastClass: "alert alert-success alert-with-icon",
-          positionClass: 'toast-top-right'
-        });
         this.getSales();
       },
       error: (err) => {

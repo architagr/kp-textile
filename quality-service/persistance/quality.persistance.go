@@ -35,7 +35,7 @@ func InitQualityPersistance() (*QualityPersistance, *commonModels.ErrorDetail) {
 
 		qualityPersistanceObj = &QualityPersistance{
 			db:        dynamodb.New(dynamoDbSession),
-			tableName: common.EnvValues.TableName,
+			tableName: common.EnvValues.QualityTableName,
 		}
 	}
 
@@ -160,9 +160,9 @@ func (repo *QualityPersistance) Get(id string) (*commonModels.QualityDto, *commo
 	return quality, nil
 }
 
-func (repo *QualityPersistance) Add(code string) (*commonModels.QualityDto, *commonModels.ErrorDetail) {
+func (repo *QualityPersistance) Add(newQualityService commonModels.QualityDto) (*commonModels.QualityDto, *commonModels.ErrorDetail) {
 	id, _ := uuid.NewV1()
-	newQualityService := commonModels.QualityDto{Id: id.String(), Name: code}
+	newQualityService.Id = id.String()
 
 	av, err := dynamodbattribute.MarshalMap(newQualityService)
 	if err != nil {
@@ -183,17 +183,16 @@ func (repo *QualityPersistance) Add(code string) (*commonModels.QualityDto, *com
 
 		return nil, &commonModels.ErrorDetail{
 			ErrorCode:    commonModels.ErrorInsert,
-			ErrorMessage: fmt.Sprintf("Error in adding Quality %s, error message; %s", code, err.Error()),
+			ErrorMessage: fmt.Sprintf("Error in adding Quality %+v, error message; %s", newQualityService, err.Error()),
 		}
 	}
 
 	return &newQualityService, nil
 }
 
-func (repo *QualityPersistance) AddMultiple(codes []string) ([]commonModels.QualityDto, []commonModels.ErrorDetail) {
-	var newQualityServices []commonModels.QualityDto
+func (repo *QualityPersistance) AddMultiple(newQualityServices []commonModels.QualityDto) ([]commonModels.QualityDto, []commonModels.ErrorDetail) {
 	var errors = make([]commonModels.ErrorDetail, 0)
-	for _, val := range codes {
+	for _, val := range newQualityServices {
 		newQualityService, err := repo.Add(val)
 		if err != nil {
 			common.WriteLog(1, err.Error())

@@ -1,12 +1,11 @@
 <div class="content">
   <div class="row">
     <div class="col-md-12">
-      <app-spinner *ngIf="showSpinnerCount>0"></app-spinner>
-      <div class="card card-plain" *ngIf="showSpinnerCount<=0">
+      
+      <div class="card card-plain">
         <div class="card-header flex">
-          <button (click)="openDialog({id:'', name:''})" class="btn btn-icon btn-round align-right">
-            <i class="tim-icons icon-simple-add"></i>
-          </button>
+        <button class="btn btn-primary" (click)="addProductOpenDialog()" type="button">Add Product</button>
+        <button class="btn btn-primary" (click)="addQualityOpenDialog()" type="button">Add Quality</button>
         </div>
         <div class="card-body">
           <div class="table-responsive">
@@ -24,20 +23,20 @@
               matSortActive="created" matSortDisableClear matSortDirection="desc">
               <ng-container matColumnDef="QualityName">
                 <th mat-header-cell *matHeaderCellDef>Quality Name</th>
-                <td mat-cell *matCellDef="let client" class="pointer-cursor"
-                  (click)="expandedElement = expandedElement === client ? null : client">{{client.name}}</td>
+                <td mat-cell *matCellDef="let quality" class="pointer-cursor"
+                  (click)="expandedElement = expandedElement === quality ? null : quality">{{quality?.name}}</td>
               </ng-container>
               <ng-container matColumnDef="RemainingQuantity">
                 <th mat-header-cell *matHeaderCellDef>Remaining Quantity</th>
-                <td mat-cell *matCellDef="let client">{{client.pendingQuantity}}</td>
+                <td mat-cell *matCellDef="let quality">{{quality.pendingQuantity}}</td>
               </ng-container>
               <ng-container matColumnDef="expandedDetail">
-                <td mat-cell *matCellDef="let client" [attr.colspan]="displayedColumns.length"
-                  [@detailExpand1]="client == expandedElement ? 'expanded' : 'collapsed'">
+                <td mat-cell *matCellDef="let quality" [attr.colspan]="displayedColumns.length"
+                  [@detailExpand1]="quality == expandedElement ? 'expanded' : 'collapsed'">
                   <div class="example-element-detail"
-                    [@detailExpand]="client == expandedElement ? 'expanded' : 'collapsed'">
-                    <div class="row" *ngIf="client.bailDetails && client.bailDetails.length>0; else noaddress" style="width:100%">
-                      <div class="col-md-3 pointer-cursor" *ngFor="let baildata of client.bailDetails; let i = index"
+                    [@detailExpand]="quality == expandedElement ? 'expanded' : 'collapsed'">
+                    <div class="row" *ngIf="quality.bailDetails && quality.bailDetails.length>0; else noaddress" style="width:100%">
+                      <div class="col-md-3 pointer-cursor" *ngFor="let baildata of quality.bailDetails; let i = index"
                       (click)="showBaleInfo(baildata.bailNo)"
                       >
                         <div class="card" >
@@ -65,18 +64,22 @@
               </ng-container>
               <ng-container matColumnDef="NoBale">
                 <th mat-header-cell *matHeaderCellDef>Number of Bales</th>
-                <td mat-cell *matCellDef="let client">
-                  {{client.bailDetails?.length}}
+                <td mat-cell *matCellDef="let quality">
+                  {{quality.bailDetails?.length}}
                 </td>
               </ng-container>
-              <ng-container matColumnDef="Action">
-                <th mat-header-cell *matHeaderCellDef>Action</th>
-                <td mat-cell *matCellDef="let client">
-                  <button (click)="openDialog(client)" type="button"
-                    class="btn btn-icon btn-round"> <i class="tim-icons icon-pencil"></i></button>
+              <ng-container matColumnDef="ProductName">
+                <th mat-header-cell *matHeaderCellDef>Product Name</th>
+                <td mat-cell *matCellDef="let quality">
+                  {{quality.productName}}
                 </td>
               </ng-container>
-
+              <ng-container matColumnDef="HsnCode">
+                <th mat-header-cell *matHeaderCellDef>Hsn Code</th>
+                <td mat-cell *matCellDef="let quality">
+                  {{quality.hsnCode}}
+                </td>
+              </ng-container>
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: displayedColumns;"
                 [class.example-expanded-row]="expandedElement === row"></tr>

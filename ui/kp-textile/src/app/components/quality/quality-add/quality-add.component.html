@@ -1,13 +1,48 @@
-<h1 mat-dialog-title>{{data.id===""? "Add Quality": "Update Quality" }}</h1>
-<form [formGroup]="addQualityForm" (submit)="onNoClick()">
+<h1 mat-dialog-title>{{data.quality.id===""? "Add Quality": "Update Quality" }}</h1>
+<form [formGroup]="addQualityForm" (submit)="submit()">
     <div mat-dialog-content>
         <div class="card">
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-12">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label> Quality name </label>
-                            <input formControlName="name" class="form-control" placeholder="name" type="text" />
+                            <input [ngClass]="{'error': addQualityForm.dirty && formControls['name'].errors}"
+                                formControlName="name" class="form-control" placeholder="name" type="text" />
+                            <div *ngIf="formControls['name'].errors">
+                                <p class=" text-danger">
+                                    Name is required
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 px-md-1">
+                        <div class="form-group">
+                            <label> Hsn Code </label>
+                            <input [ngClass]="{'error': addQualityForm.dirty && formControls['hsnCode'].errors}"
+                                formControlName="hsnCode" class="form-control" placeholder="HSN Code" type="text" />
+                            <div *ngIf="formControls['hsnCode'].errors">
+                                <p class=" text-danger">
+                                    Hsn Code is required
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 px-md-1">
+                        <div class="form-group">
+                            <label> Product </label>
+                            <select [ngClass]="{'error': addQualityForm.dirty && formControls['productId'].errors}"
+                                 class="form-control" formControlName="productId">
+                                <option value="">Select Product</option>
+                                <option *ngFor="let product of data.products" [value]="product.id">{{product.name}}
+                                </option>
+                            </select>
+
+                            <div *ngIf="formControls['productId'].errors">
+                                <p class=" text-danger">
+                                    Product is required
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

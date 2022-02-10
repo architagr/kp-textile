@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { SpinnerService } from 'src/app/services/spinner-service';
 
 @Component({
   selector: 'app-home',
@@ -8,7 +9,7 @@ import { Component, OnInit } from '@angular/core';
 export class HomeComponent implements OnInit {
   
 
-  constructor() {}
+  constructor(public spinnerService: SpinnerService) {}
   // public sidebarColor: string = "red";
   // changeSidebarColor(color: string){
   //   var sidebar = document.getElementsByClassName('sidebar')[0];

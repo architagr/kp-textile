@@ -8,6 +8,7 @@ import { Location } from "@angular/common";
 })
 export class MenuComponent implements OnInit {
   menuItems: any[] = [];
+  showMasterDataMenu:boolean = false;
   constructor(
     private location: Location,
   ) { }

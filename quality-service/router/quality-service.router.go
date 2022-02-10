@@ -9,7 +9,8 @@ import (
 )
 
 func InitRoutes(engine *gin.Engine) {
-	controller, err := controller.InitQualityController()
+	qualityController, err := controller.InitQualityController()
+	productController, err := controller.InitProductController()
 	if err != nil {
 		common.WriteLog(1, err.Error())
 		panic(err)
@@ -17,15 +18,29 @@ func InitRoutes(engine *gin.Engine) {
 	engine.Use(middlewares.CORSMiddleware(), middlewares.ValidateTokenMiddleware())
 	qualityGroup := engine.Group("quality")
 	qualityGroup.GET("/", func(c *gin.Context) {
-		controller.GetAll(c)
+		qualityController.GetAll(c)
 	})
 	qualityGroup.GET("/:id", func(c *gin.Context) {
-		controller.Get(c)
+		qualityController.Get(c)
 	})
 	qualityGroup.POST("/", func(c *gin.Context) {
-		controller.Add(c)
+		qualityController.Add(c)
 	})
 	qualityGroup.POST("/addmultiple", func(c *gin.Context) {
-		controller.AddMultiple(c)
+		qualityController.AddMultiple(c)
+	})
+
+	productGroup := engine.Group("product")
+	productGroup.GET("/", func(c *gin.Context) {
+		productController.GetAll(c)
+	})
+	productGroup.GET("/:id", func(c *gin.Context) {
+		productController.Get(c)
+	})
+	productGroup.POST("/", func(c *gin.Context) {
+		productController.Add(c)
+	})
+	productGroup.POST("/addmultiple", func(c *gin.Context) {
+		productController.AddMultiple(c)
 	})
 }

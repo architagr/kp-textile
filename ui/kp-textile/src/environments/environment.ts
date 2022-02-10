@@ -5,7 +5,7 @@
 export const environment = {
   production: false,
   clientBaseUrl: "http://localhost:8080/",
-  qualityBaseUrl: "http://localhost:8080/quality/",
+  qualityBaseUrl: "http://localhost:8080/",
   hsnBaseUrl: "http://localhost:8081/hsncode/",
   vendorBaseUrl: "http://localhost:8082/",
   transporterBaseUrl: "http://localhost:8083/transporter/",

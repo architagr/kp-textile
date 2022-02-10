@@ -56,6 +56,9 @@ import { QualityListComponent } from './components/quality/quality-list/quality-
 import { QualityAddComponent } from './components/quality/quality-add/quality-add.component';
 import { QualityUpdateComponent } from './components/quality/quality-update/quality-update.component';
 import { BailInfoComponent } from './components/bail-info/bail-info.component';
+import { SpinnerService } from './services/spinner-service';
+import { ToastService } from './services/toast-service';
+import { AddProductComponent } from './components/quality/add-product/add-product.component';
 
 @NgModule({
   declarations: [
@@ -88,7 +91,8 @@ import { BailInfoComponent } from './components/bail-info/bail-info.component';
     QualityListComponent,
     QualityAddComponent,
     QualityUpdateComponent,
-    BailInfoComponent
+    BailInfoComponent,
+    AddProductComponent
   ],
   imports: [
     BrowserModule,
@@ -109,7 +113,17 @@ import { BailInfoComponent } from './components/bail-info/bail-info.component';
     MatProgressSpinnerModule,
     ToastrModule.forRoot()
   ],
-  providers: [ClientService, HsnCodeService, VendorService, PurchaseService, SalesService, BailService, QualityService, DocumentService,
+  providers: [
+    SpinnerService,
+    ClientService,
+    HsnCodeService,
+    VendorService,
+    PurchaseService,
+    SalesService,
+    ToastService,
+    BailService, 
+    QualityService, 
+    DocumentService,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })

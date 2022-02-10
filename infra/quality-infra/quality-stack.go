@@ -25,11 +25,12 @@ func NewQualityStack(scope constructs.Construct, id string, props *QualityStackP
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	qualityTable := buildTable(stack, props)
-	buildLambda(stack, qualityTable, props)
+	qualityTable := buildQualityTable(stack, props)
+	productTable := buildProductTable(stack, props)
+	buildLambda(stack, qualityTable, productTable, props)
 	return stack
 }
-func buildTable(stack awscdk.Stack, props *QualityStackProps) dynamodb.Table {
+func buildQualityTable(stack awscdk.Stack, props *QualityStackProps) dynamodb.Table {
 	var removalPolicy awscdk.RemovalPolicy = awscdk.RemovalPolicy_RETAIN
 
 	if props.IsLocal == "" {
@@ -53,10 +54,36 @@ func buildTable(stack awscdk.Stack, props *QualityStackProps) dynamodb.Table {
 		RemovalPolicy: removalPolicy,
 	})
 }
-func buildLambda(stack awscdk.Stack, qualityTable dynamodb.Table, props *QualityStackProps) {
+
+func buildProductTable(stack awscdk.Stack, props *QualityStackProps) dynamodb.Table {
+	var removalPolicy awscdk.RemovalPolicy = awscdk.RemovalPolicy_RETAIN
+
+	if props.IsLocal == "" {
+		removalPolicy = awscdk.RemovalPolicy_RETAIN
+	} else {
+		removalPolicy = awscdk.RemovalPolicy_DESTROY
+
+	}
+
+	return dynamodb.NewTable(stack, jsii.String("ProductTable"), &dynamodb.TableProps{
+		TableName: jsii.String("product-table"),
+		PartitionKey: &dynamodb.Attribute{
+			Name: jsii.String("id"),
+			Type: dynamodb.AttributeType_STRING,
+		},
+		SortKey: &dynamodb.Attribute{
+			Name: jsii.String("name"),
+			Type: dynamodb.AttributeType_STRING,
+		},
+		BillingMode:   dynamodb.BillingMode_PAY_PER_REQUEST,
+		RemovalPolicy: removalPolicy,
+	})
+}
+func buildLambda(stack awscdk.Stack, qualityTable dynamodb.Table, productTable dynamodb.Table, props *QualityStackProps) {
 
 	env := common.GetEnv()
 	env["qualityTable"] = qualityTable.TableName()
+	env["productTable"] = productTable.TableName()
 
 	qualityFunction := lambda.NewFunction(stack, jsii.String("QualityServiceLambda"), &lambda.FunctionProps{
 		Environment:  &env,
@@ -67,6 +94,8 @@ func buildLambda(stack awscdk.Stack, qualityTable dynamodb.Table, props *Quality
 	})
 
 	qualityTable.GrantFullAccess(qualityFunction)
+	productTable.GrantFullAccess(qualityFunction)
+
 	qualityApi := apigateway.NewLambdaRestApi(stack, jsii.String("QualityApi"), &apigateway.LambdaRestApiProps{
 		DeployOptions:               props.Stage,
 		Handler:                     qualityFunction,
@@ -84,21 +113,37 @@ func buildLambda(stack awscdk.Stack, qualityTable dynamodb.Table, props *Quality
 
 	integration := apigateway.NewLambdaIntegration(qualityFunction, &apigateway.LambdaIntegrationOptions{})
 
-	apis := qualityApi.Root().AddResource(jsii.String("quality"), &apigateway.ResourceOptions{
+	qualityApis := qualityApi.Root().AddResource(jsii.String("quality"), &apigateway.ResourceOptions{
 		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
 	})
-	apis.AddMethod(jsii.String("GET"), integration, nil)
-	apis.AddMethod(jsii.String("POST"), integration, nil)
+	qualityApis.AddMethod(jsii.String("GET"), integration, nil)
+	qualityApis.AddMethod(jsii.String("POST"), integration, nil)
 
-	api := apis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{
+	qApi := qualityApis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{
 		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
 	})
-	api.AddMethod(jsii.String("GET"), integration, nil)
+	qApi.AddMethod(jsii.String("GET"), integration, nil)
 
-	api2 := apis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{
+	qApi2 := qualityApis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{
 		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
 	})
-	api2.AddMethod(jsii.String("POST"), integration, nil)
+	qApi2.AddMethod(jsii.String("POST"), integration, nil)
+
+	productApis := qualityApi.Root().AddResource(jsii.String("product"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	productApis.AddMethod(jsii.String("GET"), integration, nil)
+	productApis.AddMethod(jsii.String("POST"), integration, nil)
+
+	pApi := productApis.AddResource(jsii.String("{id}"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	pApi.AddMethod(jsii.String("GET"), integration, nil)
+
+	pApi2 := productApis.AddResource(jsii.String("addmultiple"), &apigateway.ResourceOptions{
+		DefaultCorsPreflightOptions: common.GetCorsPreflightOptions(),
+	})
+	pApi2.AddMethod(jsii.String("POST"), integration, nil)
 
 	hostedZone := common.GetHostedZone(stack, jsii.String("qualityHostedZone"), props.InfraEnv)
 

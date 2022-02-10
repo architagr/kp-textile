@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { BailDetailsDto, BailInfoResponse } from 'src/app/models/item-model';
-import { QualityDto, QualityListItemDto } from 'src/app/models/quality-model';
+import { BailInfoResponse } from 'src/app/models/item-model';
+import { ProductDto, ProductListResponse, QualityDto, QualityListItemDto, QualityListResponse } from 'src/app/models/quality-model';
 import { BailService } from 'src/app/services/bail-service';
 import { QualityService } from 'src/app/services/quality-serice';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { catchError, forkJoin, from, map, mergeMap, Observable, of, tap, toArray } from 'rxjs';
+import { catchError, from, mergeMap, of, toArray } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { QualityAddComponent } from '../quality-add/quality-add.component';
 import { BailInfoComponent } from '../../bail-info/bail-info.component';
+import { AddProductComponent } from '../add-product/add-product.component';
 
 @Component({
   selector: 'app-quality-list',
@@ -27,12 +28,12 @@ import { BailInfoComponent } from '../../bail-info/bail-info.component';
   ],
 })
 export class QualityListComponent implements OnInit {
-  showSpinnerCount = 0;
   allQuality: QualityListItemDto[] = [];
+  allProduct: ProductDto[] = [];
   qualities: QualityListItemDto[] = [];
   expandedElement: QualityListItemDto | null = null
-  displayedColumns: string[] = ['QualityName', 'RemainingQuantity', 'NoBale'];
-  pageSize = 10;
+  displayedColumns: string[] = ['QualityName', 'ProductName', 'HsnCode', 'RemainingQuantity', 'NoBale'];
+  pageSize = 5;
   pageNumber = 0;
 
   constructor(
@@ -42,24 +43,31 @@ export class QualityListComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.getAllQuality();
+    this.getAllProduct(true);
+  }
+  getAllProduct(updateQualities: boolean) {
+    this.allProduct = [];
+    this.qualityService.getAllProduct().subscribe({
+      next: (response: ProductListResponse) => {
+        this.allProduct = response.data;
+        if (updateQualities)
+          this.getAllQuality();
+      }
+    })
   }
   getAllQuality() {
     this.allQuality = [];
     this.pageNumber = 0;
-    this.showSpinnerCount++;
     this.qualityService.getAllQualities().subscribe({
-      next: (data) => {
-        this.showSpinnerCount--;
-        this.getAllSalableBails(data.data);
-      },
-      complete: () => {
-
+      next: (response: QualityListResponse) => {
+        response.data.forEach(x => {
+          x.productName = this.allProduct.find(y => y.id === x.productId)!.name
+        })
+        this.getAllSalableBails(response.data);
       }
     });
   }
   getAllSalableBails(qualities: QualityDto[]) {
-    this.showSpinnerCount += qualities.length
     from(qualities).pipe(mergeMap((element) =>
       this.bailService.getBailInfoByQuality(element.id).pipe(catchError(error => {
         return of({} as BailInfoResponse)
@@ -81,7 +89,6 @@ export class QualityListComponent implements OnInit {
               this.allQuality.push({ ...element, pendingQuantity: 0, bailDetails: [] } as QualityListItemDto);
             }
           }
-          this.showSpinnerCount -= this.allQuality.length
           this.getQualitiesFromLocalList();
         }
       })
@@ -115,11 +122,43 @@ export class QualityListComponent implements OnInit {
     for (; startIndex <= endIndex; startIndex++) {
       this.qualities.push(this.allQuality[startIndex])
     }
+    console.log(`qualities`, {qualities: this.qualities})
+  }
+  addProductOpenDialog() {
+    const dialogRef = this.dialog.open(AddProductComponent, {
+      data: { id: '', name: '' } as ProductDto,
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed', result);
+      if (result) {
+        const product = (result as ProductDto)
+        if (product.id === "") {
+          this.addProduct(product);
+        }
+      }
+    });
   }
 
-  openDialog(quality: QualityDto): void {
+  addProduct(product: ProductDto) {
+    this.qualityService.addProduct(product.name).subscribe(response => {
+      console.log(`data added `, response)
+      this.getAllProduct(false);
+    })
+  }
+
+  addQualityOpenDialog(): void {
     const dialogRef = this.dialog.open(QualityAddComponent, {
-      data: quality,
+      data: {
+        quality: {
+          id: '',
+          name: '',
+          hsnCode: '',
+          productId: '',
+          productName: ''
+        } as QualityDto,
+        products: this.allProduct
+      },
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -141,12 +180,12 @@ export class QualityListComponent implements OnInit {
   }
 
   showBaleInfo(baleNumber: string) {
-        
+
     this.bailService.getBailInfo(baleNumber).subscribe({
       next: (response) => {
         this.openBaleInfo(baleNumber, response);
       },
-      error:(err)=>{
+      error: (err) => {
         console.log(`error in getting bale info `, err)
       }
     })

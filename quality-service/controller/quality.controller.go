@@ -13,8 +13,8 @@ type AddRequest struct {
 	Code string `json:"code" binding:"required"`
 }
 
-type AddMultipleRequest struct {
-	Codes []string `json:"codes" binding:"required"`
+type AddMultipleQualityRequest struct {
+	Qualities []commonModels.QualityDto `json:"qualities" binding:"required"`
 }
 type GetRequest struct {
 	Id string `uri:"id"`
@@ -58,10 +58,10 @@ func (ctrl *QualityController) Get(context *gin.Context) {
 }
 
 func (ctrl *QualityController) Add(context *gin.Context) {
-	var addData AddRequest
+	var addData commonModels.QualityDto
 
 	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.qualitySvc.Add(addData.Code)
+		data := ctrl.qualitySvc.Add(addData)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -71,9 +71,9 @@ func (ctrl *QualityController) Add(context *gin.Context) {
 }
 
 func (ctrl *QualityController) AddMultiple(context *gin.Context) {
-	var addData AddMultipleRequest
+	var addData AddMultipleQualityRequest
 	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.qualitySvc.AddMultiple(addData.Codes)
+		data := ctrl.qualitySvc.AddMultiple(addData.Qualities)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
