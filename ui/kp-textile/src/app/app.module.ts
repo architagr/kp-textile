@@ -59,7 +59,7 @@ import { BailInfoComponent } from './components/bail-info/bail-info.component';
 import { SpinnerService } from './services/spinner-service';
 import { ToastService } from './services/toast-service';
 import { AddProductComponent } from './components/quality/add-product/add-product.component';
-
+import {MatIconModule} from '@angular/material/icon';
 @NgModule({
   declarations: [
     AppComponent,
@@ -111,6 +111,7 @@ import { AddProductComponent } from './components/quality/add-product/add-produc
     MatDialogModule,
     MatAutocompleteModule,
     MatProgressSpinnerModule,
+    MatIconModule,
     ToastrModule.forRoot()
   ],
   providers: [

@@ -29,10 +29,14 @@ func InitBailService() (*BailService, *commonModels.ErrorDetail) {
 func (svc *BailService) GetBailInfoByQuality(request commonModels.BailInfoReuest) commonModels.BailInfoResponse {
 	purchaseDetailes, purchaseErr := svc.bailRepo.GetPurchasedBailDetailByQuanlity(request.BranchId, request.Quality)
 	if purchaseErr != nil {
+		errMessage := "Error in getting purchase detailes for mentioned bail number"
+		if purchaseErr.ErrorCode == commonModels.ErrorNoDataFound {
+			errMessage = "No Purchase for mentioned Quality"
+		}
 		return commonModels.BailInfoResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusNotFound,
-				ErrorMessage: "Error in getting purchase detailes for mentioned bail number",
+				ErrorMessage: errMessage,
 				Errors: []commonModels.ErrorDetail{
 					*purchaseErr,
 				},

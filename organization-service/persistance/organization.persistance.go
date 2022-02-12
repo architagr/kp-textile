@@ -52,7 +52,7 @@ func InitOrganizationPersistance() (*OrganizationPersistance, *commonModels.Erro
 		organizationpersistanceObj = &OrganizationPersistance{
 			db:        dynamodb.New(dynamoDbSession),
 			lambda:    lambda.New(dynamoDbSession),
-			tableName: common.EnvValues.BranchTableName,
+			tableName: common.EnvValues.GodownTableName,
 		}
 	}
 

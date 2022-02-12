@@ -9,6 +9,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { QualityAddComponent } from '../quality-add/quality-add.component';
 import { BailInfoComponent } from '../../bail-info/bail-info.component';
 import { AddProductComponent } from '../add-product/add-product.component';
+import { ToastService } from 'src/app/services/toast-service';
+import { FormControl, FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'app-quality-list',
@@ -28,6 +30,7 @@ import { AddProductComponent } from '../add-product/add-product.component';
   ],
 })
 export class QualityListComponent implements OnInit {
+  filterForm: FormGroup
   allQuality: QualityListItemDto[] = [];
   allProduct: ProductDto[] = [];
   qualities: QualityListItemDto[] = [];
@@ -35,13 +38,19 @@ export class QualityListComponent implements OnInit {
   displayedColumns: string[] = ['QualityName', 'ProductName', 'HsnCode', 'RemainingQuantity', 'NoBale'];
   pageSize = 5;
   pageNumber = 0;
-
+  searchText = ''
   constructor(
     private qualityService: QualityService,
     private bailService: BailService,
-    public dialog: MatDialog
-  ) { }
+    public dialog: MatDialog,
+    private toastService: ToastService
+  ) {
 
+    this.filterForm = new FormGroup({
+      searchText: new FormControl('')
+    })
+  }
+  
   ngOnInit(): void {
     this.getAllProduct(true);
   }
@@ -64,6 +73,9 @@ export class QualityListComponent implements OnInit {
           x.productName = this.allProduct.find(y => y.id === x.productId)!.name
         })
         this.getAllSalableBails(response.data);
+      },
+      error: (err) => {
+        this.toastService.show("Error", err.error?.errorMessage ?? err.message)
       }
     });
   }
@@ -105,24 +117,41 @@ export class QualityListComponent implements OnInit {
   }
   get endIndex(): number {
     let endIndex = this.startIndex + this.pageSize - 1
-    if (endIndex > this.allQuality.length) {
-      endIndex = this.allQuality.length - 1
+    let qualities = this.filterAllQuality()
+    if (endIndex >= qualities.length) {
+      endIndex = qualities.length - 1
     }
     return endIndex
+  }
+  filterAllQuality(): QualityListItemDto[]{
+    let qualities = this.allQuality
+    if(this.searchText.length>0){
+      qualities = this.allQuality.filter(x=>x.name.toLocaleLowerCase().indexOf(this.searchText)!==-1
+      || x.hsnCode.toLocaleLowerCase().indexOf(this.searchText)!==-1
+      || x.hsnCode.toLocaleLowerCase().indexOf(this.searchText)!==-1) 
+    }
+    return qualities;
   }
   onPageChange(pageNumber: number) {
     this.pageNumber = pageNumber;
     this.getQualitiesFromLocalList();
   }
-
+  
+  applyFilter(){
+    this.pageNumber = 0;
+    this.searchText = this.filterForm.value['searchText']
+    this.getQualitiesFromLocalList();
+  }
   getQualitiesFromLocalList() {
     this.qualities = [];
     let startIndex = this.startIndex
     let endIndex = this.endIndex
+    console.log(`endIndex: ${endIndex}`)
+    let qualities = this.filterAllQuality()
+
     for (; startIndex <= endIndex; startIndex++) {
-      this.qualities.push(this.allQuality[startIndex])
+      this.qualities.push(qualities[startIndex])
     }
-    console.log(`qualities`, {qualities: this.qualities})
   }
   addProductOpenDialog() {
     const dialogRef = this.dialog.open(AddProductComponent, {

@@ -7,18 +7,17 @@ import { ToastService } from '../services/toast-service';
 @Injectable()
 export class TokenInterceptor implements HttpInterceptor {
   constructor(private spinnerService: SpinnerService,
-    private toastService: ToastService
   ) { }
   intercept(httpRequest: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     this.spinnerService.show();
     const Authorization = `Bearer ${localStorage.getItem('token')}`;
     return next.handle(httpRequest.clone({ setHeaders: { Authorization } })).pipe(
       tap(() => {
-        this.spinnerService.hide();
+          this.spinnerService.hide();
       }),
       catchError((err: any) => {
         console.log(`error`, { err })
-        this.toastService.show("Error", err.error?.errorMessage ?? err.message)
+        
         return of(err);
       })
     );

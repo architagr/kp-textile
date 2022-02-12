@@ -16,7 +16,6 @@ const (
 )
 
 type JwtClaims struct {
-	BranchId string `json:"branchId,omitempty"`
 	Username string `json:"username,omitempty"`
 	Roles    []int  `json:"roles,omitempty"`
 	jwt.StandardClaims

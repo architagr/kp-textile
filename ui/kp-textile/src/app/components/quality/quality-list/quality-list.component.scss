@@ -1,3 +1,7 @@
+.align-right {
+  align-items: flex-end;
+  margin-left: auto;
+}
 .btn-round {
     margin-right: 5px;
   }
@@ -13,10 +17,7 @@
     &.flex {
       display: flex;
     }
-    .align-right {
-      align-items: flex-end;
-      margin-left: auto;
-    }
+   
   }
   .badge {
     padding: 5px;
