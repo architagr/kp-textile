@@ -17,6 +17,15 @@ export const ROUTES: RouteInfo[] = [
     childRoutes:[],
     showMenu:true
   },
+  {
+    path: "/godown",
+    title: "Godown",
+    icon: "icon-app",
+    class: "",
+    parentPath:"",
+    childRoutes:[],
+    showMenu:true
+  },
   // {
   //   path: "/client",
   //   title: "Client List",

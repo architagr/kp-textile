@@ -79,7 +79,7 @@ func (repo *UserPersistance) GetUserByUserName(userName string) (*commonModels.U
 			common.WriteLog(1, err.Error())
 			return nil, &commonModels.ErrorDetail{
 				ErrorCode:    commonModels.ErrorNoDataFound,
-				ErrorMessage: "Product not is correct format",
+				ErrorMessage: "username not is correct format",
 			}
 		}
 	}

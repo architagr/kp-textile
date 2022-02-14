@@ -1,6 +1,7 @@
 package router
 
 import (
+	"commonpkg/middlewares"
 	"organization-service/common"
 	"organization-service/controller"
 
@@ -8,21 +9,28 @@ import (
 )
 
 func InitRoutes(engine *gin.Engine) {
-	controller, err := controller.InitOrganizationController()
+	godownController, err := controller.InitGodownController()
 	if err != nil {
 		common.WriteLog(1, err.Error())
 		panic(err)
 	}
-	engine.GET("/", func(c *gin.Context) {
-		controller.GetAll(c)
+	userController, err := controller.InitUserController()
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		panic(err)
+	}
+	engine.Use(middlewares.CORSMiddleware())
+	godownGroup := engine.Group("godown")
+	godownGroup.Use(middlewares.ValidateTokenMiddleware())
+	godownGroup.GET("/", func(c *gin.Context) {
+		godownController.GetAll(c)
 	})
-	engine.GET("/:id", func(c *gin.Context) {
-		controller.Get(c)
+	godownGroup.POST("/", func(c *gin.Context) {
+		godownController.Add(c)
 	})
-	engine.POST("/", func(c *gin.Context) {
-		controller.Add(c)
-	})
-	engine.POST("/addmultiple", func(c *gin.Context) {
-		controller.AddMultiple(c)
+
+	userGroup := engine.Group("user")
+	userGroup.POST("/login", func(c *gin.Context) {
+		userController.Login(c)
 	})
 }

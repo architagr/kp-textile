@@ -60,6 +60,11 @@ import { SpinnerService } from './services/spinner-service';
 import { ToastService } from './services/toast-service';
 import { AddProductComponent } from './components/quality/add-product/add-product.component';
 import {MatIconModule} from '@angular/material/icon';
+import { LoginComponent } from './components/login/login.component';
+import { GodownListComponent } from './components/godown/godown-list/godown-list.component';
+import { AddGodownComponent } from './components/godown/add-godown/add-godown.component';
+import { AuthGuard } from './services/auth-guard';
+import { GodownService } from './services/godown-service';
 @NgModule({
   declarations: [
     AppComponent,
@@ -92,7 +97,10 @@ import {MatIconModule} from '@angular/material/icon';
     QualityAddComponent,
     QualityUpdateComponent,
     BailInfoComponent,
-    AddProductComponent
+    AddProductComponent,
+    LoginComponent,
+    GodownListComponent,
+    AddGodownComponent
   ],
   imports: [
     BrowserModule,
@@ -125,6 +133,8 @@ import {MatIconModule} from '@angular/material/icon';
     BailService, 
     QualityService, 
     DocumentService,
+    GodownService,
+    AuthGuard,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })

@@ -16,3 +16,4 @@ lambda-build:
 
 start-internal:
 	go run ./clients/internal-api.go
+

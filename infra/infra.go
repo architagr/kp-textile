@@ -4,6 +4,7 @@ import (
 	"fmt"
 	clientinfra "infra/client-infra"
 	documentinfra "infra/document-infra"
+	organizationinfra "infra/organization-infra"
 
 	common "infra/common"
 	hsncodeinfra "infra/hsn-code-infra"
@@ -58,6 +59,10 @@ var infraStackProps = common.InfraStackProps{
 				RecordName: "doc-api",
 				Url:        fmt.Sprintf("doc-api.%s", baseDomain),
 			},
+			OrganizationApiDomain: common.DomainDetails{
+				RecordName: "organization-api",
+				Url:        fmt.Sprintf("organization-api.%s", baseDomain),
+			},
 		},
 		CommonStackProps: common.CommonStackProps{
 			IsLocal: os.Getenv("isLocal"),
@@ -91,6 +96,10 @@ func main() {
 	})
 
 	vendorinfra.NewVendorStack(app, "VendorStack", &vendorinfra.VendorStackProps{
+		InfraStackProps: infraStackProps,
+	})
+
+	organizationinfra.NewOrganizationStack(app, "OrganizationStack", &organizationinfra.OrganizationStackProps{
 		InfraStackProps: infraStackProps,
 	})
 

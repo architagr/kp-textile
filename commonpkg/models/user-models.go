@@ -8,8 +8,8 @@ type UserDto struct {
 }
 
 type LoginRequest struct {
-	Username string `json:"userName"`
-	Password string `json:"password"`
+	Username string `json:"userName" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 type LoginResponse struct {

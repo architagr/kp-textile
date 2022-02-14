@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpInterceptor, HttpEvent, HttpResponse, HttpRequest, HttpHandler } from '@angular/common/http';
-import { catchError, Observable, of, tap } from 'rxjs';
+import { catchError, Observable, of, tap, throwError } from 'rxjs';
 import { SpinnerService } from '../services/spinner-service';
 import { ToastService } from '../services/toast-service';
 
@@ -14,11 +14,6 @@ export class TokenInterceptor implements HttpInterceptor {
     return next.handle(httpRequest.clone({ setHeaders: { Authorization } })).pipe(
       tap(() => {
           this.spinnerService.hide();
-      }),
-      catchError((err: any) => {
-        console.log(`error`, { err })
-        
-        return of(err);
       })
     );
   }

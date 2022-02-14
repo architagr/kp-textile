@@ -3,7 +3,6 @@ package service
 import (
 	commonModels "commonpkg/models"
 	token "commonpkg/token"
-	"fmt"
 	"net/http"
 	"organization-service/persistance"
 	"time"
@@ -35,7 +34,7 @@ func (svc *UserService) Login(loginRequest commonModels.LoginRequest) *commonMod
 		return &commonModels.LoginResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("error in validating the credential"),
+				ErrorMessage: "error in validating the credential",
 				Errors: []commonModels.ErrorDetail{
 					*err,
 				},
@@ -47,11 +46,11 @@ func (svc *UserService) Login(loginRequest commonModels.LoginRequest) *commonMod
 		return &commonModels.LoginResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("Invalid credential"),
+				ErrorMessage: "Invalid credential",
 				Errors: []commonModels.ErrorDetail{
-					commonModels.ErrorDetail{
+					{
 						ErrorCode:    commonModels.ErrorNoDataFound,
-						ErrorMessage: fmt.Sprintf("Invalid credential"),
+						ErrorMessage: "Invalid credential",
 					},
 				},
 			},
@@ -65,9 +64,9 @@ func (svc *UserService) Login(loginRequest commonModels.LoginRequest) *commonMod
 		return &commonModels.LoginResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("error in validating the credential"),
+				ErrorMessage: "error in validating the credential",
 				Errors: []commonModels.ErrorDetail{
-					commonModels.ErrorDetail{
+					{
 						ErrorCode:    commonModels.ErrorServer,
 						ErrorMessage: tokenError.Error(),
 					},

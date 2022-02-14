@@ -10,6 +10,10 @@ import (
 
 func InitRoutes(engine *gin.Engine) {
 	qualityController, err := controller.InitQualityController()
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		panic(err)
+	}
 	productController, err := controller.InitProductController()
 	if err != nil {
 		common.WriteLog(1, err.Error())

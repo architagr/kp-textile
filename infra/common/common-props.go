@@ -24,9 +24,9 @@ type DomainDetails struct {
 	RecordName, Url string
 }
 type Domain struct {
-	BaseApi                                                                  string
-	ClientApiDomain, VendorApiDomain, TransporterApiDomain, HsnCodeApiDomain DomainDetails
-	QualityApiDomain, ItemApiDomain, DocumentApiDomain                       DomainDetails
+	BaseApi                                                                   string
+	ClientApiDomain, VendorApiDomain, TransporterApiDomain, HsnCodeApiDomain  DomainDetails
+	QualityApiDomain, ItemApiDomain, DocumentApiDomain, OrganizationApiDomain DomainDetails
 }
 type InfraStackProps struct {
 	awscdk.StackProps

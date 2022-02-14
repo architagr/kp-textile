@@ -18,6 +18,7 @@ import { SalesAddComponent } from './components/sales/sales-add/sales-add.compon
 import { SalesUpdateComponent } from './components/sales/sales-update/sales-update.component';
 import { SalesListComponent } from './components/sales/sales-list/sales-list.component';
 import { QualityListComponent } from './components/quality/quality-list/quality-list.component';
+import { GodownListComponent } from './components/godown/godown-list/godown-list.component';
 
 const routes: Routes = [
   {
@@ -96,6 +97,10 @@ const routes: Routes = [
     path: 'quality',
     component: QualityListComponent
   },
+  {
+    path:'godown',
+    component: GodownListComponent
+  }
 ];
 
 @NgModule({

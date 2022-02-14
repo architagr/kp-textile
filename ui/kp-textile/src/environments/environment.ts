@@ -13,6 +13,7 @@ export const environment = {
   bailBaseUrl: "http://localhost:8084/bailInfo",
   purchaseBaseUrl: "http://localhost:8084/purchase",
   documentBaseUrl: "http://localhost:8085/",
+  organizationBaseUrl: "http://localhost:8087/",
 };
 
 /*

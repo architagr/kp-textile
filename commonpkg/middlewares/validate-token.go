@@ -37,7 +37,6 @@ func ValidateTokenMiddleware() gin.HandlerFunc {
 			if len(context.Keys) == 0 {
 				context.Keys = make(map[string]interface{})
 			}
-			context.Keys[models.ContextKey_BranchId] = claims.BranchId
 			context.Keys[models.ContextKey_Username] = claims.Username
 			context.Keys[models.ContextKey_Roles] = claims.Roles
 			context.Next()

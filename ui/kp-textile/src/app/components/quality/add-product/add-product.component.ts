@@ -16,7 +16,7 @@ export class AddProductComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: ProductDto,
   ) {
     this.addProductForm = new FormGroup({
-      name:new FormControl(''),
+      name: new FormControl(''),
       id: new FormControl('')
     })
   }
@@ -28,8 +28,8 @@ export class AddProductComponent implements OnInit {
   onNoClick(): void {
     this.dialogRef.close(null);
   }
-submit():void{
-  this.dialogRef.close(this.addProductForm.value);
+  submit(): void {
+    this.dialogRef.close(this.addProductForm.value);
 
-}
+  }
 }
