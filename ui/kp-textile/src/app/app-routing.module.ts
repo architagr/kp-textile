@@ -18,88 +18,115 @@ import { SalesAddComponent } from './components/sales/sales-add/sales-add.compon
 import { SalesUpdateComponent } from './components/sales/sales-update/sales-update.component';
 import { SalesListComponent } from './components/sales/sales-list/sales-list.component';
 import { QualityListComponent } from './components/quality/quality-list/quality-list.component';
-import { GodownListComponent } from './components/godown/godown-list/godown-list.component';
+import { AuthGuard } from './services/auth-guard';
+import { LoginComponent } from './components/login/login.component';
 
 const routes: Routes = [
   {
-    path: "",
-    component: HomeComponent
+    path:'',
+    component: LoginComponent,
+    outlet:'loginRoute'
+  },
+  {
+    path:'login',
+    component: LoginComponent,
+    outlet:'loginRoute'
+  },
+  {
+    path:'master-data',
+    loadChildren:()=>import ('./components/master-data-module/master-data.module').then(m=>m.MasterDataModule),
+    canActivate: [AuthGuard],
+    outlet:'nonLoginRoute'
   },
   {
     path: "dashboard",
-    component: HomeComponent
+    component: HomeComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "client",
-    component: ClientListComponent
+    component: ClientListComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "addclient",
-    component: ClientAddComponent
+    component: ClientAddComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "updateclient/:clientId",
-    component: ClientUpdateComponent
+    component: ClientUpdateComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "vendor",
-    component: VendorListComponent
+    component: VendorListComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "addvendor",
-    component: VendorAddComponent
+    component: VendorAddComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "updatevendor/:vendorId",
-    component: VendorUpdateComponent
+    component: VendorUpdateComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "transpoter",
-    component: TransporterListComponent
+    component: TransporterListComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "addtranspoter",
-    component: TransporterAddComponent
+    component: TransporterAddComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "updatetranspoter/:transpoterId",
-    component: TransporterUpdateComponent
+    component: TransporterUpdateComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: "hsncode",
-    component: HsnCodeListComponent
+    component: HsnCodeListComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: 'purchase',
-    component: PurchaseListComponent
+    component: PurchaseListComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: 'updatepurchase/:purchaseBillNumber',
-    component: PurchaseUpdateComponent
+    component: PurchaseUpdateComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: 'addpurchase',
-    component: PurchaseAddComponent
+    component: PurchaseAddComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: 'sales',
-    component: SalesListComponent
+    component: SalesListComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: 'updatesales/:salesBillNumber',
-    component: SalesUpdateComponent
+    component: SalesUpdateComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: 'addsales',
-    component: SalesAddComponent
+    component: SalesAddComponent,
+    outlet:'nonLoginRoute'
   },
   {
     path: 'quality',
-    component: QualityListComponent
-  },
-  {
-    path:'godown',
-    component: GodownListComponent
+    component: QualityListComponent,
+    outlet:'nonLoginRoute'
   }
 ];
 

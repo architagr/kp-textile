@@ -9,27 +9,17 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { ClientListComponent } from './components/client-list/client-list.component';
 import { ClientAddComponent } from './components/client-add/client-add.component';
 import { ClientUpdateComponent } from './components/client-update/client-update.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatTableModule } from '@angular/material/table';
-import { MatSidenavModule } from '@angular/material/sidenav';
+
 import { HomeComponent } from './components/home/home.component';
-import { MatMenuModule } from '@angular/material/menu';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClientService } from './services/client-service';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { ReactiveFormsModule } from '@angular/forms';
+
 import { HsnCodeListComponent } from './components/hsn-code-list/hsn-code-list.component';
 import { HsnCodeAddComponent } from './components/hsn-code-add/hsn-code-add.component';
 import { HsnCodeUpdateComponent } from './components/hsn-code-update/hsn-code-update.component';
 import { HsnCodeService } from './services/hsn-code-service';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+
 import { TokenInterceptor } from './interceptors/token-interceptor';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SpinnerComponent } from './components/spinner/spinner.component';
 import { ToastrModule } from 'ngx-toastr';
 import { DeleteConfirmationComponent } from './components/delete-confirmation/delete-confirmation.component';
@@ -59,12 +49,10 @@ import { BailInfoComponent } from './components/bail-info/bail-info.component';
 import { SpinnerService } from './services/spinner-service';
 import { ToastService } from './services/toast-service';
 import { AddProductComponent } from './components/quality/add-product/add-product.component';
-import {MatIconModule} from '@angular/material/icon';
 import { LoginComponent } from './components/login/login.component';
-import { GodownListComponent } from './components/godown/godown-list/godown-list.component';
-import { AddGodownComponent } from './components/godown/add-godown/add-godown.component';
 import { AuthGuard } from './services/auth-guard';
-import { GodownService } from './services/godown-service';
+import { SharedModule } from './shared-module/shared.module';
+import { LoginService } from './services/login-service';
 @NgModule({
   declarations: [
     AppComponent,
@@ -98,28 +86,13 @@ import { GodownService } from './services/godown-service';
     QualityUpdateComponent,
     BailInfoComponent,
     AddProductComponent,
-    LoginComponent,
-    GodownListComponent,
-    AddGodownComponent
+    LoginComponent
   ],
   imports: [
     BrowserModule,
+    SharedModule,
     HttpClientModule,
     AppRoutingModule,
-    MatTableModule,
-    MatSidenavModule,
-    MatMenuModule,
-    BrowserAnimationsModule,
-    NgbModule,
-    MatFormFieldModule,
-    MatPaginatorModule,
-    MatDividerModule,
-    MatExpansionModule,
-    ReactiveFormsModule,
-    MatDialogModule,
-    MatAutocompleteModule,
-    MatProgressSpinnerModule,
-    MatIconModule,
     ToastrModule.forRoot()
   ],
   providers: [
@@ -133,8 +106,8 @@ import { GodownService } from './services/godown-service';
     BailService, 
     QualityService, 
     DocumentService,
-    GodownService,
     AuthGuard,
+    LoginService,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })

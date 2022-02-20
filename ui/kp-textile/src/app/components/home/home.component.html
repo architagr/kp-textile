@@ -1,11 +1,14 @@
-<div class="wrapper">
+<router-outlet name="loginRoute">
+
+</router-outlet>
+<div *ngIf="!isLogin" class="wrapper">
     <div class="sidebar" data="blue">
         <app-menu></app-menu>
     </div>
     <div class="main-panel">
         <app-header></app-header>
         <div>
-            <router-outlet></router-outlet>
+            <router-outlet name="nonLoginRoute"></router-outlet>            
             <app-spinner *ngIf="spinnerService.count>0"></app-spinner>
         </div>
         <!-- <app-footer></app-footer> -->
