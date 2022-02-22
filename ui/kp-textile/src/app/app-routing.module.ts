@@ -17,121 +17,101 @@ import { PurchaseAddComponent } from './components/purchase/purchase-add/purchas
 import { SalesAddComponent } from './components/sales/sales-add/sales-add.component';
 import { SalesUpdateComponent } from './components/sales/sales-update/sales-update.component';
 import { SalesListComponent } from './components/sales/sales-list/sales-list.component';
-import { QualityListComponent } from './components/quality/quality-list/quality-list.component';
 import { AuthGuard } from './services/auth-guard';
 import { LoginComponent } from './components/login/login.component';
 
 const routes: Routes = [
+  
   {
-    path:'',
+    path: 'login',
     component: LoginComponent,
-    outlet:'loginRoute'
+    pathMatch: 'full'
   },
   {
-    path:'login',
-    component: LoginComponent,
-    outlet:'loginRoute'
-  },
-  {
-    path:'master-data',
-    loadChildren:()=>import ('./components/master-data-module/master-data.module').then(m=>m.MasterDataModule),
+    path: 'master-data',
+    loadChildren: () => import('./components/master-data-module/master-data.module').then(m => m.MasterDataModule),
     canActivate: [AuthGuard],
-    outlet:'nonLoginRoute'
+    pathMatch: 'prefix'
   },
   {
     path: "dashboard",
     component: HomeComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "client",
     component: ClientListComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "addclient",
     component: ClientAddComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "updateclient/:clientId",
     component: ClientUpdateComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "vendor",
     component: VendorListComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "addvendor",
     component: VendorAddComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "updatevendor/:vendorId",
     component: VendorUpdateComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "transpoter",
     component: TransporterListComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "addtranspoter",
     component: TransporterAddComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "updatetranspoter/:transpoterId",
     component: TransporterUpdateComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: "hsncode",
     component: HsnCodeListComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: 'purchase',
     component: PurchaseListComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: 'updatepurchase/:purchaseBillNumber',
     component: PurchaseUpdateComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: 'addpurchase',
     component: PurchaseAddComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: 'sales',
     component: SalesListComponent,
-    outlet:'nonLoginRoute'
+    pathMatch: 'full'
   },
   {
     path: 'updatesales/:salesBillNumber',
     component: SalesUpdateComponent,
-    outlet:'nonLoginRoute'
   },
   {
     path: 'addsales',
     component: SalesAddComponent,
-    outlet:'nonLoginRoute'
   },
+
   {
-    path: 'quality',
-    component: QualityListComponent,
-    outlet:'nonLoginRoute'
+    path: '',
+    redirectTo:"/login",
+    pathMatch: 'full'
   }
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, {useHash: true})],
+  imports: [RouterModule.forRoot(routes, { useHash: true })],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

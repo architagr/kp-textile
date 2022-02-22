@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs';
 import { SpinnerService } from 'src/app/services/spinner-service';
 
 @Component({
@@ -8,14 +9,24 @@ import { SpinnerService } from 'src/app/services/spinner-service';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  
-isLogin: boolean = false;
+
+  isLogin: boolean = false;
   constructor(public spinnerService: SpinnerService,
-    private router: Router) {
-      if(router.url === '/' || router.url === '/login'){
-        this.isLogin  = true
-      }
-    }
+    router: Router) {
+    router.events
+      .pipe(
+        filter(e => e instanceof NavigationEnd)
+      ).subscribe({
+        next: (event) => {
+          this.isLogin = false;
+          if ((event as NavigationEnd).urlAfterRedirects === '/' || (event as NavigationEnd).urlAfterRedirects === '/login') {
+            this.isLogin = true
+          }
+        }
+      });
+
+
+  }
   // public sidebarColor: string = "red";
   // changeSidebarColor(color: string){
   //   var sidebar = document.getElementsByClassName('sidebar')[0];

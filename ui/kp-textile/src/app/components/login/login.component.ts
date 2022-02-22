@@ -32,7 +32,7 @@ export class LoginComponent implements OnInit {
       next: (response: LoginResponse) => {
         if (response.statusCode === 200 && response.token.length > 0) {
           localStorage.setItem('token', response.token);
-          this.router.navigateByUrl("/dashboard")
+          this.router.navigate(["/dashboard"])
         } else {
           this.toasterService.show("Error", "Invalid credential")
         }

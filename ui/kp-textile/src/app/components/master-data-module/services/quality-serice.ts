@@ -1,12 +1,11 @@
 import { Injectable } from "@angular/core";
-import { Observable, of } from "rxjs";
+import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
-import { AddRequest, HnsCodeDto, HnsCodeListResponse, HnsCodeResponse } from "../models/hsn-code-model";
-import { ProductDto, ProductListResponse, ProductResponse, QualityDto, QualityListResponse, QualityResponse } from "../models/quality-model";
+import { ProductListResponse, ProductResponse, QualityDto, QualityListResponse, QualityResponse } from "../../../models/quality-model";
 import { environment } from "src/environments/environment";
 
 @Injectable({
-    providedIn: 'root',
+    providedIn: 'any',
 })
 export class QualityService {
     baseUrl: string = environment.qualityBaseUrl;

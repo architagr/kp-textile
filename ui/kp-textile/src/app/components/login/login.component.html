@@ -1,7 +1,7 @@
-<div class="content">
+<div class="login-content">
     <div class="row" style="height: 98vh; width: 99vw; justify-content: center; align-items: center;">
         <div class="col-md-4">
-            <form>
+            <form [formGroup]="loginForm" (submit)="submit()">
                 <div class="card card-user">
                     <div class="card-body">
                         <p class="card-text"></p>
@@ -21,7 +21,15 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label>Username</label>
-                                        <input class="form-control" placeholder="Username" type="text" />
+                                        <input class="form-control" placeholder="Username" 
+                                        [ngClass]="{'error': loginForm.dirty && formControls['username'].errors}"
+                                        formControlName="username"
+                                        type="text" />
+                                        <div *ngIf="formControls['username'].errors">
+                                            <p class=" text-danger">
+                                                Username is required
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -29,7 +37,15 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label>Password</label>
-                                        <input class="form-control" placeholder="password" type="password" />
+                                        <input class="form-control" placeholder="password" type="password"
+                                        [ngClass]="{'error': loginForm.dirty && formControls['password'].errors}"
+                                        formControlName="password"
+                                         />
+                                         <div *ngIf="formControls['password'].errors">
+                                            <p class=" text-danger">
+                                                Password is required
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -37,7 +53,7 @@
                     </div>
                     <div class="card-footer">
                         <div class="button-container">
-                            <button type="button" class="btn btn-primary">Login</button>
+                            <button type="submit" class="btn btn-primary" [disabled]="!loginForm.valid">Login</button>
                         </div>
                     </div>
                 </div>

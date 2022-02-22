@@ -14,9 +14,13 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from "@angular/common";
+import { PaginationComponent } from "../components/pagination/pagination.component";
 
 
 @NgModule({
+    declarations:[
+        PaginationComponent
+    ],
     imports: [
         MatTableModule,
         MatSidenavModule,
@@ -49,7 +53,8 @@ import { CommonModule } from "@angular/common";
         MatAutocompleteModule,
         MatProgressSpinnerModule,
         MatIconModule,
-        CommonModule
+        CommonModule,
+        PaginationComponent
     ]
 })
 export class SharedModule{

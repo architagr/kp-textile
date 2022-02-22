@@ -1,14 +1,15 @@
-<router-outlet name="loginRoute">
+<!-- <router-outlet name="loginRoute">
 
-</router-outlet>
-<div *ngIf="!isLogin" class="wrapper">
-    <div class="sidebar" data="blue">
+</router-outlet> -->
+<div  class="wrapper">
+    <div *ngIf="!isLogin" class="sidebar" data="blue">
         <app-menu></app-menu>
     </div>
-    <div class="main-panel">
-        <app-header></app-header>
+    <div class="main-panel" data="blue">
+        <app-header *ngIf="!isLogin"></app-header>
         <div>
-            <router-outlet name="nonLoginRoute"></router-outlet>            
+            <router-outlet></router-outlet>
+            <!-- <router-outlet name="nonLoginRoute"></router-outlet>             -->
             <app-spinner *ngIf="spinnerService.count>0"></app-spinner>
         </div>
         <!-- <app-footer></app-footer> -->
