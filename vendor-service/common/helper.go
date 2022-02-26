@@ -2,10 +2,10 @@ package common
 
 import "fmt"
 
-func GetVendorSortKey(vendorId string) string {
-	return fmt.Sprintf("%s|%s", VendorSortKey, vendorId)
+func GetVendorSortKey() string {
+	return VendorSortKey
 }
 
-func GetVendorContactSortKey(vendorId, contactId string) string {
-	return fmt.Sprintf("%s|%s|%s", ContactSortKey, vendorId, contactId)
+func GetVendorContactSortKey(contactId string) string {
+	return fmt.Sprintf("%s|%s", ContactSortKey, contactId)
 }

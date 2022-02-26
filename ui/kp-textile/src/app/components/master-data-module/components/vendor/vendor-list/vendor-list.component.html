@@ -3,7 +3,7 @@
       <div class="col-md-12">
         <div class="card card-plain">
           <div class="card-header flex">
-            <button routerLink="/addvendor" class="btn btn-icon btn-round align-right">
+            <button routerLink="/master-data/addvendor" class="btn btn-icon btn-round align-right">
               <i class="tim-icons icon-simple-add"></i>
             </button>
           </div>
@@ -74,7 +74,7 @@
                 <ng-container matColumnDef="Action">
                   <th mat-header-cell *matHeaderCellDef>Action</th>
                   <td mat-cell *matCellDef="let vendor">
-                    <button [routerLink]="['/updatevendor', vendor.vendorId]" type="button"
+                    <button [routerLink]="['/master-data/updatevendor', vendor.vendorId]" type="button"
                       class="btn btn-icon btn-round"> <i class="tim-icons icon-pencil"></i></button>
                     <button type="button" (click)="deleteVendor(vendor)" class="btn btn-icon btn-round"> <i
                         class="tim-icons icon-trash-simple"></i></button>

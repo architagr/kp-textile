@@ -33,14 +33,14 @@ func InitTransporterService() (*TransporterService, *commonModels.ErrorDetail) {
 func (service *TransporterService) Add(transporter commonModels.AddTransporterRequest) commonModels.AddTransporterResponse {
 	transporterid, _ := uuid.NewV1()
 	transporter.TransporterId = transporterid.String()
-	transporter.SortKey = common.GetTransporterSortKey(transporter.TransporterId)
+	transporter.SortKey = common.GetTransporterSortKey()
 
 	_, err := service.transporterServiceRepo.UpsertTransporter(transporter.TransporterDto, true)
 	if err != nil {
 		return commonModels.AddTransporterResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("could not add transporter - %s", transporter.CompanyName),
+				ErrorMessage: fmt.Sprintf("could not add transporter - %s, as %s", transporter.CompanyName, err.ErrorMessage),
 				Errors: []commonModels.ErrorDetail{
 					*err,
 				},
@@ -53,8 +53,7 @@ func (service *TransporterService) Add(transporter commonModels.AddTransporterRe
 		contactId, _ := uuid.NewV1()
 		contact.ContactId = contactId.String()
 		contact.TransporterId = transporter.TransporterId
-		contact.BranchId = transporter.BranchId
-		contact.SortKey = common.GetTransporterContactSortKey(transporter.TransporterId, contact.ContactId)
+		contact.SortKey = common.GetTransporterContactSortKey(contact.ContactId)
 		_, err := service.transporterServiceRepo.UpsertTransporterContact(contact)
 
 		if err != nil {
@@ -78,7 +77,7 @@ func (service *TransporterService) Add(transporter commonModels.AddTransporterRe
 }
 
 func (service *TransporterService) Put(transporter commonModels.AddTransporterRequest) commonModels.AddTransporterResponse {
-	transporter.SortKey = common.GetTransporterSortKey(transporter.TransporterId)
+	transporter.SortKey = common.GetTransporterSortKey()
 
 	_, err := service.transporterServiceRepo.UpsertTransporter(transporter.TransporterDto, false)
 	if err != nil {
@@ -95,7 +94,7 @@ func (service *TransporterService) Put(transporter commonModels.AddTransporterRe
 	errors := make([]commonModels.ErrorDetail, 0)
 	transporterContacts := make([]commonModels.TransporterContactPersonDto, len(transporter.ContactPersons))
 
-	errDelete := deleteTransporterContact(transporter.BranchId, transporter.TransporterId, transporter.ContactPersons)
+	errDelete := deleteTransporterContact(transporter.TransporterId, transporter.ContactPersons)
 	if errDelete != nil {
 		return commonModels.AddTransporterResponse{
 			CommonResponse: commonModels.CommonResponse{
@@ -113,8 +112,7 @@ func (service *TransporterService) Put(transporter commonModels.AddTransporterRe
 			contact.ContactId = contactId.String()
 		}
 		contact.TransporterId = transporter.TransporterId
-		contact.BranchId = transporter.BranchId
-		contact.SortKey = common.GetTransporterContactSortKey(transporter.TransporterId, contact.ContactId)
+		contact.SortKey = common.GetTransporterContactSortKey(contact.ContactId)
 		_, err := service.transporterServiceRepo.UpsertTransporterContact(contact)
 
 		if err != nil {
@@ -136,9 +134,8 @@ func (service *TransporterService) Put(transporter commonModels.AddTransporterRe
 		Data: transporter,
 	}
 }
-func deleteTransporterContact(branchId, transporterId string, contactPersons []commonModels.TransporterContactPersonDto) *commonModels.ErrorDetail {
+func deleteTransporterContact(transporterId string, contactPersons []commonModels.TransporterContactPersonDto) *commonModels.ErrorDetail {
 	existingContact, err := transporterServiceObj.transporterServiceRepo.GetPersonByTransporterId(commonModels.GetTransporterRequestDto{
-		BranchId:      branchId,
 		TransporterId: transporterId,
 	})
 
@@ -153,7 +150,7 @@ func deleteTransporterContact(branchId, transporterId string, contactPersons []c
 			}
 		}
 		if !found {
-			deleteErr := transporterServiceObj.transporterServiceRepo.DeleteTransporterContact(branchId, transporterId, exTransporterPerson.ContactId)
+			deleteErr := transporterServiceObj.transporterServiceRepo.DeleteTransporterContact(transporterId, exTransporterPerson.ContactId)
 			if deleteErr != nil {
 				return deleteErr
 			}
@@ -163,7 +160,6 @@ func deleteTransporterContact(branchId, transporterId string, contactPersons []c
 }
 func (service *TransporterService) DeleteTransporter(request commonModels.GetTransporterRequestDto) commonModels.CommonResponse {
 	existingContact, err := transporterServiceObj.transporterServiceRepo.GetPersonByTransporterId(commonModels.GetTransporterRequestDto{
-		BranchId:      request.BranchId,
 		TransporterId: request.TransporterId,
 	})
 	if err != nil {
@@ -176,7 +172,7 @@ func (service *TransporterService) DeleteTransporter(request commonModels.GetTra
 		}
 	}
 	for _, exTransporterPerson := range existingContact {
-		deleteErr := transporterServiceObj.transporterServiceRepo.DeleteTransporterContact(request.BranchId, request.TransporterId, exTransporterPerson.ContactId)
+		deleteErr := transporterServiceObj.transporterServiceRepo.DeleteTransporterContact(request.TransporterId, exTransporterPerson.ContactId)
 		if deleteErr != nil {
 			return commonModels.CommonResponse{
 				ErrorMessage: fmt.Sprintf("error in deleting Transporter contact id - %s for Transporter id %s", exTransporterPerson.ContactId, request.TransporterId),
@@ -187,7 +183,7 @@ func (service *TransporterService) DeleteTransporter(request commonModels.GetTra
 			}
 		}
 	}
-	transporterDeleteErr := transporterServiceObj.transporterServiceRepo.DeleteTransporter(request.BranchId, request.TransporterId)
+	transporterDeleteErr := transporterServiceObj.transporterServiceRepo.DeleteTransporter(request.TransporterId)
 	if transporterDeleteErr != nil {
 		return commonModels.CommonResponse{
 			ErrorMessage: fmt.Sprintf("error in deleting transporter id %s", request.TransporterId),

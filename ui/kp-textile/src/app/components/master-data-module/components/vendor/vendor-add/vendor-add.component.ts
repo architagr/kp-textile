@@ -3,15 +3,16 @@ import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Valida
 import { Router } from '@angular/router';
 import { AddressType, PaymentTerm, PersonType, Status } from 'src/app/models/client-model';
 import { coutries } from 'src/app/models/country-city';
-import { TransporterService } from 'src/app/services/transporter-service';
+import { ToastService } from 'src/app/services/toast-service';
+import { VendorService } from 'src/app/services/vendor-service';
 
 @Component({
-  selector: 'app-transporter-add',
-  templateUrl: './transporter-add.component.html',
-  styleUrls: ['./transporter-add.component.scss']
+  selector: 'app-vendor-add',
+  templateUrl: './vendor-add.component.html',
+  styleUrls: ['./vendor-add.component.scss']
 })
-export class TransporterAddComponent implements OnInit {
-  addTransporterForm: FormGroup;
+export class VendorAddComponent implements OnInit {
+  addVendorForm: FormGroup;
 
   paymentTermsValues: string[] = [];
   statusValues: string[] = [];
@@ -56,11 +57,12 @@ export class TransporterAddComponent implements OnInit {
     })
   }
   constructor(
+    private toaster: ToastService,
     private router: Router,
-    private transporterService: TransporterService,
+    private vendorService: VendorService,
     private fb: FormBuilder
   ) { 
-    this.addTransporterForm = this.fb.group({
+    this.addVendorForm = this.fb.group({
       companyName: new FormControl('', [Validators.required]),
       alias: new FormControl(''),
       website: new FormControl('', /*[Validators.pattern('/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi')]*/),
@@ -98,13 +100,13 @@ export class TransporterAddComponent implements OnInit {
   }
 
   get formControls(): { [key: string]: AbstractControl } {
-    return this.addTransporterForm.controls
+    return this.addVendorForm.controls
   }
   get companyContactInfo(): { [key: string]: AbstractControl } {
-    return (this.addTransporterForm.controls['contactInfo'] as FormGroup).controls
+    return (this.addVendorForm.controls['contactInfo'] as FormGroup).controls
   }
   get addresses(): FormArray {
-    return this.addTransporterForm.controls['addresses'] as FormArray
+    return this.addVendorForm.controls['addresses'] as FormArray
   }
   addAddress() {
     this.addresses.push(this.getAddressFormGroup());
@@ -114,7 +116,7 @@ export class TransporterAddComponent implements OnInit {
   }
 
   get contactPersons(): FormArray {
-    return this.addTransporterForm.controls['contactPersons'] as FormArray
+    return this.addVendorForm.controls['contactPersons'] as FormArray
   }
   addContactPerson() {
     this.contactPersons.push(this.getContactPersonFormGroup());
@@ -128,14 +130,15 @@ export class TransporterAddComponent implements OnInit {
   }
 
   submitData() {
-    this.transporterService.addTransporter(this.addTransporterForm.value).subscribe({
+    this.vendorService.addVendor(this.addVendorForm.value).subscribe({
       next: (data) => {
         console.log(`response from save `, data)
-        this.router.navigate(['/transpoter']);
+        this.router.navigate(['/master-data/vendor']);
       }, error: (err) => {
+        this.toaster.show("Error", err.error.errorMessage);
         console.log(`error from save `, err)
       }, complete: () => {
-        console.log(`save over`, this.addTransporterForm.value)
+        console.log(`save over`, this.addVendorForm.value)
       }
     })
   }

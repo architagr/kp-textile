@@ -1,25 +1,26 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AddressType, PaymentTerm, PersonType, Status } from 'src/app/models/client-model';
+import { ToastrService } from 'ngx-toastr';
 import { coutries } from 'src/app/models/country-city';
-import { VendorService } from 'src/app/services/vendor-service';
+import { TransporterService } from 'src/app/services/transporter-service';
+import { ToastService } from 'src/app/services/toast-service';
 
 @Component({
-  selector: 'app-vendor-add',
-  templateUrl: './vendor-add.component.html',
-  styleUrls: ['./vendor-add.component.scss']
+  selector: 'app-transporter-update',
+  templateUrl: './transporter-update.component.html',
+  styleUrls: ['./transporter-update.component.scss']
 })
-export class VendorAddComponent implements OnInit {
-  addVendorForm: FormGroup;
+export class TransporterUpdateComponent implements OnInit {
+  updateTransporterForm: FormGroup;
 
   paymentTermsValues: string[] = [];
   statusValues: string[] = [];
   addressTypeValues: string[] = [];
   personTypeValues: string[] = [];
-  countries = coutries;
+  countries = coutries
   countriesKey: string[] = []
-  
   private getContactInfoFormGroup(): FormGroup {
     return this.fb.group({
       email: new FormControl('', [Validators.email]),
@@ -45,6 +46,10 @@ export class VendorAddComponent implements OnInit {
 
   private getContactPersonFormGroup(): FormGroup {
     return this.fb.group({
+      branchId: new FormControl(''),
+      sortKey: new FormControl(''),
+      transporterId: new FormControl(''),
+      contactId: new FormControl(''),
       salutation: new FormControl('', [Validators.required]),
       firstName: new FormControl('', [Validators.required]),
       lastName: new FormControl(''),
@@ -57,10 +62,15 @@ export class VendorAddComponent implements OnInit {
   }
   constructor(
     private router: Router,
-    private vendorService: VendorService,
-    private fb: FormBuilder
-  ) { 
-    this.addVendorForm = this.fb.group({
+    private route: ActivatedRoute,
+    private transporterService: TransporterService,
+    private fb: FormBuilder,
+    private toaster: ToastService
+  ) {
+    this.updateTransporterForm = this.fb.group({
+      branchId: new FormControl(''),
+      sortKey: new FormControl(''),
+      transporterId: new FormControl(''),
       companyName: new FormControl('', [Validators.required]),
       alias: new FormControl(''),
       website: new FormControl('', /*[Validators.pattern('/[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/gi')]*/),
@@ -70,17 +80,16 @@ export class VendorAddComponent implements OnInit {
       gstn: new FormControl(''),
       status: new FormControl('', [Validators.required]),
       addresses: this.fb.array([
-        this.getAddressFormGroup()
       ]),
       contactPersons: this.fb.array([
-        this.getContactPersonFormGroup()
       ])
     })
     this.paymentTermsValues = Object.values(PaymentTerm);
     this.statusValues = Object.values(Status);
     this.addressTypeValues = Object.values(AddressType);
     this.personTypeValues = Object.values(PersonType);
-    this.countriesKey = Object.keys(this.countries)
+    this.countriesKey = Object.keys(this.countries);
+
   }
 
   getAddressControl(index: number): { [key: string]: AbstractControl } {
@@ -98,13 +107,13 @@ export class VendorAddComponent implements OnInit {
   }
 
   get formControls(): { [key: string]: AbstractControl } {
-    return this.addVendorForm.controls
+    return this.updateTransporterForm.controls
   }
   get companyContactInfo(): { [key: string]: AbstractControl } {
-    return (this.addVendorForm.controls['contactInfo'] as FormGroup).controls
+    return (this.updateTransporterForm.controls['contactInfo'] as FormGroup).controls
   }
   get addresses(): FormArray {
-    return this.addVendorForm.controls['addresses'] as FormArray
+    return this.updateTransporterForm.controls['addresses'] as FormArray
   }
   addAddress() {
     this.addresses.push(this.getAddressFormGroup());
@@ -114,7 +123,7 @@ export class VendorAddComponent implements OnInit {
   }
 
   get contactPersons(): FormArray {
-    return this.addVendorForm.controls['contactPersons'] as FormArray
+    return this.updateTransporterForm.controls['contactPersons'] as FormArray
   }
   addContactPerson() {
     this.contactPersons.push(this.getContactPersonFormGroup());
@@ -122,22 +131,42 @@ export class VendorAddComponent implements OnInit {
   removeContactPerson(removeIndex: number) {
     this.contactPersons.removeAt(removeIndex);
   }
+  transpoterId: string = '';
 
   ngOnInit(): void {
+    this.transpoterId = this.route.snapshot.paramMap.get('transpoterId') ?? ''
 
-  }
-
-  submitData() {
-    this.vendorService.addVendor(this.addVendorForm.value).subscribe({
-      next: (data) => {
-        console.log(`response from save `, data)
-        this.router.navigate(['/vendor']);
-      }, error: (err) => {
-        console.log(`error from save `, err)
-      }, complete: () => {
-        console.log(`save over`, this.addVendorForm.value)
+    this.transporterService.getTransporterData(this.transpoterId).subscribe(response => {
+      if (response.data.addresses == undefined || response.data.addresses == null) {
+        response.data.addresses = [];
       }
+      if (response.data.contactPersons == undefined || response.data.contactPersons == null) {
+        response.data.contactPersons = [];
+      }
+      for (let index = 0; index < response.data.contactPersons.length; index++) {
+        this.addContactPerson();
+      }
+
+      for (let index = 0; index < response.data.addresses.length; index++) {
+        this.addAddress();
+      }
+      this.updateTransporterForm.patchValue(response.data);
     })
   }
 
+  submitData() {
+    this.transporterService.updateTransporter(this.transpoterId, this.updateTransporterForm.value).subscribe({
+      next: (data) => {
+        this.toaster.show("Success", "Transporter update.")
+        console.log(`response from save `, data)
+        this.router.navigate(['/master-data/transpoter']);
+      }, error: (err) => {
+        this.toaster.show("Error", err.error.errorMessage)
+
+        console.log(`error from save `, err)
+      }, complete: () => {
+        console.log(`save over`, this.updateTransporterForm.value)
+      }
+    })
+  }
 }

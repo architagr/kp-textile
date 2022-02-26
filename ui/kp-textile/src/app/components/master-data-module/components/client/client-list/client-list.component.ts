@@ -4,7 +4,7 @@ import { ClientDto } from 'src/app/models/client-model';
 import { ClientService } from 'src/app/services/client-service';
 import { ToastrService } from 'ngx-toastr';
 import { MatDialog } from '@angular/material/dialog';
-import { DeleteConfirmationComponent } from '../delete-confirmation/delete-confirmation.component';
+import { DeleteConfirmationComponent } from '../../../../delete-confirmation/delete-confirmation.component';
 import { FormControl, FormGroup } from '@angular/forms';
 
 @Component({

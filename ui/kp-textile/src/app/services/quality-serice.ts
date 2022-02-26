@@ -1,14 +1,14 @@
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
-import { ProductListResponse, ProductResponse, QualityDto, QualityListResponse, QualityResponse } from "../../../models/quality-model";
+import { ProductListResponse, ProductResponse, QualityDto, QualityListResponse, QualityResponse } from "../models/quality-model";
 import { environment } from "src/environments/environment";
 
 @Injectable({
     providedIn: 'any',
 })
 export class QualityService {
-    baseUrl: string = environment.qualityBaseUrl;
+    private baseUrl: string = environment.qualityBaseUrl;
     constructor(
         private httpClient: HttpClient
     ) { }

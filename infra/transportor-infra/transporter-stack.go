@@ -42,7 +42,7 @@ func buildTable(stack awscdk.Stack, props *TransporterStackProps) dynamodb.Table
 	return dynamodb.NewTable(stack, jsii.String("TransporterTable"), &dynamodb.TableProps{
 		TableName: jsii.String("transporter-table"),
 		PartitionKey: &dynamodb.Attribute{
-			Name: jsii.String("branchId"),
+			Name: jsii.String("transporterId"),
 			Type: dynamodb.AttributeType_STRING,
 		},
 		SortKey: &dynamodb.Attribute{

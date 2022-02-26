@@ -8,7 +8,7 @@ export const environment = {
   qualityBaseUrl: "http://localhost:8080/",
   hsnBaseUrl: "http://localhost:8081/hsncode/",
   vendorBaseUrl: "http://localhost:8082/",
-  transporterBaseUrl: "http://localhost:8083/transporter/",
+  transporterBaseUrl: "http://localhost:8083/",
   salesBaseUrl: "http://localhost:8084/sales",
   bailBaseUrl: "http://localhost:8084/bailInfo",
   purchaseBaseUrl: "http://localhost:8084/purchase",

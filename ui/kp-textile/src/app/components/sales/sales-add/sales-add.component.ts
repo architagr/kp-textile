@@ -9,7 +9,7 @@ import { TransporterDto } from 'src/app/models/transporter-model';
 import { BailService } from 'src/app/services/bail-service';
 import { DocumentService } from 'src/app/services/document-service';
 import { HsnCodeService } from 'src/app/services/hsn-code-service';
-import { QualityService } from 'src/app/components/master-data-module/services/quality-serice';
+import { QualityService } from 'src/app/services/quality-serice';
 import { SalesService } from 'src/app/services/sales-service';
 import { TransporterService } from 'src/app/services/transporter-service';
 

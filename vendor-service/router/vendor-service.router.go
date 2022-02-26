@@ -16,21 +16,22 @@ func InitRoutes(engine *gin.Engine) {
 	}
 	engine.Use(middlewares.CORSMiddleware(), middlewares.ValidateTokenMiddleware())
 
-	engine.POST("/", func(c *gin.Context) {
+	group := engine.Group("/vendor")
+	group.POST("/", func(c *gin.Context) {
 		controller.Add(c)
 	})
 
-	engine.GET("/:vendorId", func(c *gin.Context) {
+	group.GET("/:vendorId", func(c *gin.Context) {
 		controller.Get(c)
 	})
-	engine.DELETE("/:vendorId", func(c *gin.Context) {
+	group.DELETE("/:vendorId", func(c *gin.Context) {
 		controller.Delete(c)
 	})
-	engine.PUT("/:vendorId", func(c *gin.Context) {
+	group.PUT("/:vendorId", func(c *gin.Context) {
 		controller.Put(c)
 	})
 
-	engine.POST("/getall", func(c *gin.Context) {
+	group.POST("/getall", func(c *gin.Context) {
 		controller.GetAll(c)
 	})
 }

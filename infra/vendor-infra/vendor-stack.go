@@ -42,7 +42,7 @@ func buildTable(stack awscdk.Stack, props *VendorStackProps) dynamodb.Table {
 	return dynamodb.NewTable(stack, jsii.String("VendorTable"), &dynamodb.TableProps{
 		TableName: jsii.String("vendor-table"),
 		PartitionKey: &dynamodb.Attribute{
-			Name: jsii.String("branchId"),
+			Name: jsii.String("vendorId"),
 			Type: dynamodb.AttributeType_STRING,
 		},
 		SortKey: &dynamodb.Attribute{

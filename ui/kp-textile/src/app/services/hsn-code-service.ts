@@ -8,7 +8,7 @@ import { environment } from "src/environments/environment";
     providedIn: 'root',
 })
 export class HsnCodeService {
-    baseUrl: string = environment.hsnBaseUrl;
+    private baseUrl: string = environment.hsnBaseUrl;
     constructor(
         private httpClient: HttpClient
     ) { }

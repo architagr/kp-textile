@@ -43,7 +43,6 @@ func main() {
 	timeNow := time.Now()
 	expireTime := timeNow.AddDate(0, 1, 0)
 	claims := commonModels.JwtClaims{
-		BranchId: "branchId",
 		Username: "Username",
 		Roles:    []int{1},
 		StandardClaims: jwt.StandardClaims{

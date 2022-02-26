@@ -9,7 +9,7 @@ import { environment } from "src/environments/environment";
     providedIn: 'root',
 })
 export class TransporterService {
-    baseUrl: string = environment.transporterBaseUrl;
+    private baseUrl: string = `${environment.transporterBaseUrl}transporter/`;
     constructor(
         private httpClient: HttpClient
     ) { }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { GodownDto, GodownListResponse, GodownResponse } from 'src/app/models/godown-model';
-import { GodownService } from 'src/app/components/master-data-module/services/godown-service';
+import { GodownService } from 'src/app/services/godown-service';
 import { ToastService } from 'src/app/services/toast-service';
 import { AddGodownComponent } from '../add-godown/add-godown.component';
 

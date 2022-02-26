@@ -33,14 +33,14 @@ func InitVendorService() (*VendorService, *commonModels.ErrorDetail) {
 func (service *VendorService) Add(vendor commonModels.AddVendorRequest) commonModels.AddVendorResponse {
 	vendorid, _ := uuid.NewV1()
 	vendor.VendorId = vendorid.String()
-	vendor.SortKey = common.GetVendorSortKey(vendor.VendorId)
+	vendor.SortKey = common.GetVendorSortKey()
 
 	_, err := service.vendorServiceRepo.UpsertVendor(vendor.VendorDto, true)
 	if err != nil {
 		return commonModels.AddVendorResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("could not add vendor - %s", vendor.CompanyName),
+				ErrorMessage: fmt.Sprintf("could not add vendor - %s as, %s", vendor.CompanyName, err.ErrorMessage),
 				Errors: []commonModels.ErrorDetail{
 					*err,
 				},
@@ -53,8 +53,7 @@ func (service *VendorService) Add(vendor commonModels.AddVendorRequest) commonMo
 		contactId, _ := uuid.NewV1()
 		contact.ContactId = contactId.String()
 		contact.VendorId = vendor.VendorId
-		contact.BranchId = vendor.BranchId
-		contact.SortKey = common.GetVendorContactSortKey(vendor.VendorId, contact.ContactId)
+		contact.SortKey = common.GetVendorContactSortKey(contact.ContactId)
 		_, err := service.vendorServiceRepo.UpsertVendorContact(contact)
 
 		if err != nil {
@@ -78,14 +77,14 @@ func (service *VendorService) Add(vendor commonModels.AddVendorRequest) commonMo
 }
 
 func (service *VendorService) Put(vendor commonModels.AddVendorRequest) commonModels.AddVendorResponse {
-	vendor.SortKey = common.GetVendorSortKey(vendor.VendorId)
+	vendor.SortKey = common.GetVendorSortKey()
 
 	_, err := service.vendorServiceRepo.UpsertVendor(vendor.VendorDto, false)
 	if err != nil {
 		return commonModels.AddVendorResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("could no update vendor - %s", vendor.CompanyName),
+				ErrorMessage: fmt.Sprintf("could not update vendor - %s as, %s", vendor.CompanyName, err.ErrorMessage),
 				Errors: []commonModels.ErrorDetail{
 					*err,
 				},
@@ -95,12 +94,12 @@ func (service *VendorService) Put(vendor commonModels.AddVendorRequest) commonMo
 	errors := make([]commonModels.ErrorDetail, 0)
 	vendorContacts := make([]commonModels.VendorContactPersonDto, len(vendor.ContactPersons))
 
-	errDelete := deleteVendorContact(vendor.BranchId, vendor.VendorId, vendor.ContactPersons)
+	errDelete := deleteVendorContact(vendor.VendorId, vendor.ContactPersons)
 	if errDelete != nil {
 		return commonModels.AddVendorResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: fmt.Sprintf("could no delete contact person data vendor id - %s that were rermoved", vendor.VendorId),
+				ErrorMessage: fmt.Sprintf("could not delete contact person data vendor id - %s that were rermoved", vendor.VendorId),
 				Errors: []commonModels.ErrorDetail{
 					*errDelete,
 				},
@@ -113,8 +112,7 @@ func (service *VendorService) Put(vendor commonModels.AddVendorRequest) commonMo
 			contact.ContactId = contactId.String()
 		}
 		contact.VendorId = vendor.VendorId
-		contact.BranchId = vendor.BranchId
-		contact.SortKey = common.GetVendorContactSortKey(vendor.VendorId, contact.ContactId)
+		contact.SortKey = common.GetVendorContactSortKey(contact.ContactId)
 		_, err := service.vendorServiceRepo.UpsertVendorContact(contact)
 
 		if err != nil {
@@ -136,9 +134,8 @@ func (service *VendorService) Put(vendor commonModels.AddVendorRequest) commonMo
 		Data: vendor,
 	}
 }
-func deleteVendorContact(branchId, vendorId string, contactPersons []commonModels.VendorContactPersonDto) *commonModels.ErrorDetail {
+func deleteVendorContact(vendorId string, contactPersons []commonModels.VendorContactPersonDto) *commonModels.ErrorDetail {
 	existingContact, err := VendorServiceObj.vendorServiceRepo.GetPersonByVendorId(commonModels.GetVendorRequestDto{
-		BranchId: branchId,
 		VendorId: vendorId,
 	})
 
@@ -153,7 +150,7 @@ func deleteVendorContact(branchId, vendorId string, contactPersons []commonModel
 			}
 		}
 		if !found {
-			deleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendorContact(branchId, vendorId, exVendorPerson.ContactId)
+			deleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendorContact(vendorId, exVendorPerson.ContactId)
 			if deleteErr != nil {
 				return deleteErr
 			}
@@ -163,7 +160,6 @@ func deleteVendorContact(branchId, vendorId string, contactPersons []commonModel
 }
 func (service *VendorService) DeleteVendor(request commonModels.GetVendorRequestDto) commonModels.CommonResponse {
 	existingContact, err := VendorServiceObj.vendorServiceRepo.GetPersonByVendorId(commonModels.GetVendorRequestDto{
-		BranchId: request.BranchId,
 		VendorId: request.VendorId,
 	})
 	if err != nil {
@@ -176,7 +172,7 @@ func (service *VendorService) DeleteVendor(request commonModels.GetVendorRequest
 		}
 	}
 	for _, exVendorPerson := range existingContact {
-		deleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendorContact(request.BranchId, request.VendorId, exVendorPerson.ContactId)
+		deleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendorContact(request.VendorId, exVendorPerson.ContactId)
 		if deleteErr != nil {
 			return commonModels.CommonResponse{
 				ErrorMessage: fmt.Sprintf("error in deleting vendor contact id - %s for vendor id %s", exVendorPerson.ContactId, request.VendorId),
@@ -187,7 +183,7 @@ func (service *VendorService) DeleteVendor(request commonModels.GetVendorRequest
 			}
 		}
 	}
-	vendorDeleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendor(request.BranchId, request.VendorId)
+	vendorDeleteErr := VendorServiceObj.vendorServiceRepo.DeleteVendor(request.VendorId)
 	if vendorDeleteErr != nil {
 		return commonModels.CommonResponse{
 			ErrorMessage: fmt.Sprintf("error in deleting vendor id %s", request.VendorId),
@@ -256,7 +252,6 @@ func (service *VendorService) GetAll(request commonModels.VendorListRequest) com
 	request.LastEvalutionKey = nil
 	//request.PageSize = 100
 	count, _ := service.vendorServiceRepo.GetVendorTotalByFilter(request)
-	fmt.Println("count", count)
 	return commonModels.VendorListResponse{
 		CommonListResponse: commonModels.CommonListResponse{
 			CommonResponse: commonModels.CommonResponse{

@@ -3,7 +3,7 @@
       <div class="col-md-12">
         <div class="card card-plain">
           <div class="card-header flex">
-            <button routerLink="/addtranspoter" class="btn btn-icon btn-round align-right">
+            <button routerLink="/master-data/addtranspoter" class="btn btn-icon btn-round align-right">
               <i class="tim-icons icon-simple-add"></i>
             </button>
           </div>
@@ -74,7 +74,7 @@
                 <ng-container matColumnDef="Action">
                   <th mat-header-cell *matHeaderCellDef>Action</th>
                   <td mat-cell *matCellDef="let transporter">
-                    <button [routerLink]="['/updatetranspoter', transporter.transporterId]" type="button"
+                    <button [routerLink]="['/master-data/updatetranspoter', transporter.transporterId]" type="button"
                       class="btn btn-icon btn-round"> <i class="tim-icons icon-pencil"></i></button>
                     <button type="button" (click)="deleteTransporter(transporter)" class="btn btn-icon btn-round"> <i
                         class="tim-icons icon-trash-simple"></i></button>

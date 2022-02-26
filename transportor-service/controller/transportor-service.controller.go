@@ -2,7 +2,6 @@ package controller
 
 import (
 	commonModels "commonpkg/models"
-	"fmt"
 	"net/http"
 
 	"transportor-service/service"
@@ -33,7 +32,6 @@ func (ctrl *TransporterController) Add(context *gin.Context) {
 	var addData commonModels.AddTransporterRequest
 
 	if err := context.ShouldBindJSON(&addData); err == nil {
-		addData.BranchId = getBranchIdFromContext(context)
 		data := ctrl.transporterServiceSvc.Add(addData)
 		context.JSON(data.StatusCode, data)
 	} else {
@@ -47,8 +45,6 @@ func (ctrl *TransporterController) Get(context *gin.Context) {
 	var request commonModels.GetTransporterRequestDto
 
 	if err := context.ShouldBindUri(&request); err == nil {
-		request.BranchId = getBranchIdFromContext(context)
-
 		data := ctrl.transporterServiceSvc.GetTransporter(request)
 		context.JSON(data.StatusCode, data)
 	} else {
@@ -62,8 +58,6 @@ func (ctrl *TransporterController) Delete(context *gin.Context) {
 	var request commonModels.GetTransporterRequestDto
 
 	if err := context.ShouldBindUri(&request); err == nil {
-		request.BranchId = getBranchIdFromContext(context)
-
 		data := ctrl.transporterServiceSvc.DeleteTransporter(request)
 		context.JSON(data.StatusCode, data)
 	} else {
@@ -77,8 +71,6 @@ func (ctrl *TransporterController) Put(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&request); err == nil {
 		if err1 := context.ShouldBindUri(&request); err1 == nil {
-			request.BranchId = getBranchIdFromContext(context)
-
 			data := ctrl.transporterServiceSvc.Put(request)
 			context.JSON(data.StatusCode, data)
 		} else {
@@ -97,7 +89,6 @@ func (ctrl *TransporterController) GetAll(context *gin.Context) {
 	var getAllRequest commonModels.TransporterListRequest
 	if err := context.ShouldBindJSON(&getAllRequest); err == nil {
 		if err1 := context.ShouldBindQuery(&getAllRequest); err1 == nil {
-			getAllRequest.BranchId = getBranchIdFromContext((context))
 			data := ctrl.transporterServiceSvc.GetAll(getAllRequest)
 			context.JSON(data.StatusCode, data)
 		} else {
@@ -111,8 +102,4 @@ func (ctrl *TransporterController) GetAll(context *gin.Context) {
 		})
 	}
 
-}
-
-func getBranchIdFromContext(context *gin.Context) string {
-	return fmt.Sprint(context.Keys[commonModels.ContextKey_BranchId])
 }

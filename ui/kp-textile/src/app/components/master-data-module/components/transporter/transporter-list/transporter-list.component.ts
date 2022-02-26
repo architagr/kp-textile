@@ -3,15 +3,14 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
-import { VendorDto } from 'src/app/models/vendor-models';
-import { VendorService } from 'src/app/services/vendor-service';
-import { DeleteConfirmationComponent } from '../../delete-confirmation/delete-confirmation.component';
-
+import { TransporterDto } from 'src/app/models/transporter-model';
+import { TransporterService } from 'src/app/services/transporter-service';
+import { DeleteConfirmationComponent } from '../../../../delete-confirmation/delete-confirmation.component';
 
 @Component({
-  selector: 'app-vendor-list',
-  templateUrl: './vendor-list.component.html',
-  styleUrls: ['./vendor-list.component.scss'],
+  selector: 'app-transporter-list',
+  templateUrl: './transporter-list.component.html',
+  styleUrls: ['./transporter-list.component.scss'],
   animations: [
     trigger('detailExpand', [
       state('collapsed', style({ height: '0px', minHeight: '0' })),
@@ -25,7 +24,7 @@ import { DeleteConfirmationComponent } from '../../delete-confirmation/delete-co
     ]),
   ],
 })
-export class VendorListComponent implements OnInit {
+export class TransporterListComponent implements OnInit {
   filterForm: FormGroup
   searchText: string = ''
   displayedColumns: string[] = ['CompanyName', 'PaymentTerms', 'Status', 'ContactInfo', 'Action'];
@@ -33,11 +32,11 @@ export class VendorListComponent implements OnInit {
   pageSize: number = 10;
   total: number = 0;
   lastEvalutionKey: any = null
-  vendors: VendorDto[] = []
-  vendorsAll: VendorDto[] = []
-  expandedElement: VendorDto | null = null
+  transporters: TransporterDto[] = []
+  transporterAll: TransporterDto[] = []
+  expandedElement: TransporterDto | null = null
   constructor(
-    public vendorService: VendorService,
+    public transporterService: TransporterService,
     private toastr: ToastrService,
     public dialog: MatDialog
   ) { 
@@ -48,13 +47,13 @@ export class VendorListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.getVendors();
+    this.getTransporter();
   }
   onPageSizeChange(pageSize: number) {
     this.pageSize = pageSize;
     this.lastEvalutionKey = null;
     this.pageNumber = 0;
-    this.getVendors();
+    this.getTransporter();
   }
 
   get startIndex(): number{
@@ -62,68 +61,69 @@ export class VendorListComponent implements OnInit {
   }
   get endIndex(): number{
     let endIndex = this.startIndex + this.pageSize - 1
-    if (endIndex > this.vendorsAll.length) {
-      endIndex = this.vendorsAll.length - 1
+    if (endIndex > this.transporterAll.length) {
+      endIndex = this.transporterAll.length - 1
     }
     return endIndex
   }
   onNextPageClick(pageNumber: number) {
     this.pageNumber = pageNumber;
 
-    if (this.vendorsAll.length >= this.endIndex + 1) {
-      this.getVendorFromLocalList()
+    if (this.transporterAll.length >= this.endIndex + 1) {
+      this.getTransporterFromLocalList()
     } else {
-      this.getVendors();
+      this.getTransporter();
     }
   }
-  getVendorFromLocalList(){
-    this.vendors = [];
+  getTransporterFromLocalList(){
+    this.transporters = [];
     let startIndex = this.startIndex
     let endIndex = this.endIndex 
     for (; startIndex <= endIndex; startIndex++) {
-      this.vendors.push(this.vendorsAll[startIndex])
+      this.transporters.push(this.transporterAll[startIndex])
     }
   }
   onPrevPageClick(pageNumber: number) {
     this.pageNumber = pageNumber;
-    this.getVendorFromLocalList();
+    this.getTransporterFromLocalList();
   }
-  getVendors() {
-    this.vendorService.getAllVendors(this.pageSize, this.searchText, this.lastEvalutionKey).subscribe(data => {
-      this.vendors = data.data
-      this.addToAllVendorList(data.data);
+  getTransporter() {
+    this.transporterService.getAllTransporter(this.pageSize, this.searchText, this.lastEvalutionKey).subscribe(data => {
+      this.transporters = data.data
+      this.addToAllTransporterList(data.data);
       this.lastEvalutionKey = data.lastEvalutionKey
       this.total = data.total
     });
   }
-  addToAllVendorList(data: VendorDto[]) {
+  addToAllTransporterList(data: TransporterDto[]) {
+    if(data)
     data.forEach(x => {
-      if (!this.vendorsAll.some(y => y.vendorId === x.vendorId)) {
-        this.vendorsAll.push(x);
+      if (!this.transporterAll.some(y => y.transporterId === x.transporterId)) {
+        this.transporterAll.push(x);
       }
     });
   }
   applyFilter() {
     this.searchText = this.filterForm.controls['searchText'].value;
     this.lastEvalutionKey = null;
-    this.getVendors();
+    this.getTransporter();
   }
-  deleteVendor(vendor: VendorDto) {
+  deleteTransporter(transporter: TransporterDto) {
     const dialogRef = this.dialog.open(DeleteConfirmationComponent, {
-      data: { heading: 'Delete Vendor', message: `Are you sure you want to delete ${vendor.companyName} ?` },
+      data: { heading: 'Delete Transporter', message: `Are you sure you want to delete ${transporter.companyName} ?` },
     });
 
     dialogRef.afterClosed().subscribe(result => {
       console.log('The dialog was closed', result);
       if (result) {
-        this.delete(vendor.vendorId);
+        this.delete(transporter.transporterId);
       }
     });
   }
-  delete(vendorId: string) {
-    this.vendorService.deleteVendor(vendorId).subscribe({
+  delete(transporterId: string) {
+    this.transporterService.deleteTransporter(transporterId).subscribe({
       next: (data) => {
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Vendor deleted.', 'Success', {
+        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Transporter deleted.', 'Success', {
           disableTimeOut: false,
           timeOut: 2000,
           closeButton: true,
@@ -131,10 +131,10 @@ export class VendorListComponent implements OnInit {
           toastClass: "alert alert-success alert-with-icon",
           positionClass: 'toast-top-right'
         });
-        this.getVendors();
+        this.getTransporter();
       },
       error: (err) => {
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Error in deleting vendor.', 'Error', {
+        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Error in deleting Transporter.', 'Error', {
           disableTimeOut: false,
           timeOut: 2000,
           closeButton: true,
@@ -145,4 +145,5 @@ export class VendorListComponent implements OnInit {
       }
     })
   }
+
 }

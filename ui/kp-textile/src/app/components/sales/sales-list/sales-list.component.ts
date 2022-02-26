@@ -8,7 +8,7 @@ import { InventoryDto } from 'src/app/models/item-model';
 import { HsnCodeService } from 'src/app/services/hsn-code-service';
 import { HnsCodeDto } from 'src/app/models/hsn-code-model';
 import { SalesService } from 'src/app/services/sales-service';
-import { QualityService } from 'src/app/components/master-data-module/services/quality-serice';
+import { QualityService } from 'src/app/services/quality-serice';
 import { QualityDto } from 'src/app/models/quality-model';
 
 @Component({

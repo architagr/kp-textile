@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { BailInfoResponse } from 'src/app/models/item-model';
 import { ProductDto, ProductListResponse, QualityDto, QualityListItemDto, QualityListResponse } from 'src/app/models/quality-model';
 import { BailService } from 'src/app/services/bail-service';
-import { QualityService } from 'src/app/components/master-data-module/services/quality-serice';
+import { QualityService } from 'src/app/services/quality-serice';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { catchError, from, mergeMap, of, toArray } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';

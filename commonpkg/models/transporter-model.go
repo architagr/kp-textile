@@ -5,9 +5,8 @@ import (
 )
 
 type TransporterDto struct {
-	BranchId              string            `json:"branchId,omitempty"`
-	SortKey               string            `json:"sortKey,omitempty"`
 	TransporterId         string            `json:"transporterId,omitempty" uri:"transporterId"`
+	SortKey               string            `json:"sortKey,omitempty"`
 	CompanyName           string            `json:"companyName,omitempty"`
 	Alias                 string            `json:"alias,omitempty"`
 	ContactInfo           ContactDetailsDto `json:"contactInfo,omitempty"`
@@ -22,9 +21,8 @@ type TransporterDto struct {
 }
 
 type TransporterContactPersonDto struct {
-	BranchId      string            `json:"branchId,omitempty"`
-	SortKey       string            `json:"sortKey,omitempty"`
 	TransporterId string            `json:"transporterId,omitempty"`
+	SortKey       string            `json:"sortKey,omitempty"`
 	ContactId     string            `json:"contactId,omitempty"`
 	Salutation    string            `json:"salutation,omitempty"`
 	FirstName     string            `json:"firstName,omitempty"`
@@ -47,7 +45,6 @@ type AddTransporterResponse struct {
 }
 
 type TransporterFilterDto struct {
-	BranchId               string
 	CompanyName            string `json:"companyName,omitempty" form:"companyName"`
 	Alias                  string `json:"alias,omitempty" form:"alias"`
 	Email                  string `json:"email,omitempty" form:"email"`
@@ -77,6 +74,5 @@ type TransporterResponse struct {
 }
 
 type GetTransporterRequestDto struct {
-	BranchId      string
 	TransporterId string `uri:"transporterId"`
 }

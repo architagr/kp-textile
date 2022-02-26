@@ -5,9 +5,8 @@ import (
 )
 
 type VendorDto struct {
-	BranchId         string            `json:"branchId,omitempty"`
-	SortKey          string            `json:"sortKey,omitempty"`
 	VendorId         string            `json:"vendorId,omitempty" uri:"vendorId"`
+	SortKey          string            `json:"sortKey,omitempty"`
 	CompanyName      string            `json:"companyName,omitempty"`
 	Alias            string            `json:"alias,omitempty"`
 	ContactInfo      ContactDetailsDto `json:"contactInfo,omitempty"`
@@ -22,9 +21,8 @@ type VendorDto struct {
 }
 
 type VendorContactPersonDto struct {
-	BranchId    string            `json:"branchId,omitempty"`
-	SortKey     string            `json:"sortKey,omitempty"`
 	VendorId    string            `json:"vendorId,omitempty"`
+	SortKey     string            `json:"sortKey,omitempty"`
 	ContactId   string            `json:"contactId,omitempty"`
 	Salutation  string            `json:"salutation,omitempty"`
 	FirstName   string            `json:"firstName,omitempty"`
@@ -47,7 +45,6 @@ type AddVendorResponse struct {
 }
 
 type VendorFilterDto struct {
-	BranchId               string
 	CompanyName            string `json:"companyName,omitempty" form:"companyName"`
 	Alias                  string `json:"alias,omitempty" form:"alias"`
 	Email                  string `json:"email,omitempty" form:"email"`
@@ -77,6 +74,5 @@ type VendorResponse struct {
 }
 
 type GetVendorRequestDto struct {
-	BranchId string
 	VendorId string `uri:"vendorId"`
 }

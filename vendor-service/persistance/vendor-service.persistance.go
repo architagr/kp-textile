@@ -45,8 +45,8 @@ func InitVendorPersistance() (*VendorPersistance, *commonModels.ErrorDetail) {
 
 func (repo *VendorPersistance) GetPersonByVendorId(request commonModels.GetVendorRequestDto) ([]commonModels.VendorContactPersonDto, *commonModels.ErrorDetail) {
 	keyCondition := expression.KeyAnd(
-		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("sortKey").BeginsWith(common.GetVendorContactSortKey(request.VendorId, "")),
+		expression.Key("vendorId").Equal(expression.Value(request.VendorId)),
+		expression.Key("sortKey").BeginsWith(common.GetVendorContactSortKey("")),
 	)
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
@@ -85,8 +85,8 @@ func (repo *VendorPersistance) GetPersonByVendorId(request commonModels.GetVendo
 func (repo *VendorPersistance) GetVendor(request commonModels.GetVendorRequestDto) (commonModels.VendorDto, *commonModels.ErrorDetail) {
 
 	keyCondition := expression.KeyAnd(
-		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("sortKey").Equal(expression.Value(common.GetVendorSortKey(request.VendorId))),
+		expression.Key("vendorId").Equal(expression.Value(request.VendorId)),
+		expression.Key("sortKey").Equal(expression.Value(common.GetVendorSortKey())),
 	)
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
@@ -120,7 +120,7 @@ func (repo *VendorPersistance) GetVendor(request commonModels.GetVendorRequestDt
 
 func buildFilterExpression(filterData commonModels.VendorListRequest, projection *expression.ProjectionBuilder) (*expression.Expression, *commonModels.ErrorDetail) {
 
-	filter := expression.Name("branchId").Equal(expression.Value(filterData.BranchId)).And(expression.Name("sortKey").BeginsWith(common.VendorSortKey))
+	filter := expression.Name("sortKey").BeginsWith(common.VendorSortKey)
 
 	if len(filterData.Alias) > 0 {
 		filter = filter.And(expression.Name("alias").Contains(filterData.Alias).Or(expression.Name("alias").Equal(expression.Value(filterData.Alias))).Or(expression.Name("alias").BeginsWith(filterData.Alias)))
@@ -165,7 +165,7 @@ func buildFilterExpression(filterData commonModels.VendorListRequest, projection
 
 func (repo *VendorPersistance) GetVendorTotalByFilter(filterData commonModels.VendorListRequest) (int64, *commonModels.ErrorDetail) {
 	var count int64
-	proj := expression.NamesList(expression.Name("branchId"))
+	proj := expression.NamesList(expression.Name("vendorId"))
 	expr, errorDetails := buildFilterExpression(filterData, &proj)
 	if errorDetails != nil {
 		return count, errorDetails
@@ -276,7 +276,6 @@ func (repo *VendorPersistance) GetVendorByFilter(filterData commonModels.VendorL
 func (repo *VendorPersistance) UpsertVendor(vendor commonModels.VendorDto, isNew bool) (*commonModels.VendorDto, *commonModels.ErrorDetail) {
 	existigClients, _, errorDetails := repo.GetVendorByFilter(commonModels.VendorListRequest{
 		VendorFilterDto: commonModels.VendorFilterDto{
-			BranchId:    vendor.BranchId,
 			CompanyName: vendor.CompanyName,
 			Alias:       vendor.Alias,
 			Email:       vendor.ContactInfo.Email,
@@ -360,15 +359,15 @@ func (repo *VendorPersistance) UpsertVendorContact(vendorContact commonModels.Ve
 	return &vendorContact, nil
 }
 
-func (repo *VendorPersistance) DeleteVendorContact(branchId, vendorId, contactId string) *commonModels.ErrorDetail {
+func (repo *VendorPersistance) DeleteVendorContact(vendorId, contactId string) *commonModels.ErrorDetail {
 	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: &repo.vendorTableName,
 		Key: map[string]*dynamodb.AttributeValue{
-			"branchId": {
-				S: aws.String(branchId),
+			"vendorId": {
+				S: aws.String(vendorId),
 			},
 			"sortKey": {
-				S: aws.String(common.GetVendorContactSortKey(vendorId, contactId)),
+				S: aws.String(common.GetVendorContactSortKey(contactId)),
 			},
 		},
 	})
@@ -383,15 +382,15 @@ func (repo *VendorPersistance) DeleteVendorContact(branchId, vendorId, contactId
 	return nil
 }
 
-func (repo *VendorPersistance) DeleteVendor(branchId, vendorId string) *commonModels.ErrorDetail {
+func (repo *VendorPersistance) DeleteVendor(vendorId string) *commonModels.ErrorDetail {
 	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
 		TableName: &repo.vendorTableName,
 		Key: map[string]*dynamodb.AttributeValue{
-			"branchId": {
-				S: aws.String(branchId),
+			"vendorId": {
+				S: aws.String(vendorId),
 			},
 			"sortKey": {
-				S: aws.String(common.GetVendorSortKey(vendorId)),
+				S: aws.String(common.GetVendorSortKey()),
 			},
 		},
 	})

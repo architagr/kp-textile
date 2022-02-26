@@ -8,7 +8,7 @@ import { LoginRequest, LoginResponse } from "../models/user-model";
     providedIn: 'root',
 })
 export class LoginService {
-    baseUrl: string = `${environment.organizationBaseUrl}user/`;
+    private baseUrl: string = `${environment.organizationBaseUrl}user/`;
 
     constructor(
         private httpClient: HttpClient

@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	clientinfra "infra/client-infra"
 	documentinfra "infra/document-infra"
 	organizationinfra "infra/organization-infra"
 
 	common "infra/common"
-	hsncodeinfra "infra/hsn-code-infra"
 	iteminfra "infra/item-infra"
 	qualityinfra "infra/quality-infra"
 	transporterinfra "infra/transportor-infra"
@@ -76,15 +74,13 @@ var infraStackProps = common.InfraStackProps{
 func main() {
 	app := awscdk.NewApp(nil)
 
-	clientinfra.NewClientStack(app, "ClientStack", &clientinfra.ClientStackProps{
-		InfraStackProps: infraStackProps,
-	})
+	// clientinfra.NewClientStack(app, "ClientStack", &clientinfra.ClientStackProps{
+	// 	InfraStackProps: infraStackProps,
+	// })
 	documentinfra.NewDocumentStack(app, "DocumentStack", &documentinfra.DocumentStackProps{
 		InfraStackProps: infraStackProps,
 	})
-	hsncodeinfra.NewHsnCodeStack(app, "HsnCodeStack", &hsncodeinfra.HsnCodeStackProps{
-		InfraStackProps: infraStackProps,
-	})
+
 	iteminfra.NewItemStack(app, "ItemStack", &iteminfra.ItemStackProps{
 		InfraStackProps: infraStackProps,
 	})

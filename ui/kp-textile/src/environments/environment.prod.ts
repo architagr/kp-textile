@@ -4,7 +4,7 @@ export const environment = {
   qualityBaseUrl: "https://quality-api.inventory-management.click/",
   hsnBaseUrl: "https://hsncode-api.inventory-management.click/hsncode/",
   vendorBaseUrl: "https://vendor-api.inventory-management.click/",
-  transporterBaseUrl: "https://transporter-api.inventory-management.click/transporter/",
+  transporterBaseUrl: "https://transporter-api.inventory-management.click/",
   salesBaseUrl: "https://item-api.inventory-management.click/sales",
   bailBaseUrl: "https://item-api.inventory-management.click/bailInfo",
   purchaseBaseUrl: "https://item-api.inventory-management.click/purchase",

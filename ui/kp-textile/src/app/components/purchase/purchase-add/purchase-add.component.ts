@@ -7,7 +7,7 @@ import { InventoryDto } from 'src/app/models/item-model';
 import { QualityDto } from 'src/app/models/quality-model';
 import { HsnCodeService } from 'src/app/services/hsn-code-service';
 import { PurchaseService } from 'src/app/services/purchase-service';
-import { QualityService } from 'src/app/components/master-data-module/services/quality-serice';
+import { QualityService } from 'src/app/services/quality-serice';
 @Component({
   selector: 'app-purchase-add',
   templateUrl: './purchase-add.component.html',
