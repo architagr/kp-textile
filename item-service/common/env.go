@@ -3,10 +3,15 @@ package common
 import "os"
 
 type Env struct {
-	ItemTableName      string
-	InventoryTableName string
-	BailInfoTableName  string
-	PortNumber         string
+	BaleTableName           string
+	PurchaseTableName       string
+	SalesTableName          string
+	PurchaseIdIndexName     string
+	PurchaseBillNoIndexName string
+	SalesBillNoIndexName    string
+	ChallanNoIndexName      string
+	BaleNoIndexName         string
+	PortNumber              string
 }
 
 var EnvValues Env
@@ -14,17 +19,27 @@ var EnvValues Env
 func InitEnv(isLocal string) {
 	if isLocal == "" {
 		EnvValues = Env{
-			ItemTableName:      os.Getenv("ItemTable"),
-			BailInfoTableName:  os.Getenv("BailInfoTable"),
-			InventoryTableName: os.Getenv("InventoryTable"),
-			PortNumber:         "0",
+			BaleTableName:           os.Getenv("BaleTable"),
+			PurchaseTableName:       os.Getenv("PurchaseTable"),
+			SalesTableName:          os.Getenv("SalesTable"),
+			PurchaseIdIndexName:     os.Getenv("PurchaseIdIndex"),
+			PurchaseBillNoIndexName: os.Getenv("PurchaseBillNoIndex"),
+			SalesBillNoIndexName:    os.Getenv("SalesBillNoIndex"),
+			ChallanNoIndexName:      os.Getenv("ChallanNoIndex"),
+			BaleNoIndexName:         os.Getenv("BaleNoIndex"),
+			PortNumber:              "0",
 		}
 	} else {
 		EnvValues = Env{
-			ItemTableName:      "item-table",
-			BailInfoTableName:  "bail-info-table",
-			InventoryTableName: "inventory-table",
-			PortNumber:         ":8084",
+			BaleTableName:           os.Getenv("bale-table"),
+			PurchaseTableName:       os.Getenv("purchase-table"),
+			SalesTableName:          os.Getenv("sales-table"),
+			PurchaseIdIndexName:     os.Getenv("purchaseid-index"),
+			PurchaseBillNoIndexName: os.Getenv("purchase-billno-index"),
+			SalesBillNoIndexName:    os.Getenv("sales-billno-index"),
+			ChallanNoIndexName:      os.Getenv("challanno-index"),
+			BaleNoIndexName:         os.Getenv("baleno-index"),
+			PortNumber:              ":8084",
 		}
 	}
 }

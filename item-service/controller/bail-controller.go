@@ -8,31 +8,30 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var bailControllerObj *BailController
+var baleControllerObj *BaleController
 
-type BailController struct {
-	bailService *service.BailService
+type BaleController struct {
+	baleService *service.BaleService
 }
 
-func InitBailController() (*BailController, *commonModels.ErrorDetail) {
-	if bailControllerObj == nil {
-		svc, err := service.InitBailService()
+func InitBaleController() (*BaleController, *commonModels.ErrorDetail) {
+	if baleControllerObj == nil {
+		svc, err := service.InitBaleService()
 		if err != nil {
 			return nil, err
 		}
-		bailControllerObj = &BailController{
-			bailService: svc,
+		baleControllerObj = &BaleController{
+			baleService: svc,
 		}
 	}
 
-	return bailControllerObj, nil
+	return baleControllerObj, nil
 }
 
-func (ctrl *BailController) GetBailInfo(context *gin.Context) {
-	var filterData commonModels.BailInfoReuest
+func (ctrl *BaleController) GetBaleInfo(context *gin.Context) {
+	var filterData commonModels.BaleInfoReuest
 	if err := context.ShouldBindUri(&filterData); err == nil {
-		filterData.BranchId = getBranchIdFromContext(context)
-		data := ctrl.bailService.GetBailInfo(filterData)
+		data := ctrl.baleService.GetBaleInfo(filterData)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -41,11 +40,10 @@ func (ctrl *BailController) GetBailInfo(context *gin.Context) {
 	}
 }
 
-func (ctrl *BailController) GetBailsByQuantity(context *gin.Context) {
-	var filterData commonModels.BailInfoReuest
+func (ctrl *BaleController) GetBalesByQuantity(context *gin.Context) {
+	var filterData commonModels.BaleInfoReuest
 	if err := context.ShouldBindUri(&filterData); err == nil {
-		filterData.BranchId = getBranchIdFromContext(context)
-		data := ctrl.bailService.GetBailInfoByQuality(filterData)
+		data := ctrl.baleService.GetBaleInfoByQuality(filterData)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{

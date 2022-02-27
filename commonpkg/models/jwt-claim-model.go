@@ -10,7 +10,6 @@ import (
 
 const (
 	AuthHeaderName      = "Authorization"
-	ContextKey_BranchId = "branchId"
 	ContextKey_Username = "username"
 	ContextKey_Roles    = "roles"
 )
@@ -26,7 +25,7 @@ func (claims JwtClaims) Valid() error {
 	if claims.VerifyExpiresAt(now, true) {
 		return nil
 	}
-	return fmt.Errorf("Token is invalid")
+	return fmt.Errorf("token is invalid")
 }
 
 func (claims JwtClaims) VerifyAudience(origin string) bool {

@@ -6,34 +6,34 @@ import (
 	"net/http"
 )
 
-var bailServiceObj *BailService
+var baleServiceObj *BaleService
 
-type BailService struct {
-	bailRepo *persistance.BailPersistance
+type BaleService struct {
+	baleRepo *persistance.BalePersistance
 }
 
-func InitBailService() (*BailService, *commonModels.ErrorDetail) {
-	if bailServiceObj == nil {
+func InitBaleService() (*BaleService, *commonModels.ErrorDetail) {
+	if baleServiceObj == nil {
 
-		bailRepo, err := persistance.InitBailPersistance()
+		baleRepo, err := persistance.InitBalePersistance()
 		if err != nil {
 			return nil, err
 		}
 
-		bailServiceObj = &BailService{
-			bailRepo: bailRepo,
+		baleServiceObj = &BaleService{
+			baleRepo: baleRepo,
 		}
 	}
-	return bailServiceObj, nil
+	return baleServiceObj, nil
 }
-func (svc *BailService) GetBailInfoByQuality(request commonModels.BailInfoReuest) commonModels.BailInfoResponse {
-	purchaseDetailes, purchaseErr := svc.bailRepo.GetPurchasedBailDetailByQuanlity(request.BranchId, request.Quality)
+func (svc *BaleService) GetBaleInfoByQuality(request commonModels.BaleInfoReuest) commonModels.BaleInfoResponse {
+	purchaseDetailes, purchaseErr := svc.baleRepo.GetPurchasedBaleDetailByQuanlity(request.GodownId, request.Quality)
 	if purchaseErr != nil {
-		errMessage := "Error in getting purchase detailes for mentioned bail number"
+		errMessage := "Error in getting purchase detailes for mentioned bale number"
 		if purchaseErr.ErrorCode == commonModels.ErrorNoDataFound {
 			errMessage = "No Purchase for mentioned Quality"
 		}
-		return commonModels.BailInfoResponse{
+		return commonModels.BaleInfoResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusNotFound,
 				ErrorMessage: errMessage,
@@ -43,20 +43,20 @@ func (svc *BailService) GetBailInfoByQuality(request commonModels.BailInfoReuest
 			},
 		}
 	}
-	return commonModels.BailInfoResponse{
+	return commonModels.BaleInfoResponse{
 		CommonResponse: commonModels.CommonResponse{
 			StatusCode: http.StatusOK,
 		},
 		Purchase: purchaseDetailes,
 	}
 }
-func (svc *BailService) GetBailInfo(request commonModels.BailInfoReuest) commonModels.BailInfoResponse {
-	purchaseDetailes, purchaseErr := svc.bailRepo.GetPurchasedBailDetail(request.BranchId, request.BailNo)
+func (svc *BaleService) GetBaleInfo(request commonModels.BaleInfoReuest) commonModels.BaleInfoResponse {
+	purchaseDetailes, purchaseErr := svc.baleRepo.GetPurchasedBaleDetail(request.GodownId, request.BaleNo)
 	if purchaseErr != nil {
-		return commonModels.BailInfoResponse{
+		return commonModels.BaleInfoResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusNotFound,
-				ErrorMessage: "Error in getting bail info for mentioned bail number",
+				ErrorMessage: "Error in getting bale info for mentioned bale number",
 				Errors: []commonModels.ErrorDetail{
 					*purchaseErr,
 				},
@@ -64,23 +64,23 @@ func (svc *BailService) GetBailInfo(request commonModels.BailInfoReuest) commonM
 		}
 	}
 
-	salesDetailes, salesErr := svc.bailRepo.GetSalesBailDetail(request.BranchId, request.BailNo, "")
+	salesDetailes, salesErr := svc.baleRepo.GetSalesBaleDetail(request.GodownId, request.BaleNo, "")
 	if salesErr != nil && salesErr.ErrorCode != commonModels.ErrorNoDataFound {
-		return commonModels.BailInfoResponse{
+		return commonModels.BaleInfoResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusNotFound,
-				ErrorMessage: "Error in getting sales detailes for mentioned bail number",
+				ErrorMessage: "Error in getting sales detailes for mentioned bale number",
 				Errors: []commonModels.ErrorDetail{
 					*salesErr,
 				},
 			},
 		}
 	}
-	return commonModels.BailInfoResponse{
+	return commonModels.BaleInfoResponse{
 		CommonResponse: commonModels.CommonResponse{
 			StatusCode: http.StatusOK,
 		},
-		Purchase: []commonModels.BailDetailsDto{
+		Purchase: []commonModels.BaleDetailsDto{
 			*purchaseDetailes,
 		},
 		Sales: salesDetailes,

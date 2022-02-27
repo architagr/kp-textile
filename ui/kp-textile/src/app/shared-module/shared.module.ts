@@ -19,7 +19,7 @@ import { DeleteConfirmationComponent } from "../components/delete-confirmation/d
 import { BailService } from "../services/bail-service";
 import { ClientService } from "../services/client-service";
 import { DocumentService } from "../services/document-service";
-import { HsnCodeService } from "../services/hsn-code-service";
+// import { HsnCodeService } from "../services/hsn-code-service";
 import { PurchaseService } from "../services/purchase-service";
 import { SalesService } from "../services/sales-service";
 import { ToastService } from "../services/toast-service";
@@ -65,7 +65,7 @@ export class SharedModule {
           providers: [ BailService, 
             ClientService, 
             DocumentService, 
-            HsnCodeService, 
+            // HsnCodeService, 
             PurchaseService, 
             SalesService, 
             ToastService, 

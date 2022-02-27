@@ -1,274 +1,221 @@
 package persistance
 
-import (
-	commonModels "commonpkg/models"
-	"fmt"
-	"item-service/common"
-	"time"
+// var salesPersistanceObj *SalesPersistance
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-)
+// type SalesPersistance struct {
+// 	db                 *dynamodb.DynamoDB
+// 	inventoryTableName string
+// 	baleInfoTable      string
+// 	itemTable          string
+// }
 
-var salesPersistanceObj *SalesPersistance
+// func InitSalesPersistance() (*SalesPersistance, *commonModels.ErrorDetail) {
+// 	if salesPersistanceObj == nil {
+// 		dbSession, err := session.NewSessionWithOptions(session.Options{
+// 			SharedConfigState: session.SharedConfigEnable,
+// 		})
 
-type SalesPersistance struct {
-	db                 *dynamodb.DynamoDB
-	inventoryTableName string
-	bailInfoTable      string
-	itemTable          string
-}
+// 		if err != nil {
+// 			return nil, &commonModels.ErrorDetail{
+// 				ErrorCode:    commonModels.ErrorDbConnection,
+// 				ErrorMessage: err.Error(),
+// 			}
+// 		}
+// 		dynamoDbSession := session.Must(dbSession, err)
 
-func InitSalesPersistance() (*SalesPersistance, *commonModels.ErrorDetail) {
-	if salesPersistanceObj == nil {
-		dbSession, err := session.NewSessionWithOptions(session.Options{
-			SharedConfigState: session.SharedConfigEnable,
-		})
+// 		salesPersistanceObj = &SalesPersistance{
+// 			db:                 dynamodb.New(dynamoDbSession),
+// 			inventoryTableName: common.EnvValues.InventoryTableName,
+// 			baleInfoTable:      common.EnvValues.BaleInfoTableName,
+// 			itemTable:          common.EnvValues.ItemTableName,
+// 		}
+// 	}
 
-		if err != nil {
-			return nil, &commonModels.ErrorDetail{
-				ErrorCode:    commonModels.ErrorDbConnection,
-				ErrorMessage: err.Error(),
-			}
-		}
-		dynamoDbSession := session.Must(dbSession, err)
+// 	return salesPersistanceObj, nil
+// }
 
-		salesPersistanceObj = &SalesPersistance{
-			db:                 dynamodb.New(dynamoDbSession),
-			inventoryTableName: common.EnvValues.InventoryTableName,
-			bailInfoTable:      common.EnvValues.BailInfoTableName,
-			itemTable:          common.EnvValues.ItemTableName,
-		}
-	}
+// func (repo *SalesPersistance) GetAllSalesOrders(request commonModels.InventoryListRequest) ([]commonModels.InventoryDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
+// 	keyCondition := expression.KeyAnd(
+// 		expression.Key("godownId").Equal(expression.Value(request.GodownId)),
+// 		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey("")),
+// 	)
 
-	return salesPersistanceObj, nil
-}
+// 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
 
-func (repo *SalesPersistance) GetAllSalesOrders(request commonModels.InventoryListRequest) ([]commonModels.InventoryDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
-	keyCondition := expression.KeyAnd(
-		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey("")),
-	)
+// 	if err != nil {
+// 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+// 		common.WriteLog(1, errMessage)
+// 		return nil, nil, &commonModels.ErrorDetail{
+// 			ErrorCode:    commonModels.ErrorServer,
+// 			ErrorMessage: errMessage,
+// 		}
+// 	}
+// 	result, getInventoryDetailError := getInventoryDetails(expr, request)
+// 	if getInventoryDetailError != nil {
+// 		return nil, nil, getInventoryDetailError
+// 	}
 
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+// 	request.LastEvalutionKey = result.LastEvaluatedKey
+// 	inventoryDetails, inventoryListParseErr := parseDbItemsToPurchaseList(result.Items)
+// 	if inventoryListParseErr != nil {
+// 		return nil, nil, inventoryListParseErr
+// 	}
+// 	for len(inventoryDetails) < int(request.PageSize) && request.LastEvalutionKey != nil {
+// 		result, getInventoryDetailError = getInventoryDetails(expr, request)
+// 		if getInventoryDetailError != nil {
+// 			return nil, nil, getInventoryDetailError
+// 		}
+// 		request.LastEvalutionKey = result.LastEvaluatedKey
+// 		inventoryDetailsTemp, inventoryListParseErr := parseDbItemsToPurchaseList(result.Items)
+// 		if inventoryListParseErr != nil {
+// 			return nil, nil, inventoryListParseErr
+// 		}
+// 		inventoryDetails = append(inventoryDetails, inventoryDetailsTemp...)
 
-	if err != nil {
-		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
-		common.WriteLog(1, errMessage)
-		return nil, nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorServer,
-			ErrorMessage: errMessage,
-		}
-	}
-	result, getInventoryDetailError := getInventoryDetails(expr, request)
-	if getInventoryDetailError != nil {
-		return nil, nil, getInventoryDetailError
-	}
+// 	}
 
-	request.LastEvalutionKey = result.LastEvaluatedKey
-	inventoryDetails, inventoryListParseErr := parseDbItemsToInventoryList(result.Items)
-	if inventoryListParseErr != nil {
-		return nil, nil, inventoryListParseErr
-	}
-	for len(inventoryDetails) < int(request.PageSize) && request.LastEvalutionKey != nil {
-		result, getInventoryDetailError = getInventoryDetails(expr, request)
-		if getInventoryDetailError != nil {
-			return nil, nil, getInventoryDetailError
-		}
-		request.LastEvalutionKey = result.LastEvaluatedKey
-		inventoryDetailsTemp, inventoryListParseErr := parseDbItemsToInventoryList(result.Items)
-		if inventoryListParseErr != nil {
-			return nil, nil, inventoryListParseErr
-		}
-		inventoryDetails = append(inventoryDetails, inventoryDetailsTemp...)
+// 	return inventoryDetails, result.LastEvaluatedKey, nil
+// }
 
-	}
+// func (repo *SalesPersistance) GetTotalSalesOrders(request commonModels.InventoryListRequest) (int64, *commonModels.ErrorDetail) {
+// 	var count int64 = 0
+// 	proj := expression.NamesList(expression.Name("godownId"))
+// 	keyCondition := expression.KeyAnd(
+// 		expression.Key("godownId").Equal(expression.Value(request.GodownId)),
+// 		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey("")),
+// 	)
 
-	return inventoryDetails, result.LastEvaluatedKey, nil
-}
+// 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).WithProjection(proj).Build()
 
-func (repo *SalesPersistance) GetTotalSalesOrders(request commonModels.InventoryListRequest) (int64, *commonModels.ErrorDetail) {
-	var count int64 = 0
-	proj := expression.NamesList(expression.Name("branchId"))
-	keyCondition := expression.KeyAnd(
-		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey("")),
-	)
+// 	if err != nil {
+// 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+// 		common.WriteLog(1, errMessage)
+// 		return 0, &commonModels.ErrorDetail{
+// 			ErrorCode:    commonModels.ErrorServer,
+// 			ErrorMessage: errMessage,
+// 		}
+// 	}
+// 	request.PageSize = 100
+// 	result, getInventoryDetailError := getInventoryDetails(expr, request)
+// 	if getInventoryDetailError != nil {
+// 		return 0, getInventoryDetailError
+// 	}
 
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).WithProjection(proj).Build()
+// 	request.LastEvalutionKey = result.LastEvaluatedKey
+// 	count = count + int64(len(result.Items))
 
-	if err != nil {
-		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
-		common.WriteLog(1, errMessage)
-		return 0, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorServer,
-			ErrorMessage: errMessage,
-		}
-	}
-	request.PageSize = 100
-	result, getInventoryDetailError := getInventoryDetails(expr, request)
-	if getInventoryDetailError != nil {
-		return 0, getInventoryDetailError
-	}
+// 	for len(result.Items) > 0 && request.LastEvalutionKey != nil {
+// 		result, getInventoryDetailError = getInventoryDetails(expr, request)
+// 		if getInventoryDetailError != nil {
+// 			return 0, getInventoryDetailError
+// 		}
+// 		request.LastEvalutionKey = result.LastEvaluatedKey
+// 		count = count + int64(len(result.Items))
+// 	}
 
-	request.LastEvalutionKey = result.LastEvaluatedKey
-	count = count + int64(len(result.Items))
+// 	return count, nil
+// }
 
-	for len(result.Items) > 0 && request.LastEvalutionKey != nil {
-		result, getInventoryDetailError = getInventoryDetails(expr, request)
-		if getInventoryDetailError != nil {
-			return 0, getInventoryDetailError
-		}
-		request.LastEvalutionKey = result.LastEvaluatedKey
-		count = count + int64(len(result.Items))
-	}
+// func (repo *SalesPersistance) GetSalesBillDetails(request commonModels.InventoryFilterDto) (*commonModels.InventoryDto, *commonModels.ErrorDetail) {
+// 	keyCondition := expression.KeyAnd(
+// 		expression.Key("godownId").Equal(expression.Value(request.GodownId)),
+// 		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey(request.SalesBillNumber)),
+// 	)
 
-	return count, nil
-}
+// 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
 
-func (repo *SalesPersistance) GetSalesBillDetails(request commonModels.InventoryFilterDto) (*commonModels.InventoryDto, *commonModels.ErrorDetail) {
-	keyCondition := expression.KeyAnd(
-		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("inventorySortKey").BeginsWith(common.GetInventorySalesSortKey(request.SalesBillNumber)),
-	)
+// 	if err != nil {
+// 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+// 		common.WriteLog(1, errMessage)
+// 		return nil, &commonModels.ErrorDetail{
+// 			ErrorCode:    commonModels.ErrorServer,
+// 			ErrorMessage: errMessage,
+// 		}
+// 	}
+// 	result, getInventoryDetailError := getInventoryDetails(expr, commonModels.InventoryListRequest{
+// 		InventoryFilterDto: request,
+// 	})
 
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+// 	if getInventoryDetailError != nil {
+// 		return nil, getInventoryDetailError
+// 	}
 
-	if err != nil {
-		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
-		common.WriteLog(1, errMessage)
-		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorServer,
-			ErrorMessage: errMessage,
-		}
-	}
-	result, getInventoryDetailError := getInventoryDetails(expr, commonModels.InventoryListRequest{
-		InventoryFilterDto: request,
-	})
+// 	if len(result.Items) > 0 {
+// 		inventory, err := parseDbItemToPurchase(result.Items[0])
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return inventory, nil
+// 	}
 
-	if getInventoryDetailError != nil {
-		return nil, getInventoryDetailError
-	}
+// 	return nil, &commonModels.ErrorDetail{
+// 		ErrorCode:    commonModels.ErrorNoDataFound,
+// 		ErrorMessage: fmt.Sprintf("No Sales order found by the order no %s", request.SalesBillNumber),
+// 	}
+// }
 
-	if len(result.Items) > 0 {
-		inventory, err := parseDbItemToInventory(result.Items[0])
-		if err != nil {
-			return nil, err
-		}
-		return inventory, nil
-	}
+// func (repo *SalesPersistance) GetDeletedSalesBillDetails(request commonModels.InventoryFilterDto) (*commonModels.InventoryDto, *commonModels.ErrorDetail) {
 
-	return nil, &commonModels.ErrorDetail{
-		ErrorCode:    commonModels.ErrorNoDataFound,
-		ErrorMessage: fmt.Sprintf("No Sales order found by the order no %s", request.SalesBillNumber),
-	}
-}
+// 	var inventorySortKey = fmt.Sprintf("%s|%s|", common.GetInventoryDeleteSortKey(request.SalesBillNumber), common.SORTKEY_INVENTORY_SALES)
+// 	keyCondition := expression.KeyAnd(
+// 		expression.Key("godownId").Equal(expression.Value(request.GodownId)),
+// 		expression.Key("inventorySortKey").BeginsWith(inventorySortKey),
+// 	)
 
-func (repo *SalesPersistance) GetDeletedSalesBillDetails(request commonModels.InventoryFilterDto) (*commonModels.InventoryDto, *commonModels.ErrorDetail) {
+// 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
 
-	var inventorySortKey = fmt.Sprintf("%s|%s|", common.GetInventoryDeleteSortKey(request.SalesBillNumber), common.SORTKEY_INVENTORY_SALES)
-	keyCondition := expression.KeyAnd(
-		expression.Key("branchId").Equal(expression.Value(request.BranchId)),
-		expression.Key("inventorySortKey").BeginsWith(inventorySortKey),
-	)
+// 	if err != nil {
+// 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+// 		common.WriteLog(1, errMessage)
+// 		return nil, &commonModels.ErrorDetail{
+// 			ErrorCode:    commonModels.ErrorServer,
+// 			ErrorMessage: errMessage,
+// 		}
+// 	}
+// 	result, getInventoryDetailError := getInventoryDetails(expr, commonModels.InventoryListRequest{
+// 		InventoryFilterDto: request,
+// 	})
 
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+// 	if getInventoryDetailError != nil {
+// 		return nil, getInventoryDetailError
+// 	}
 
-	if err != nil {
-		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
-		common.WriteLog(1, errMessage)
-		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorServer,
-			ErrorMessage: errMessage,
-		}
-	}
-	result, getInventoryDetailError := getInventoryDetails(expr, commonModels.InventoryListRequest{
-		InventoryFilterDto: request,
-	})
+// 	if len(result.Items) > 0 {
+// 		inventory, err := parseDbItemToPurchase(result.Items[0])
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return inventory, nil
+// 	}
 
-	if getInventoryDetailError != nil {
-		return nil, getInventoryDetailError
-	}
+// 	return nil, &commonModels.ErrorDetail{
+// 		ErrorCode:    commonModels.ErrorNoDataFound,
+// 		ErrorMessage: fmt.Sprintf("No deleted Sales order found by the order no %s", request.SalesBillNumber),
+// 	}
+// }
 
-	if len(result.Items) > 0 {
-		inventory, err := parseDbItemToInventory(result.Items[0])
-		if err != nil {
-			return nil, err
-		}
-		return inventory, nil
-	}
+// func (repo *SalesPersistance) UpsertSalesOrder(data commonModels.InventoryDto) (*commonModels.InventoryDto, *commonModels.ErrorDetail) {
+// 	av, err := dynamodbattribute.MarshalMap(data)
+// 	if err != nil {
+// 		common.WriteLog(1, err.Error())
 
-	return nil, &commonModels.ErrorDetail{
-		ErrorCode:    commonModels.ErrorNoDataFound,
-		ErrorMessage: fmt.Sprintf("No deleted Sales order found by the order no %s", request.SalesBillNumber),
-	}
-}
+// 		return nil, &commonModels.ErrorDetail{
+// 			ErrorCode:    commonModels.ErrorServer,
+// 			ErrorMessage: fmt.Sprintf("Got error marshalling purchase details, sales bill number - %s, branch id - %s, err: %s", data.BillNo, data.GodownId, err),
+// 		}
+// 	}
+// 	_, err = repo.db.PutItem(&dynamodb.PutItemInput{
+// 		TableName: &repo.inventoryTableName,
+// 		Item:      av,
+// 	})
 
-func (repo *SalesPersistance) UpsertSalesOrder(data commonModels.InventoryDto) (*commonModels.InventoryDto, *commonModels.ErrorDetail) {
-	av, err := dynamodbattribute.MarshalMap(data)
-	if err != nil {
-		common.WriteLog(1, err.Error())
+// 	if err != nil {
+// 		common.WriteLog(1, err.Error())
 
-		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorServer,
-			ErrorMessage: fmt.Sprintf("Got error marshalling purchase details, sales bill number - %s, branch id - %s, err: %s", data.BillNo, data.BranchId, err),
-		}
-	}
-	_, err = repo.db.PutItem(&dynamodb.PutItemInput{
-		TableName: &repo.inventoryTableName,
-		Item:      av,
-	})
-
-	if err != nil {
-		common.WriteLog(1, err.Error())
-
-		return nil, &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorInsert,
-			ErrorMessage: fmt.Sprintf("Error in adding/updating sales data for bill no %s, branch id %s, error message; %s", data.BillNo, data.BranchId, err.Error()),
-		}
-	}
-	return &data, nil
-}
-
-func (repo *SalesPersistance) DeleteSalesBillDetails(branchId, billno string) *commonModels.ErrorDetail {
-	salesDetails, getSalesDetailErr := repo.GetSalesBillDetails(commonModels.InventoryFilterDto{
-		BranchId:        branchId,
-		SalesBillNumber: billno,
-	})
-	if getSalesDetailErr != nil {
-		return getSalesDetailErr
-	}
-
-	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
-		TableName: &repo.inventoryTableName,
-		Key: map[string]*dynamodb.AttributeValue{
-			"branchId": {
-				S: aws.String(branchId),
-			},
-			"inventorySortKey": {
-				S: aws.String(salesDetails.InventorySortKey),
-			},
-		},
-	})
-
-	if err != nil {
-		common.WriteLog(1, err.Error())
-
-		return &commonModels.ErrorDetail{
-			ErrorCode:    commonModels.ErrorDelete,
-			ErrorMessage: fmt.Sprintf("Error in deleting sales bill no: %s for branchId: %s, error: %s", billno, branchId, err.Error()),
-		}
-	}
-
-	timeNow := time.Now().UTC().Unix()
-	salesDetails.InventorySortKey = fmt.Sprintf("%s|%s|%d", common.GetInventoryDeleteSortKey(billno), common.SORTKEY_INVENTORY_SALES, timeNow)
-	_, updateError := repo.UpsertSalesOrder(*salesDetails)
-	if updateError != nil {
-		return updateError
-	}
-
-	return nil
-}
+// 		return nil, &commonModels.ErrorDetail{
+// 			ErrorCode:    commonModels.ErrorInsert,
+// 			ErrorMessage: fmt.Sprintf("Error in adding/updating sales data for bill no %s, branch id %s, error message; %s", data.BillNo, data.GodownId, err.Error()),
+// 		}
+// 	}
+// 	return &data, nil
+// }

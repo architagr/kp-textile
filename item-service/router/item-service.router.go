@@ -13,24 +13,24 @@ func InitRoutes(engine *gin.Engine) {
 	engine.Use(middlewares.CORSMiddleware(), middlewares.ValidateTokenMiddleware())
 	purchaseRoutes(engine)
 	salesRoutes(engine)
-	bailInfo(engine)
+	baleInfo(engine)
 }
 
-func bailInfo(engine *gin.Engine) {
-	bailControllerObj, err := controller.InitBailController()
+func baleInfo(engine *gin.Engine) {
+	baleControllerObj, err := controller.InitBaleController()
 	if err != nil {
 		common.WriteLog(1, err.Error())
 		panic(err)
 	}
 
-	bailInfoApiGroup := engine.Group("/bailInfo")
+	baleInfoApiGroup := engine.Group("/baleInfo")
 
-	bailInfoApiGroup.GET("/quality/:quality", func(c *gin.Context) {
-		bailControllerObj.GetBailsByQuantity(c)
+	baleInfoApiGroup.GET("/quality/:quality", func(c *gin.Context) {
+		baleControllerObj.GetBalesByQuantity(c)
 	})
 
-	bailInfoApiGroup.GET("/:bailNo", func(c *gin.Context) {
-		bailControllerObj.GetBailInfo(c)
+	baleInfoApiGroup.GET("/:baleNo", func(c *gin.Context) {
+		baleControllerObj.GetBaleInfo(c)
 	})
 }
 
@@ -53,14 +53,6 @@ func salesRoutes(engine *gin.Engine) {
 	salesApiGroup.POST("/", func(c *gin.Context) {
 		salesControllerObj.AddSalesBillDetails(c)
 	})
-
-	salesApiGroup.PUT("/:salesBillNumber", func(c *gin.Context) {
-		salesControllerObj.UpdateSalesBillDetails(c)
-	})
-
-	salesApiGroup.DELETE("/:salesBillNumber", func(c *gin.Context) {
-		salesControllerObj.DeleteSalesBillDetails(c)
-	})
 }
 func purchaseRoutes(engine *gin.Engine) {
 
@@ -82,14 +74,5 @@ func purchaseRoutes(engine *gin.Engine) {
 
 	purchaseApiGroup.POST("/", func(c *gin.Context) {
 		purchaseControllerObj.AddPurchaseBillDetails(c)
-	})
-
-	purchaseApiGroup.PUT("/:purchaseBillNumber", func(c *gin.Context) {
-		purchaseControllerObj.UpdatePurchaseBillDetails(c)
-	})
-
-	purchaseApiGroup.DELETE("/:purchaseBillNumber", func(c *gin.Context) {
-		purchaseControllerObj.DeletePurchaseBillDetails(c)
-
 	})
 }
