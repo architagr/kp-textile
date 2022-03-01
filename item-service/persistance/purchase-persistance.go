@@ -12,6 +12,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
+type IPurchasePersistance interface {
+	GetAllTotal(request commonModels.InventoryListRequest) (int64, *commonModels.ErrorDetail)
+	GetAll(request commonModels.InventoryListRequest) ([]commonModels.PurchaseDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail)
+	GetById(purchaseId string) (*commonModels.PurchaseDto, *commonModels.ErrorDetail)
+	GetByBillNo(purchaseBillNo string) (*commonModels.PurchaseDto, *commonModels.ErrorDetail)
+	Add(data commonModels.PurchaseDto) (*commonModels.PurchaseDto, *commonModels.ErrorDetail)
+	UpdateSold(purchaseId string) *commonModels.ErrorDetail
+}
+
 var purchansePersistanceObj *PurchasePersistance
 
 type PurchasePersistance struct {
@@ -21,7 +30,7 @@ type PurchasePersistance struct {
 	purchaseBillNoIndexName string
 }
 
-func InitPurchasePersistance() (*PurchasePersistance, *commonModels.ErrorDetail) {
+func InitPurchasePersistance() (IPurchasePersistance, *commonModels.ErrorDetail) {
 	if purchansePersistanceObj == nil {
 		dbSession, err := session.NewSessionWithOptions(session.Options{
 			SharedConfigState: session.SharedConfigEnable,
@@ -51,7 +60,7 @@ func (repo *PurchasePersistance) GetAllTotal(request commonModels.InventoryListR
 	proj := expression.NamesList(expression.Name("godownId"))
 	keyCondition := expression.Key("godownId").Equal(expression.Value(request.GodownId))
 	if len(request.ProductId) > 0 {
-		sortKey := common.GetPurchaseSortKey(request.ProductId, request.QualityId)
+		sortKey := common.GetPurchaseSortKey(request.ProductId, request.QualityId, "")
 		keyCondition.And(expression.Key("sortKey").BeginsWith(sortKey))
 	}
 
@@ -87,9 +96,10 @@ func (repo *PurchasePersistance) GetAllTotal(request commonModels.InventoryListR
 }
 
 func (repo *PurchasePersistance) GetAll(request commonModels.InventoryListRequest) ([]commonModels.PurchaseDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
+
 	keyCondition := expression.Key("godownId").Equal(expression.Value(request.GodownId))
 	if len(request.ProductId) > 0 {
-		sortKey := common.GetPurchaseSortKey(request.ProductId, request.QualityId)
+		sortKey := common.GetPurchaseSortKey(request.ProductId, request.QualityId, "")
 		keyCondition.And(expression.Key("sortKey").BeginsWith(sortKey))
 	}
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
@@ -155,6 +165,34 @@ func (repo *PurchasePersistance) GetById(purchaseId string) (*commonModels.Purch
 
 	return &purchaseDetails[0], nil
 }
+func (repo *PurchasePersistance) GetByBillNo(purchaseBillNo string) (*commonModels.PurchaseDto, *commonModels.ErrorDetail) {
+	keyCondition := expression.Key("purchaseBillNo").Equal(expression.Value(purchaseBillNo))
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	result, getPurchaseDetailError := getPurchaseDetailsInIndex(expr, commonModels.InventoryListRequest{
+		PurchaseBillNo: purchaseBillNo,
+		PageSize:       0,
+	}, repo.purchaseBillNoIndexName)
+
+	if getPurchaseDetailError != nil {
+		return nil, getPurchaseDetailError
+	}
+
+	purchaseDetails, purchaseListParseErr := parseDbItemsToPurchaseList(result.Items)
+	if purchaseListParseErr != nil {
+		return nil, purchaseListParseErr
+	}
+
+	return &purchaseDetails[0], nil
+}
 
 func (repo *PurchasePersistance) Add(data commonModels.PurchaseDto) (*commonModels.PurchaseDto, *commonModels.ErrorDetail) {
 	av, err := dynamodbattribute.MarshalMap(data)
@@ -180,6 +218,43 @@ func (repo *PurchasePersistance) Add(data commonModels.PurchaseDto) (*commonMode
 		}
 	}
 	return &data, nil
+}
+
+func (repo *PurchasePersistance) UpdateSold(purchaseId string) *commonModels.ErrorDetail {
+
+	purchaseDetails, getErr := repo.GetById(purchaseId)
+	if getErr != nil {
+		return getErr
+	}
+
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":r": {
+				N: aws.String(common.STATUS_PURCHASE_SOLD),
+			},
+		},
+		TableName: &repo.purchaseTableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"godownId": {
+				N: aws.String(purchaseDetails.GodownId),
+			},
+			"sortKey": {
+				S: aws.String(purchaseDetails.SortKey),
+			},
+		},
+		ReturnValues:     aws.String("UPDATED_NEW"),
+		UpdateExpression: aws.String("set status = :r"),
+	}
+	_, err := repo.db.UpdateItem(input)
+	if err != nil {
+		errorMessage := fmt.Sprintf("error is updating sold status for purchase id %s, error; %s", purchaseId, err.Error())
+		common.WriteLog(1, errorMessage)
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorUpdate,
+			ErrorMessage: errorMessage,
+		}
+	}
+	return nil
 }
 
 // func (repo *PurchasePersistance) GetAllPurchaseOrders(request commonModels.InventoryListRequest) ([]commonModels.InventoryDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
@@ -359,7 +434,6 @@ func getPurchaseDetailsInIndex(expr expression.Expression, request commonModels.
 		ExpressionAttributeValues: expr.Values(),
 		FilterExpression:          expr.Filter(),
 		KeyConditionExpression:    expr.KeyCondition(),
-		ExclusiveStartKey:         request.LastEvalutionKey,
 		IndexName:                 &indexNane,
 		TableName:                 aws.String(purchansePersistanceObj.purchaseTableName),
 	}
@@ -397,8 +471,8 @@ func parseDbItemsToPurchaseList(items []map[string]*dynamodb.AttributeValue) ([]
 		ErrorMessage: "No data found",
 	}
 }
-func parseDbItemToPurchase(item map[string]*dynamodb.AttributeValue) (*commonModels.ProductDto, *commonModels.ErrorDetail) {
-	purchase := commonModels.ProductDto{}
+func parseDbItemToPurchase(item map[string]*dynamodb.AttributeValue) (*commonModels.PurchaseDto, *commonModels.ErrorDetail) {
+	purchase := commonModels.PurchaseDto{}
 
 	err := dynamodbattribute.UnmarshalMap(item, &purchase)
 

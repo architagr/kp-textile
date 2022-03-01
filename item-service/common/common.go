@@ -2,6 +2,16 @@ package common
 
 import "fmt"
 
+const (
+	SORTKEY_BAILDETAILS_STOCK = "Stock"
+	SORTKEY_BAILDETAILS_SOLD  = "Sold"
+)
+
+const (
+	STATUS_PURCHASE_STOCK = "Stock"
+	STATUS_PURCHASE_SOLD  = "Sold"
+)
+
 // const (
 // 	SORTKEY_BAILDETAILS_PURCHASE   = "Bale|Purchase"
 // 	SORTKEY_BAILDETAILS_SALES      = "Bale|Sales"
@@ -51,6 +61,13 @@ import "fmt"
 // 	return fmt.Sprintf("%s|%s|%s", SORTKEY_BAILDETAILS_DELETED, quality, baleNo)
 // }
 
-func GetPurchaseSortKey(productId, qualityId string) string {
-	return fmt.Sprintf("%s|%s", productId, qualityId)
+func GetPurchaseSortKey(productId, qualityId, purchaseId string) string {
+	return fmt.Sprintf("%s|%s|%s", productId, qualityId, purchaseId)
+}
+
+func GetInStockBaleSortKey(productId, qualityId, baleNo string) string {
+	return fmt.Sprintf("%s|%s|%s|%s", SORTKEY_BAILDETAILS_STOCK, productId, qualityId, baleNo)
+}
+func GetSoldBaleSortKey(productId, qualityId, baleNo string) string {
+	return fmt.Sprintf("%s|%s|%s|%s", SORTKEY_BAILDETAILS_SOLD, productId, qualityId, baleNo)
 }

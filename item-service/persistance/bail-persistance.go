@@ -1,38 +1,347 @@
 package persistance
 
-// var balePersistanceObj *BalePersistance
+import (
+	commonModels "commonpkg/models"
+	"fmt"
+	"item-service/common"
+	"time"
 
-// type BalePersistance struct {
-// 	db                 *dynamodb.DynamoDB
-// 	inventoryTableName string
-// 	baleInfoTable      string
-// 	itemTable          string
-// }
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+)
 
-// func InitBalePersistance() (*BalePersistance, *commonModels.ErrorDetail) {
-// 	if balePersistanceObj == nil {
-// 		dbSession, err := session.NewSessionWithOptions(session.Options{
-// 			SharedConfigState: session.SharedConfigEnable,
-// 		})
+type IBalePersistance interface {
+	GetBaleInfoByBaleNo(baleNumber string) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail)
+	GetBaleInfoByGodownId(godownId, sortKey string, pageSize int64) ([]commonModels.BaleDetailsDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail)
+	GetBaleInfoTotalByGodownId(godownId, sortKey string) (int64, *commonModels.ErrorDetail)
+	UpsertBaleInfo(baleDetails commonModels.BaleDetailsDto) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail)
+	TransferBale(baleNumber, fromGodownId, toGowodnId string) *commonModels.ErrorDetail
+	CheckBale(baleNumber string, receivedQuantity int32) *commonModels.ErrorDetail
+	BatchInsertBale(baleDetails []commonModels.BaleDetailsDto) *commonModels.ErrorDetail
+}
 
-// 		if err != nil {
-// 			return nil, &commonModels.ErrorDetail{
-// 				ErrorCode:    commonModels.ErrorDbConnection,
-// 				ErrorMessage: err.Error(),
-// 			}
-// 		}
-// 		dynamoDbSession := session.Must(dbSession, err)
+var balePersistanceObj *BalePersistance
 
-// 		balePersistanceObj = &BalePersistance{
-// 			db:                 dynamodb.New(dynamoDbSession),
-// 			inventoryTableName: common.EnvValues.InventoryTableName,
-// 			baleInfoTable:      common.EnvValues.BaleInfoTableName,
-// 			itemTable:          common.EnvValues.ItemTableName,
-// 		}
-// 	}
+type BalePersistance struct {
+	db              *dynamodb.DynamoDB
+	baleTableName   string
+	baleNoIndexName string
+}
 
-// 	return balePersistanceObj, nil
-// }
+func InitBalePersistance() (IBalePersistance, *commonModels.ErrorDetail) {
+	if balePersistanceObj == nil {
+		dbSession, err := session.NewSessionWithOptions(session.Options{
+			SharedConfigState: session.SharedConfigEnable,
+		})
+
+		if err != nil {
+			return nil, &commonModels.ErrorDetail{
+				ErrorCode:    commonModels.ErrorDbConnection,
+				ErrorMessage: err.Error(),
+			}
+		}
+		dynamoDbSession := session.Must(dbSession, err)
+
+		balePersistanceObj = &BalePersistance{
+			db:              dynamodb.New(dynamoDbSession),
+			baleTableName:   common.EnvValues.BaleTableName,
+			baleNoIndexName: common.EnvValues.BaleNoIndexName,
+		}
+	}
+
+	return balePersistanceObj, nil
+}
+
+func (repo *BalePersistance) GetBaleInfoByBaleNo(baleNumber string) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
+	keyCondition := expression.Key("baleNo").Equal(expression.Value(baleNumber))
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+
+	var queryInput = dynamodb.QueryInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		TableName:                 aws.String(repo.baleTableName),
+		IndexName:                 aws.String(repo.baleNoIndexName),
+	}
+
+	result, err := purchansePersistanceObj.db.Query(&queryInput)
+
+	if err != nil {
+		errMessage := fmt.Sprintf("get bale details for bale number %s call failed: %s", baleNumber, err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	baleDetails, parseBaleDetailsErr := parseDbItemsToBaleDetailList(result.Items)
+
+	if parseBaleDetailsErr != nil {
+		return nil, parseBaleDetailsErr
+	}
+
+	return &baleDetails[0], nil
+}
+
+func (repo *BalePersistance) GetBaleInfoByGodownId(godownId, sortKey string, pageSize int64) ([]commonModels.BaleDetailsDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail) {
+	var lastEvalutionKey map[string]*dynamodb.AttributeValue
+
+	keyCondition := expression.Key("godownId").Equal(expression.Value(godownId))
+	keyCondition.And(expression.Key("sortKey").BeginsWith(sortKey))
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+
+	result, getBaleDetailError := getBaleDetailsDb(expr, pageSize)
+	if err != nil {
+		return nil, nil, getBaleDetailError
+	}
+	lastEvalutionKey = result.LastEvaluatedKey
+	baleDetails, parseBaleDetailsErr := parseDbItemsToBaleDetailList(result.Items)
+
+	if parseBaleDetailsErr != nil {
+		return nil, nil, parseBaleDetailsErr
+	}
+	for len(baleDetails) < int(pageSize) && lastEvalutionKey != nil {
+		result, getBaleDetailError = getBaleDetailsDb(expr, pageSize)
+		if err != nil {
+			return nil, nil, getBaleDetailError
+		}
+		lastEvalutionKey = result.LastEvaluatedKey
+		baleDetailsTemp, parseBaleDetailsErr := parseDbItemsToBaleDetailList(result.Items)
+		if parseBaleDetailsErr != nil {
+			return nil, nil, parseBaleDetailsErr
+		}
+		baleDetails = append(baleDetails, baleDetailsTemp...)
+	}
+	return baleDetails, lastEvalutionKey, nil
+}
+
+func (repo *BalePersistance) GetBaleInfoTotalByGodownId(godownId, sortKey string) (int64, *commonModels.ErrorDetail) {
+	var lastEvalutionKey map[string]*dynamodb.AttributeValue
+	var count, pageSize int64 = 0, 100
+	proj := expression.NamesList(expression.Name("godownId"))
+	keyCondition := expression.Key("godownId").Equal(expression.Value(godownId))
+	keyCondition.And(expression.Key("sortKey").BeginsWith(sortKey))
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).WithProjection(proj).Build()
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return 0, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+
+	result, getBaleDetailError := getBaleDetailsDb(expr, pageSize)
+	if err != nil {
+		return 0, getBaleDetailError
+	}
+	lastEvalutionKey = result.LastEvaluatedKey
+	count = count + int64(len(result.Items))
+
+	for len(result.Items) > 0 && lastEvalutionKey != nil {
+		result, getBaleDetailError = getBaleDetailsDb(expr, pageSize)
+		if err != nil {
+			return 0, getBaleDetailError
+		}
+		lastEvalutionKey = result.LastEvaluatedKey
+		count = count + int64(len(result.Items))
+	}
+	return count, nil
+}
+
+func (repo *BalePersistance) UpsertBaleInfo(baleDetails commonModels.BaleDetailsDto) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
+	av, err := dynamodbattribute.MarshalMap(baleDetails)
+	if err != nil {
+		common.WriteLog(1, err.Error())
+
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: fmt.Sprintf("Got error marshalling bale details, bale number - %s, godown id - %s, err: %s", baleDetails.BaleNo, baleDetails.GodownId, err),
+		}
+	}
+	_, err = repo.db.PutItem(&dynamodb.PutItemInput{
+		TableName: &repo.baleTableName,
+		Item:      av,
+	})
+
+	if err != nil {
+		common.WriteLog(1, err.Error())
+
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorInsert,
+			ErrorMessage: fmt.Sprintf("Error in adding/updating bale data for bill no %s, godown id %s, error message; %s", baleDetails.BaleNo, baleDetails.GodownId, err.Error()),
+		}
+	}
+	return &baleDetails, nil
+}
+func (repo *BalePersistance) TransferBale(baleNumber, fromGodownId, toGowodnId string) *commonModels.ErrorDetail {
+	oldBaleDetails, baleInfoErr := repo.GetBaleInfoByBaleNo(baleNumber)
+	if baleInfoErr != nil {
+		return baleInfoErr
+	}
+	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &repo.baleTableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"godownId": {
+				S: aws.String(oldBaleDetails.GodownId),
+			},
+			"sortKey": {
+				S: aws.String(oldBaleDetails.SortKey),
+			},
+		},
+	})
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in deleting bale no: %s for godownId: %s, error; %s", oldBaleDetails.BaleNo, oldBaleDetails.GodownId, err.Error()),
+		}
+	}
+	oldBaleDetails.GodownId = toGowodnId
+	if oldBaleDetails.TransferDetails == nil {
+		oldBaleDetails.TransferDetails = make([]commonModels.BaleTransferDetails, 0)
+	}
+	oldBaleDetails.TransferDetails = append(oldBaleDetails.TransferDetails, commonModels.BaleTransferDetails{
+		FromGodownId: fromGodownId,
+		ToGowodnId:   toGowodnId,
+		Date:         time.Now(),
+	})
+	_, updateBaleInfoErr := repo.UpsertBaleInfo(*oldBaleDetails)
+
+	return updateBaleInfoErr
+}
+
+func (repo *BalePersistance) CheckBale(baleNumber string, receivedQuantity int32) *commonModels.ErrorDetail {
+	baleDetails, baleInfoErr := repo.GetBaleInfoByBaleNo(baleNumber)
+	if baleInfoErr != nil {
+		return baleInfoErr
+	}
+
+	baleDetails.ReceivedQuantity = receivedQuantity
+	_, updateBaleInfoErr := repo.UpsertBaleInfo(*baleDetails)
+
+	return updateBaleInfoErr
+}
+
+func (repo *BalePersistance) BatchInsertBale(baleDetails []commonModels.BaleDetailsDto) *commonModels.ErrorDetail {
+	var writeReqests []*dynamodb.WriteRequest = make([]*dynamodb.WriteRequest, len(baleDetails))
+	for i, val := range baleDetails {
+		av, err := dynamodbattribute.MarshalMap(val)
+		if err != nil {
+			common.WriteLog(1, err.Error())
+
+			return &commonModels.ErrorDetail{
+				ErrorCode:    commonModels.ErrorServer,
+				ErrorMessage: fmt.Sprintf("Got error marshalling bale details, bale number - %s, godown id - %s, err: %s", val.BaleNo, val.GodownId, err),
+			}
+		}
+		writeReqests[i] = &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: av,
+			},
+		}
+	}
+	params := &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]*dynamodb.WriteRequest{
+			repo.baleTableName: writeReqests,
+		},
+	}
+	_, err := repo.db.BatchWriteItem(params)
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in adding bales for godownId: %s, error; %s", baleDetails[0].GodownId, err.Error()),
+		}
+	}
+	return nil
+}
+
+func getBaleDetailsDb(expr expression.Expression, pageSize int64) (*dynamodb.QueryOutput, *commonModels.ErrorDetail) {
+	var queryInput = dynamodb.QueryInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		TableName:                 aws.String(balePersistanceObj.baleTableName),
+	}
+	if pageSize > 0 {
+		queryInput.Limit = &pageSize
+	}
+	result, err := purchansePersistanceObj.db.Query(&queryInput)
+
+	if err != nil {
+		errMessage := fmt.Sprintf("get bale details call failed: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	return result, nil
+}
+
+func parseDbItemsToBaleDetailList(items []map[string]*dynamodb.AttributeValue) ([]commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
+	baleDetails := make([]commonModels.BaleDetailsDto, 0)
+
+	if len(items) > 0 {
+		for _, val := range items {
+			baleDetail, err := parseDbItemToBaleDetail(val)
+			if err != nil {
+				return nil, err
+			}
+			baleDetails = append(baleDetails, *baleDetail)
+		}
+		return baleDetails, nil
+	}
+	return nil, &commonModels.ErrorDetail{
+		ErrorCode:    commonModels.ErrorNoDataFound,
+		ErrorMessage: "No data found",
+	}
+}
+func parseDbItemToBaleDetail(item map[string]*dynamodb.AttributeValue) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
+	baleDetail := commonModels.BaleDetailsDto{}
+
+	err := dynamodbattribute.UnmarshalMap(item, &baleDetail)
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error unmarshalling: %s", err)
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+
+	return &baleDetail, nil
+}
+
 // func (repo *BalePersistance) UpdateBaleDetailQuantity(data commonModels.BaleDetailsDto) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
 // 	updateItemInput := dynamodb.UpdateItemInput{
 // 		TableName: &repo.itemTable,
