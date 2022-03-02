@@ -3,9 +3,6 @@ package controller
 import (
 	commonModels "commonpkg/models"
 	"item-service/service"
-	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 var baleControllerObj *BaleController
@@ -28,26 +25,26 @@ func InitBaleController() (*BaleController, *commonModels.ErrorDetail) {
 	return baleControllerObj, nil
 }
 
-func (ctrl *BaleController) GetBaleInfo(context *gin.Context) {
-	var filterData commonModels.BaleInfoReuest
-	if err := context.ShouldBindUri(&filterData); err == nil {
-		data := ctrl.baleService.GetBaleInfo(filterData)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-	}
-}
+// func (ctrl *BaleController) GetBaleInfo(context *gin.Context) {
+// 	var filterData commonModels.BaleInfoReuest
+// 	if err := context.ShouldBindUri(&filterData); err == nil {
+// 		data := ctrl.baleService.GetBaleInfo(filterData)
+// 		context.JSON(data.StatusCode, data)
+// 	} else {
+// 		context.JSON(http.StatusBadRequest, gin.H{
+// 			"error": err,
+// 		})
+// 	}
+// }
 
-func (ctrl *BaleController) GetBalesByQuantity(context *gin.Context) {
-	var filterData commonModels.BaleInfoReuest
-	if err := context.ShouldBindUri(&filterData); err == nil {
-		data := ctrl.baleService.GetBaleInfoByQuality(filterData)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-	}
-}
+// func (ctrl *BaleController) GetBalesByQuantity(context *gin.Context) {
+// 	var filterData commonModels.BaleInfoReuest
+// 	if err := context.ShouldBindUri(&filterData); err == nil {
+// 		data := ctrl.baleService.GetBaleInfoByQuality(filterData)
+// 		context.JSON(data.StatusCode, data)
+// 	} else {
+// 		context.JSON(http.StatusBadRequest, gin.H{
+// 			"error": err,
+// 		})
+// 	}
+// }

@@ -2,14 +2,26 @@ package service
 
 import (
 	commonModels "commonpkg/models"
+	"fmt"
+	"item-service/common"
 	"item-service/persistance"
+	"net/http"
+
+	uuid "github.com/iris-contrib/go.uuid"
 )
+
+type ISalesService interface {
+	GetAll(request commonModels.InventoryListRequest) commonModels.SalesListResponse
+	GetbyId(salesId string) commonModels.SalesResponse
+	Add(data commonModels.AddSalesDataRequest) commonModels.AddSalesDataResponse
+}
 
 var salesServiceObj *SalesService
 
 type SalesService struct {
-	baleRepo persistance.IBalePersistance
-	// salesRepo *persistance.SalesPersistance
+	baleRepo     persistance.IBalePersistance
+	salesRepo    persistance.ISalesPersistance
+	purchaseRepo persistance.IPurchasePersistance
 }
 
 func InitSalesService() (*SalesService, *commonModels.ErrorDetail) {
@@ -20,17 +32,211 @@ func InitSalesService() (*SalesService, *commonModels.ErrorDetail) {
 			return nil, err
 		}
 
-		// salesRepo, err := persistance.InitSalesPersistance()
-		// if err != nil {
-		// 	return nil, err
-		// }
+		salesRepo, err := persistance.InitSalesPersistance()
+		if err != nil {
+			return nil, err
+		}
+
+		purchaseRepo, err := persistance.InitPurchasePersistance()
+		if err != nil {
+			return nil, err
+		}
 
 		salesServiceObj = &SalesService{
-			baleRepo: baleRepo,
-			// salesRepo: salesRepo,
+			baleRepo:     baleRepo,
+			salesRepo:    salesRepo,
+			purchaseRepo: purchaseRepo,
 		}
 	}
 	return salesServiceObj, nil
+}
+func (svc *SalesService) GetAll(request commonModels.InventoryListRequest) commonModels.SalesListResponse {
+	list, lastEvalutionKey, err := svc.salesRepo.GetAll(request)
+	if err != nil {
+		return commonModels.SalesListResponse{
+			CommonListResponse: commonModels.CommonListResponse{
+				CommonResponse: commonModels.CommonResponse{
+					StatusCode:   http.StatusBadRequest,
+					ErrorMessage: "Error in getting basic challans",
+					Errors: []commonModels.ErrorDetail{
+						*err,
+					},
+				},
+			},
+		}
+	}
+	request.LastEvalutionKey = nil
+	total, err := svc.salesRepo.GetAllTotal(request)
+	if err != nil {
+		return commonModels.SalesListResponse{
+			CommonListResponse: commonModels.CommonListResponse{
+				CommonResponse: commonModels.CommonResponse{
+					StatusCode:   http.StatusBadRequest,
+					ErrorMessage: "Error in getting basic challans",
+					Errors: []commonModels.ErrorDetail{
+						*err,
+					},
+				},
+			},
+		}
+	}
+	return commonModels.SalesListResponse{
+		CommonListResponse: commonModels.CommonListResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode: http.StatusOK,
+			},
+
+			LastEvalutionKey: lastEvalutionKey,
+			PageSize:         request.PageSize,
+			Total:            total,
+		},
+		Data: list,
+	}
+}
+
+func (svc *SalesService) GetbyId(salesId string) commonModels.SalesResponse {
+	data, err := svc.salesRepo.GetById(salesId)
+	if err != nil {
+		return commonModels.SalesResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: fmt.Sprintf("could not get details for delivery challan id %s", salesId),
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+		}
+	}
+
+	return commonModels.SalesResponse{
+		CommonResponse: commonModels.CommonResponse{
+			StatusCode: http.StatusOK,
+		},
+		Data: *data,
+	}
+}
+func (svc *SalesService) Add(data commonModels.AddSalesDataRequest) commonModels.AddSalesDataResponse {
+	purchaseIdMap := make(map[string]commonModels.BaleDetailsDto)
+
+	var errors []commonModels.ErrorDetail = make([]commonModels.ErrorDetail, 0)
+	id, _ := uuid.NewV1()
+	data.SalesDetails.SalesId = id.String()
+	data.SalesDetails.SortKey = common.GetSalesSortKey(data.SalesDetails.ProductId, data.SalesDetails.QualityId, data.SalesDetails.SalesId)
+
+	for i := range data.BaleDetails {
+		oldBale, err := svc.baleRepo.GetBaleInfoByBaleNo(data.BaleDetails[i].BaleNo)
+		if oldBale == nil || err != nil {
+			errors = append(errors, commonModels.ErrorDetail{
+				ErrorCode:    commonModels.ErrorAlreadyExists,
+				ErrorMessage: fmt.Sprintf("bale no %s not found", data.BaleDetails[i].BaleNo),
+			})
+			continue
+		}
+
+		oldBale.SalesDetails = commonModels.BaleSalesDetails{
+			SalesId: data.SalesDetails.SalesId,
+		}
+		purchaseIdMap[oldBale.PurchaseDetails.PurchaseId] = *oldBale
+		data.BaleDetails[i] = *oldBale
+	}
+
+	if len(errors) > 0 {
+		return commonModels.AddSalesDataResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: "Error in addign basic challan due to multiple errors.",
+				Errors:       errors,
+			},
+			SalesDetails: data.SalesDetails,
+			BaleDetails:  data.BaleDetails,
+		}
+	}
+	oldpurchase, getPurchaseBillNo := svc.salesRepo.GetByBillNo(data.SalesDetails.SalesBillNo)
+	if oldpurchase != nil {
+		return commonModels.AddSalesDataResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: "Error in addign delivery challan due to multiple errors.",
+				Errors: []commonModels.ErrorDetail{
+					{
+						ErrorCode:    commonModels.ErrorAlreadyExists,
+						ErrorMessage: fmt.Sprintf("same delivery challan no %s already exists.", data.SalesDetails.SalesBillNo),
+					},
+				},
+			},
+			SalesDetails: data.SalesDetails,
+			BaleDetails:  data.BaleDetails,
+		}
+	}
+	if getPurchaseBillNo != nil && getPurchaseBillNo.ErrorCode != commonModels.ErrorNoDataFound {
+		return commonModels.AddSalesDataResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: "Error in addign delivery challan due to multiple errors.",
+				Errors: []commonModels.ErrorDetail{
+					*getPurchaseBillNo,
+				},
+			},
+			SalesDetails: data.SalesDetails,
+			BaleDetails:  data.BaleDetails,
+		}
+	}
+	_, err := svc.salesRepo.Add(data.SalesDetails)
+	if err != nil {
+		return commonModels.AddSalesDataResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: "Error in addign delivery challan due to multiple errors.",
+				Errors: []commonModels.ErrorDetail{
+					*err,
+				},
+			},
+			SalesDetails: data.SalesDetails,
+			BaleDetails:  data.BaleDetails,
+		}
+	}
+	for _, val := range data.BaleDetails {
+		sellErr := svc.baleRepo.SellBale(val)
+		if sellErr != nil {
+			return commonModels.AddSalesDataResponse{
+				CommonResponse: commonModels.CommonResponse{
+					StatusCode:   http.StatusBadRequest,
+					ErrorMessage: "Error in making bale sold.",
+					Errors: []commonModels.ErrorDetail{
+						*sellErr,
+					},
+				},
+				SalesDetails: data.SalesDetails,
+				BaleDetails:  data.BaleDetails,
+			}
+		}
+	}
+	for _, val := range purchaseIdMap {
+		_, e := svc.baleRepo.GetBaleForPurchaseId(val.ProductId, val.QualityId, val.PurchaseDetails.PurchaseId)
+		if e != nil && e.ErrorCode != commonModels.ErrorNoDataFound {
+			return commonModels.AddSalesDataResponse{
+				CommonResponse: commonModels.CommonResponse{
+					StatusCode:   http.StatusBadRequest,
+					ErrorMessage: "Error in making bale sold.",
+					Errors: []commonModels.ErrorDetail{
+						*e,
+					},
+				},
+				SalesDetails: data.SalesDetails,
+				BaleDetails:  data.BaleDetails,
+			}
+		}
+		if e != nil && e.ErrorCode == commonModels.ErrorNoDataFound {
+			svc.purchaseRepo.UpdateSold(val.PurchaseDetails.PurchaseId)
+		}
+	}
+	return commonModels.AddSalesDataResponse{
+		CommonResponse: commonModels.CommonResponse{
+			StatusCode: http.StatusOK,
+		},
+		SalesDetails: data.SalesDetails,
+		BaleDetails:  data.BaleDetails,
+	}
 }
 
 // //updated

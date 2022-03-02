@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	documentinfra "infra/document-infra"
+	_ "infra/document-infra"
 	organizationinfra "infra/organization-infra"
 
 	common "infra/common"
@@ -41,10 +41,6 @@ var infraStackProps = common.InfraStackProps{
 				RecordName: "transporter-api",
 				Url:        fmt.Sprintf("transporter-api.%s", baseDomain),
 			},
-			HsnCodeApiDomain: common.DomainDetails{
-				RecordName: "hsncode-api",
-				Url:        fmt.Sprintf("hsncode-api.%s", baseDomain),
-			},
 			QualityApiDomain: common.DomainDetails{
 				RecordName: "quality-api",
 				Url:        fmt.Sprintf("quality-api.%s", baseDomain),
@@ -74,12 +70,9 @@ var infraStackProps = common.InfraStackProps{
 func main() {
 	app := awscdk.NewApp(nil)
 
-	// clientinfra.NewClientStack(app, "ClientStack", &clientinfra.ClientStackProps{
+	// documentinfra.NewDocumentStack(app, "DocumentStack", &documentinfra.DocumentStackProps{
 	// 	InfraStackProps: infraStackProps,
 	// })
-	documentinfra.NewDocumentStack(app, "DocumentStack", &documentinfra.DocumentStackProps{
-		InfraStackProps: infraStackProps,
-	})
 
 	iteminfra.NewItemStack(app, "ItemStack", &iteminfra.ItemStackProps{
 		InfraStackProps: infraStackProps,

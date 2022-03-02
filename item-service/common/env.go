@@ -7,6 +7,7 @@ type Env struct {
 	PurchaseTableName       string
 	SalesTableName          string
 	PurchaseIdIndexName     string
+	SalesIdIndexName        string
 	PurchaseBillNoIndexName string
 	SalesBillNoIndexName    string
 	ChallanNoIndexName      string
@@ -23,6 +24,7 @@ func InitEnv(isLocal string) {
 			PurchaseTableName:       os.Getenv("PurchaseTable"),
 			SalesTableName:          os.Getenv("SalesTable"),
 			PurchaseIdIndexName:     os.Getenv("PurchaseIdIndex"),
+			SalesIdIndexName:        os.Getenv("SalesIdIndex"),
 			PurchaseBillNoIndexName: os.Getenv("PurchaseBillNoIndex"),
 			SalesBillNoIndexName:    os.Getenv("SalesBillNoIndex"),
 			ChallanNoIndexName:      os.Getenv("ChallanNoIndex"),
@@ -34,6 +36,7 @@ func InitEnv(isLocal string) {
 			BaleTableName:           os.Getenv("bale-table"),
 			PurchaseTableName:       os.Getenv("purchase-table"),
 			SalesTableName:          os.Getenv("sales-table"),
+			SalesIdIndexName:        os.Getenv("salesid-index"),
 			PurchaseIdIndexName:     os.Getenv("purchaseid-index"),
 			PurchaseBillNoIndexName: os.Getenv("purchase-billno-index"),
 			SalesBillNoIndexName:    os.Getenv("sales-billno-index"),

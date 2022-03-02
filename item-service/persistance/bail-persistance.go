@@ -19,8 +19,10 @@ type IBalePersistance interface {
 	GetBaleInfoTotalByGodownId(godownId, sortKey string) (int64, *commonModels.ErrorDetail)
 	UpsertBaleInfo(baleDetails commonModels.BaleDetailsDto) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail)
 	TransferBale(baleNumber, fromGodownId, toGowodnId string) *commonModels.ErrorDetail
+	SellBale(baleDetails commonModels.BaleDetailsDto) *commonModels.ErrorDetail
 	CheckBale(baleNumber string, receivedQuantity int32) *commonModels.ErrorDetail
 	BatchInsertBale(baleDetails []commonModels.BaleDetailsDto) *commonModels.ErrorDetail
+	GetBaleForPurchaseId(productId, qualityId, purchaseId string) ([]commonModels.BaleDetailsDto, *commonModels.ErrorDetail)
 }
 
 var balePersistanceObj *BalePersistance
@@ -114,8 +116,8 @@ func (repo *BalePersistance) GetBaleInfoByGodownId(godownId, sortKey string, pag
 		}
 	}
 
-	result, getBaleDetailError := getBaleDetailsDb(expr, pageSize)
-	if err != nil {
+	result, getBaleDetailError := getBaleDetailsDb(expr, lastEvalutionKey, pageSize)
+	if getBaleDetailError != nil {
 		return nil, nil, getBaleDetailError
 	}
 	lastEvalutionKey = result.LastEvaluatedKey
@@ -125,18 +127,58 @@ func (repo *BalePersistance) GetBaleInfoByGodownId(godownId, sortKey string, pag
 		return nil, nil, parseBaleDetailsErr
 	}
 	for len(baleDetails) < int(pageSize) && lastEvalutionKey != nil {
-		result, getBaleDetailError = getBaleDetailsDb(expr, pageSize)
-		if err != nil {
+		result, getBaleDetailError = getBaleDetailsDb(expr, lastEvalutionKey, pageSize)
+		if getBaleDetailError != nil {
 			return nil, nil, getBaleDetailError
 		}
 		lastEvalutionKey = result.LastEvaluatedKey
 		baleDetailsTemp, parseBaleDetailsErr := parseDbItemsToBaleDetailList(result.Items)
-		if parseBaleDetailsErr != nil {
+		if parseBaleDetailsErr != nil && parseBaleDetailsErr.ErrorCode != commonModels.ErrorNoDataFound {
 			return nil, nil, parseBaleDetailsErr
 		}
 		baleDetails = append(baleDetails, baleDetailsTemp...)
 	}
 	return baleDetails, lastEvalutionKey, nil
+}
+
+func (repo *BalePersistance) GetBaleForPurchaseId(productId, qualityId, purchaseId string) ([]commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
+	var lastEvalutionKey map[string]*dynamodb.AttributeValue
+
+	condBuilder := expression.Name("sortKey").BeginsWith(common.GetInStockBaleSortKey(productId, qualityId, ""))
+	condBuilder.And(expression.Name("purchaseDetails.purchaseId").Equal(expression.Value(purchaseId)))
+	expr, err := expression.NewBuilder().WithFilter(condBuilder).Build()
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	result, getBaleDetailError := getBaleDetailsDb(expr, lastEvalutionKey, 100)
+	if getBaleDetailError != nil {
+		return nil, getBaleDetailError
+	}
+	lastEvalutionKey = result.LastEvaluatedKey
+	baleDetails, parseBaleDetailsErr := parseDbItemsToBaleDetailList(result.Items)
+
+	if parseBaleDetailsErr != nil {
+		return nil, parseBaleDetailsErr
+	}
+	for lastEvalutionKey != nil {
+		result, getBaleDetailError = getBaleDetailsDb(expr, lastEvalutionKey, 100)
+		if getBaleDetailError != nil {
+			return nil, getBaleDetailError
+		}
+		lastEvalutionKey = result.LastEvaluatedKey
+		baleDetailsTemp, parseBaleDetailsErr := parseDbItemsToBaleDetailList(result.Items)
+		if parseBaleDetailsErr != nil && parseBaleDetailsErr.ErrorCode != commonModels.ErrorNoDataFound {
+			return nil, parseBaleDetailsErr
+		}
+		baleDetails = append(baleDetails, baleDetailsTemp...)
+	}
+	return baleDetails, nil
 }
 
 func (repo *BalePersistance) GetBaleInfoTotalByGodownId(godownId, sortKey string) (int64, *commonModels.ErrorDetail) {
@@ -157,16 +199,16 @@ func (repo *BalePersistance) GetBaleInfoTotalByGodownId(godownId, sortKey string
 		}
 	}
 
-	result, getBaleDetailError := getBaleDetailsDb(expr, pageSize)
-	if err != nil {
+	result, getBaleDetailError := getBaleDetailsDb(expr, lastEvalutionKey, pageSize)
+	if getBaleDetailError != nil {
 		return 0, getBaleDetailError
 	}
 	lastEvalutionKey = result.LastEvaluatedKey
 	count = count + int64(len(result.Items))
 
 	for len(result.Items) > 0 && lastEvalutionKey != nil {
-		result, getBaleDetailError = getBaleDetailsDb(expr, pageSize)
-		if err != nil {
+		result, getBaleDetailError = getBaleDetailsDb(expr, lastEvalutionKey, pageSize)
+		if getBaleDetailError != nil && getBaleDetailError.ErrorCode != commonModels.ErrorNoDataFound {
 			return 0, getBaleDetailError
 		}
 		lastEvalutionKey = result.LastEvaluatedKey
@@ -200,6 +242,7 @@ func (repo *BalePersistance) UpsertBaleInfo(baleDetails commonModels.BaleDetails
 	}
 	return &baleDetails, nil
 }
+
 func (repo *BalePersistance) TransferBale(baleNumber, fromGodownId, toGowodnId string) *commonModels.ErrorDetail {
 	oldBaleDetails, baleInfoErr := repo.GetBaleInfoByBaleNo(baleNumber)
 	if baleInfoErr != nil {
@@ -234,6 +277,30 @@ func (repo *BalePersistance) TransferBale(baleNumber, fromGodownId, toGowodnId s
 	})
 	_, updateBaleInfoErr := repo.UpsertBaleInfo(*oldBaleDetails)
 
+	return updateBaleInfoErr
+}
+
+func (repo *BalePersistance) SellBale(baleDetails commonModels.BaleDetailsDto) *commonModels.ErrorDetail {
+	_, err := repo.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: &repo.baleTableName,
+		Key: map[string]*dynamodb.AttributeValue{
+			"godownId": {
+				S: aws.String(baleDetails.GodownId),
+			},
+			"sortKey": {
+				S: aws.String(baleDetails.SortKey),
+			},
+		},
+	})
+	if err != nil {
+		common.WriteLog(1, err.Error())
+		return &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorDelete,
+			ErrorMessage: fmt.Sprintf("Error in deleting bale no: %s for godownId: %s, error; %s", baleDetails.BaleNo, baleDetails.GodownId, err.Error()),
+		}
+	}
+	baleDetails.SortKey = common.GetSoldBaleSortKey(baleDetails.ProductId, baleDetails.QualityId, baleDetails.BaleNo)
+	_, updateBaleInfoErr := repo.UpsertBaleInfo(baleDetails)
 	return updateBaleInfoErr
 }
 
@@ -283,12 +350,13 @@ func (repo *BalePersistance) BatchInsertBale(baleDetails []commonModels.BaleDeta
 	return nil
 }
 
-func getBaleDetailsDb(expr expression.Expression, pageSize int64) (*dynamodb.QueryOutput, *commonModels.ErrorDetail) {
+func getBaleDetailsDb(expr expression.Expression, lastEvalutionKey map[string]*dynamodb.AttributeValue, pageSize int64) (*dynamodb.QueryOutput, *commonModels.ErrorDetail) {
 	var queryInput = dynamodb.QueryInput{
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		FilterExpression:          expr.Filter(),
 		KeyConditionExpression:    expr.KeyCondition(),
+		ExclusiveStartKey:         lastEvalutionKey,
 		TableName:                 aws.String(balePersistanceObj.baleTableName),
 	}
 	if pageSize > 0 {
@@ -325,6 +393,7 @@ func parseDbItemsToBaleDetailList(items []map[string]*dynamodb.AttributeValue) (
 		ErrorMessage: "No data found",
 	}
 }
+
 func parseDbItemToBaleDetail(item map[string]*dynamodb.AttributeValue) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
 	baleDetail := commonModels.BaleDetailsDto{}
 

@@ -25,7 +25,7 @@ type DomainDetails struct {
 }
 type Domain struct {
 	BaseApi                                                                   string
-	ClientApiDomain, VendorApiDomain, TransporterApiDomain, HsnCodeApiDomain  DomainDetails
+	ClientApiDomain, VendorApiDomain, TransporterApiDomain                    DomainDetails
 	QualityApiDomain, ItemApiDomain, DocumentApiDomain, OrganizationApiDomain DomainDetails
 }
 type InfraStackProps struct {

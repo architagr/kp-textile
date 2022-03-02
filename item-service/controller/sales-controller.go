@@ -32,21 +32,7 @@ func InitSalesController() (*SalesController, *commonModels.ErrorDetail) {
 func (ctrl *SalesController) GetAllSalesOrders(context *gin.Context) {
 	var getAllRequest commonModels.InventoryListRequest
 	if err := context.ShouldBindJSON(&getAllRequest); err == nil {
-		data := ctrl.salesService.GetAllSalesOrders(getAllRequest)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-	}
-}
-
-func (ctrl *SalesController) GetSalesBillDetails(context *gin.Context) {
-	var request commonModels.InventoryFilterDto
-
-	if err := context.ShouldBindUri(&request); err == nil {
-
-		data := ctrl.salesService.GetSalesBillDetails(request)
+		data := ctrl.salesService.GetAll(getAllRequest)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -56,9 +42,9 @@ func (ctrl *SalesController) GetSalesBillDetails(context *gin.Context) {
 }
 
 func (ctrl *SalesController) AddSalesBillDetails(context *gin.Context) {
-	var addData commonModels.InventoryDto
+	var addData commonModels.AddSalesDataRequest
 	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.salesService.AddSalesBillDetails(addData)
+		data := ctrl.salesService.Add(addData)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{

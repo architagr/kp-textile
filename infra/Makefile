@@ -1,6 +1,6 @@
 build:
 	make -C ../vendor-service lambda-build
-	make -C ../document-service lambda-build
+	# make -C ../document-service lambda-build
 	make -C ../item-service lambda-build
 	make -C ../quality-service lambda-build
 	make -C ../transportor-service lambda-build

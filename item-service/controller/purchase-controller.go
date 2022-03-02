@@ -11,7 +11,7 @@ import (
 var purchaseControllerObj *PurchaseController
 
 type PurchaseController struct {
-	purchaseService *service.PurchaseService
+	purchaseService service.IPurchaseService
 }
 
 func InitPurchaseController() (*PurchaseController, *commonModels.ErrorDetail) {
@@ -32,21 +32,7 @@ func InitPurchaseController() (*PurchaseController, *commonModels.ErrorDetail) {
 func (ctrl *PurchaseController) GetAllPurchaseOrders(context *gin.Context) {
 	var getAllRequest commonModels.InventoryListRequest
 	if err := context.ShouldBindJSON(&getAllRequest); err == nil {
-		data := ctrl.purchaseService.GetAllPurchaseOrders(getAllRequest)
-		context.JSON(data.StatusCode, data)
-	} else {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-	}
-}
-
-func (ctrl *PurchaseController) GetPurchaseBillDetails(context *gin.Context) {
-	var request commonModels.InventoryFilterDto
-
-	if err := context.ShouldBindUri(&request); err == nil {
-
-		data := ctrl.purchaseService.GetPurchaseBillDetails(request)
+		data := ctrl.purchaseService.GetAll(getAllRequest)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -56,9 +42,9 @@ func (ctrl *PurchaseController) GetPurchaseBillDetails(context *gin.Context) {
 }
 
 func (ctrl *PurchaseController) AddPurchaseBillDetails(context *gin.Context) {
-	var addData commonModels.InventoryDto
+	var addData commonModels.AddPurchaseDataRequest
 	if err := context.ShouldBindJSON(&addData); err == nil {
-		data := ctrl.purchaseService.AddPurchaseBillDetails(addData)
+		data := ctrl.purchaseService.Add(addData)
 		context.JSON(data.StatusCode, data)
 	} else {
 		context.JSON(http.StatusBadRequest, gin.H{

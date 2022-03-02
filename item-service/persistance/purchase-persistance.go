@@ -63,8 +63,31 @@ func (repo *PurchasePersistance) GetAllTotal(request commonModels.InventoryListR
 		sortKey := common.GetPurchaseSortKey(request.ProductId, request.QualityId, "")
 		keyCondition.And(expression.Key("sortKey").BeginsWith(sortKey))
 	}
+	exprBuilder := expression.NewBuilder()
 
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).WithProjection(proj).Build()
+	var filterFlag = false
+	var filter expression.ConditionBuilder
+	if len(request.PurchaseStatus) > 0 {
+		filter = expression.Name("status").Equal(expression.Value(request.PurchaseStatus))
+		filterFlag = true
+	}
+
+	if len(request.PurchaseBillNumber) > 0 {
+
+		filter1 := expression.Name("purchaseBillNo").Equal(expression.Value(request.PurchaseBillNumber))
+		if filterFlag {
+			filter = filter.And(filter1)
+		} else {
+			filter = filter1
+		}
+		filterFlag = true
+	}
+
+	if filterFlag {
+		exprBuilder = exprBuilder.WithFilter(filter)
+	}
+
+	expr, err := exprBuilder.WithKeyCondition(keyCondition).WithProjection(proj).Build()
 
 	if err != nil {
 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
@@ -102,7 +125,31 @@ func (repo *PurchasePersistance) GetAll(request commonModels.InventoryListReques
 		sortKey := common.GetPurchaseSortKey(request.ProductId, request.QualityId, "")
 		keyCondition.And(expression.Key("sortKey").BeginsWith(sortKey))
 	}
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	exprBuilder := expression.NewBuilder()
+
+	var filterFlag = false
+	var filter expression.ConditionBuilder
+	if len(request.PurchaseStatus) > 0 {
+		filter = expression.Name("status").Equal(expression.Value(request.PurchaseStatus))
+		filterFlag = true
+	}
+
+	if len(request.PurchaseBillNumber) > 0 {
+
+		filter1 := expression.Name("purchaseBillNo").Equal(expression.Value(request.PurchaseBillNumber))
+		if filterFlag {
+			filter = filter.And(filter1)
+		} else {
+			filter = filter1
+		}
+		filterFlag = true
+	}
+
+	if filterFlag {
+		exprBuilder = exprBuilder.WithFilter(filter)
+	}
+	expr, err := exprBuilder.WithKeyCondition(keyCondition).Build()
 
 	if err != nil {
 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
@@ -178,8 +225,10 @@ func (repo *PurchasePersistance) GetByBillNo(purchaseBillNo string) (*commonMode
 		}
 	}
 	result, getPurchaseDetailError := getPurchaseDetailsInIndex(expr, commonModels.InventoryListRequest{
-		PurchaseBillNo: purchaseBillNo,
-		PageSize:       0,
+		InventoryFilterDto: commonModels.InventoryFilterDto{
+			PurchaseBillNumber: purchaseBillNo,
+		},
+		PageSize: 0,
 	}, repo.purchaseBillNoIndexName)
 
 	if getPurchaseDetailError != nil {

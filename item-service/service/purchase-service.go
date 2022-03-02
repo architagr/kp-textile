@@ -42,6 +42,7 @@ func InitPurchaseService() (IPurchaseService, *commonModels.ErrorDetail) {
 	}
 	return purchaseServiceObj, nil
 }
+
 func (svc *PurchaseService) GetAll(request commonModels.InventoryListRequest) commonModels.PurchaseListResponse {
 	list, lastEvalutionKey, err := svc.purchaseRepo.GetAll(request)
 	if err != nil {

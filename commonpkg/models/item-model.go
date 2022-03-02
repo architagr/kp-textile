@@ -20,7 +20,7 @@ type PurchaseDto struct {
 
 type SalesDto struct {
 	GodownId      string    `json:"godownId,omitempty"`
-	SortKey       string    `json:"sortKey,omitempty"`     /// ProductId|QualityId
+	SortKey       string    `json:"sortKey,omitempty"`     /// ProductId|QualityId|SalesId
 	SalesId       string    `json:"salesId,omitempty"`     // GSI -1  PK  (all attr)
 	SalesBillNo   string    `json:"salesBillNo,omitempty"` // GSI PK (keys only)
 	ClientId      string    `json:"clientId,omitempty"`
@@ -33,10 +33,10 @@ type SalesDto struct {
 }
 
 type BalePurchaseDetails struct {
-	PurchaseId string
+	PurchaseId string `json:"purchaseId,omitempty"`
 }
 type BaleSalesDetails struct {
-	SalesId string
+	SalesId string `json:"salesId,omitempty"`
 }
 type BaleTransferDetails struct {
 	FromGodownId string    `json:"fromGodownId,omitempty"`
@@ -59,22 +59,22 @@ type BaleDetailsDto struct {
 }
 
 type InventoryFilterDto struct {
-	GodownId           string    `json:"godownId,omitempty"`
-	PurchaseBillNumber string    `json:"purchaseBillNumber,omitempty" uri:"purchaseBillNumber"`
-	SalesBillNumber    string    `json:"salesBillNumber,omitempty" uri:"salesBillNumber"`
-	StartDate          time.Time `json:"startDate,omitempty"`
-	EndDate            time.Time `json:"endDate,omitempty"`
-	QualityId          string    `json:"qualityId,omitempty"`
-	ProductId          string    `json:"productId,omitempty"`
+	GodownId           string `json:"godownId,omitempty"`
+	PurchaseBillNumber string `json:"purchaseBillNumber,omitempty" uri:"purchaseBillNumber"`
+	SalesBillNumber    string `json:"salesBillNumber,omitempty" uri:"salesBillNumber"`
+	// StartDate          time.Time `json:"startDate,omitempty"`
+	// EndDate            time.Time `json:"endDate,omitempty"`
+	QualityId string `json:"qualityId,omitempty"`
+	ProductId string `json:"productId,omitempty"`
 }
 
 type InventoryListRequest struct {
+	InventoryFilterDto
 	LastEvalutionKey map[string]*dynamodb.AttributeValue `json:"lastEvalutionKey,omitempty"`
 	PageSize         int64                               `json:"pageSize,omitempty" form:"pageSize"`
+	PurchaseStatus   string                              `json:"purchaseStatus,omitempty"`
 	PurchaseId       string
-	PurchaseBillNo   string
 	SalesId          string
-	InventoryFilterDto
 }
 
 type PurchaseListResponse struct {
@@ -94,6 +94,25 @@ type AddPurchaseDataResponse struct {
 	CommonResponse
 	PurchaseDetails PurchaseDto      `json:"purchaseDetails,omitempty"`
 	BaleDetails     []BaleDetailsDto `json:"baleDetails,omitempty"`
+}
+
+type SalesListResponse struct {
+	CommonListResponse
+	Data []SalesDto `json:"data,omitempty"`
+}
+type SalesResponse struct {
+	CommonResponse
+	Data SalesDto `json:"data,omitempty"`
+}
+
+type AddSalesDataRequest struct {
+	SalesDetails SalesDto         `json:"salesDetails,omitempty"`
+	BaleDetails  []BaleDetailsDto `json:"baleDetails,omitempty"`
+}
+type AddSalesDataResponse struct {
+	CommonResponse
+	SalesDetails SalesDto         `json:"salesDetails,omitempty"`
+	BaleDetails  []BaleDetailsDto `json:"baleDetails,omitempty"`
 }
 
 // type InventoryResponse struct {

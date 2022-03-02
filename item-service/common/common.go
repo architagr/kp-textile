@@ -65,6 +65,10 @@ func GetPurchaseSortKey(productId, qualityId, purchaseId string) string {
 	return fmt.Sprintf("%s|%s|%s", productId, qualityId, purchaseId)
 }
 
+func GetSalesSortKey(productId, qualityId, purchaseId string) string {
+	return fmt.Sprintf("%s|%s|%s", productId, qualityId, purchaseId)
+}
+
 func GetInStockBaleSortKey(productId, qualityId, baleNo string) string {
 	return fmt.Sprintf("%s|%s|%s|%s", SORTKEY_BAILDETAILS_STOCK, productId, qualityId, baleNo)
 }
