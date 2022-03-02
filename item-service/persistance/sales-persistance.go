@@ -17,6 +17,7 @@ type ISalesPersistance interface {
 	GetAll(request commonModels.InventoryListRequest) ([]commonModels.SalesDto, map[string]*dynamodb.AttributeValue, *commonModels.ErrorDetail)
 	GetById(salesId string) (*commonModels.SalesDto, *commonModels.ErrorDetail)
 	GetByBillNo(salesBillNo string) (*commonModels.SalesDto, *commonModels.ErrorDetail)
+	GetByChallanNo(challanNo string) (*commonModels.SalesDto, *commonModels.ErrorDetail)
 	Add(data commonModels.SalesDto) (*commonModels.SalesDto, *commonModels.ErrorDetail)
 }
 
@@ -179,6 +180,36 @@ func (repo *SalesPersistance) GetById(salesId string) (*commonModels.SalesDto, *
 
 	return &salesDetails[0], nil
 }
+
+func (repo *SalesPersistance) GetByChallanNo(challanNo string) (*commonModels.SalesDto, *commonModels.ErrorDetail) {
+	keyCondition := expression.Key("challanNo").Equal(expression.Value(challanNo))
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+
+	if err != nil {
+		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	result, getSalesDetailError := getSaleDetailsInIndex(expr, commonModels.InventoryListRequest{
+		InventoryFilterDto: commonModels.InventoryFilterDto{},
+		PageSize:           0,
+	}, repo.challanNoIndexName)
+
+	if getSalesDetailError != nil {
+		return nil, getSalesDetailError
+	}
+
+	salesDetails, salesListParseErr := parseDbItemsToSalesList(result.Items)
+	if salesListParseErr != nil {
+		return nil, salesListParseErr
+	}
+
+	return &salesDetails[0], nil
+}
+
 func (repo *SalesPersistance) GetByBillNo(salesBillNo string) (*commonModels.SalesDto, *commonModels.ErrorDetail) {
 	keyCondition := expression.Key("salesBillNo").Equal(expression.Value(salesBillNo))
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()

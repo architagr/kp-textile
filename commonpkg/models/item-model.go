@@ -15,7 +15,7 @@ type PurchaseDto struct {
 	VendorId       string    `json:"vendorId,omitempty"`
 	ProductId      string    `json:"productId,omitempty"`
 	QualityId      string    `json:"qualityId,omitempty"`
-	Status         string    `json:"status,omitempty"` // Stock | Sold
+	Status         string    `json:"purchaseStatus,omitempty"` // Stock | Sold
 }
 
 type SalesDto struct {

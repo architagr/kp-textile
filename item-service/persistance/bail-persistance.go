@@ -59,8 +59,8 @@ func InitBalePersistance() (IBalePersistance, *commonModels.ErrorDetail) {
 
 func (repo *BalePersistance) GetBaleInfoByBaleNo(baleNumber string) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
 	keyCondition := expression.Key("baleNo").Equal(expression.Value(baleNumber))
-
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
+	filter := expression.Name("sortKey").BeginsWith(common.SORTKEY_BAILDETAILS_STOCK)
+	expr, err := expression.NewBuilder().WithFilter(filter).WithKeyCondition(keyCondition).Build()
 
 	if err != nil {
 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
@@ -156,7 +156,7 @@ func (repo *BalePersistance) GetBaleForPurchaseId(productId, qualityId, purchase
 			ErrorMessage: errMessage,
 		}
 	}
-	result, getBaleDetailError := getBaleDetailsDb(expr, lastEvalutionKey, 100)
+	result, getBaleDetailError := getBaleDetailsDbScan(expr, lastEvalutionKey, 100)
 	if getBaleDetailError != nil {
 		return nil, getBaleDetailError
 	}
@@ -167,7 +167,7 @@ func (repo *BalePersistance) GetBaleForPurchaseId(productId, qualityId, purchase
 		return nil, parseBaleDetailsErr
 	}
 	for lastEvalutionKey != nil {
-		result, getBaleDetailError = getBaleDetailsDb(expr, lastEvalutionKey, 100)
+		result, getBaleDetailError = getBaleDetailsDbScan(expr, lastEvalutionKey, 100)
 		if getBaleDetailError != nil {
 			return nil, getBaleDetailError
 		}
@@ -363,6 +363,30 @@ func getBaleDetailsDb(expr expression.Expression, lastEvalutionKey map[string]*d
 		queryInput.Limit = &pageSize
 	}
 	result, err := purchansePersistanceObj.db.Query(&queryInput)
+
+	if err != nil {
+		errMessage := fmt.Sprintf("get bale details call failed: %s", err.Error())
+		common.WriteLog(1, errMessage)
+		return nil, &commonModels.ErrorDetail{
+			ErrorCode:    commonModels.ErrorServer,
+			ErrorMessage: errMessage,
+		}
+	}
+	return result, nil
+}
+
+func getBaleDetailsDbScan(expr expression.Expression, lastEvalutionKey map[string]*dynamodb.AttributeValue, pageSize int64) (*dynamodb.ScanOutput, *commonModels.ErrorDetail) {
+	var scanInput = dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ExclusiveStartKey:         lastEvalutionKey,
+		TableName:                 aws.String(balePersistanceObj.baleTableName),
+	}
+	if pageSize > 0 {
+		scanInput.Limit = &pageSize
+	}
+	result, err := purchansePersistanceObj.db.Scan(&scanInput)
 
 	if err != nil {
 		errMessage := fmt.Sprintf("get bale details call failed: %s", err.Error())

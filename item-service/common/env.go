@@ -1,6 +1,8 @@
 package common
 
-import "os"
+import (
+	"os"
+)
 
 type Env struct {
 	BaleTableName           string
@@ -33,15 +35,15 @@ func InitEnv(isLocal string) {
 		}
 	} else {
 		EnvValues = Env{
-			BaleTableName:           os.Getenv("bale-table"),
-			PurchaseTableName:       os.Getenv("purchase-table"),
-			SalesTableName:          os.Getenv("sales-table"),
-			SalesIdIndexName:        os.Getenv("salesid-index"),
-			PurchaseIdIndexName:     os.Getenv("purchaseid-index"),
-			PurchaseBillNoIndexName: os.Getenv("purchase-billno-index"),
-			SalesBillNoIndexName:    os.Getenv("sales-billno-index"),
-			ChallanNoIndexName:      os.Getenv("challanno-index"),
-			BaleNoIndexName:         os.Getenv("baleno-index"),
+			BaleTableName:           "bale-table",
+			PurchaseTableName:       "purchase-table",
+			SalesTableName:          "sales-table",
+			SalesIdIndexName:        "salesid-index",
+			PurchaseIdIndexName:     "purchaseid-index",
+			PurchaseBillNoIndexName: "purchase-billno-index",
+			SalesBillNoIndexName:    "sales-billno-index",
+			ChallanNoIndexName:      "challanno-index",
+			BaleNoIndexName:         "baleno-index",
 			PortNumber:              ":8084",
 		}
 	}

@@ -144,19 +144,19 @@ func (svc *SalesService) Add(data commonModels.AddSalesDataRequest) commonModels
 		return commonModels.AddSalesDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign basic challan due to multiple errors.",
+				ErrorMessage: "Error in adding basic challan due to multiple errors.",
 				Errors:       errors,
 			},
 			SalesDetails: data.SalesDetails,
 			BaleDetails:  data.BaleDetails,
 		}
 	}
-	oldpurchase, getPurchaseBillNo := svc.salesRepo.GetByBillNo(data.SalesDetails.SalesBillNo)
-	if oldpurchase != nil {
+	oldSales, getSalesBillNo := svc.salesRepo.GetByBillNo(data.SalesDetails.SalesBillNo)
+	if oldSales != nil {
 		return commonModels.AddSalesDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign delivery challan due to multiple errors.",
+				ErrorMessage: "Error in adding delivery challan due to multiple errors.",
 				Errors: []commonModels.ErrorDetail{
 					{
 						ErrorCode:    commonModels.ErrorAlreadyExists,
@@ -168,13 +168,30 @@ func (svc *SalesService) Add(data commonModels.AddSalesDataRequest) commonModels
 			BaleDetails:  data.BaleDetails,
 		}
 	}
-	if getPurchaseBillNo != nil && getPurchaseBillNo.ErrorCode != commonModels.ErrorNoDataFound {
+	oldSales, getSalesBillNo = svc.salesRepo.GetByChallanNo(data.SalesDetails.ChallanNo)
+	if oldSales != nil {
 		return commonModels.AddSalesDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign delivery challan due to multiple errors.",
+				ErrorMessage: "Error in adding delivery challan due to multiple errors.",
 				Errors: []commonModels.ErrorDetail{
-					*getPurchaseBillNo,
+					{
+						ErrorCode:    commonModels.ErrorAlreadyExists,
+						ErrorMessage: fmt.Sprintf("same delivery challan with challan no %s already exists.", data.SalesDetails.ChallanNo),
+					},
+				},
+			},
+			SalesDetails: data.SalesDetails,
+			BaleDetails:  data.BaleDetails,
+		}
+	}
+	if getSalesBillNo != nil && getSalesBillNo.ErrorCode != commonModels.ErrorNoDataFound {
+		return commonModels.AddSalesDataResponse{
+			CommonResponse: commonModels.CommonResponse{
+				StatusCode:   http.StatusBadRequest,
+				ErrorMessage: "Error in adding delivery challan due to multiple errors.",
+				Errors: []commonModels.ErrorDetail{
+					*getSalesBillNo,
 				},
 			},
 			SalesDetails: data.SalesDetails,
@@ -186,7 +203,7 @@ func (svc *SalesService) Add(data commonModels.AddSalesDataRequest) commonModels
 		return commonModels.AddSalesDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign delivery challan due to multiple errors.",
+				ErrorMessage: "Error in adding delivery challan due to multiple errors.",
 				Errors: []commonModels.ErrorDetail{
 					*err,
 				},
@@ -212,7 +229,7 @@ func (svc *SalesService) Add(data commonModels.AddSalesDataRequest) commonModels
 		}
 	}
 	for _, val := range purchaseIdMap {
-		_, e := svc.baleRepo.GetBaleForPurchaseId(val.ProductId, val.QualityId, val.PurchaseDetails.PurchaseId)
+		stock, e := svc.baleRepo.GetBaleForPurchaseId(val.ProductId, val.QualityId, val.PurchaseDetails.PurchaseId)
 		if e != nil && e.ErrorCode != commonModels.ErrorNoDataFound {
 			return commonModels.AddSalesDataResponse{
 				CommonResponse: commonModels.CommonResponse{
@@ -226,7 +243,7 @@ func (svc *SalesService) Add(data commonModels.AddSalesDataRequest) commonModels
 				BaleDetails:  data.BaleDetails,
 			}
 		}
-		if e != nil && e.ErrorCode == commonModels.ErrorNoDataFound {
+		if (e != nil && e.ErrorCode == commonModels.ErrorNoDataFound) || len(stock) == 0 {
 			svc.purchaseRepo.UpdateSold(val.PurchaseDetails.PurchaseId)
 		}
 	}

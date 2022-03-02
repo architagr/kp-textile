@@ -68,7 +68,7 @@ func (repo *PurchasePersistance) GetAllTotal(request commonModels.InventoryListR
 	var filterFlag = false
 	var filter expression.ConditionBuilder
 	if len(request.PurchaseStatus) > 0 {
-		filter = expression.Name("status").Equal(expression.Value(request.PurchaseStatus))
+		filter = expression.Name("purchaseStatus").Equal(expression.Value(request.PurchaseStatus))
 		filterFlag = true
 	}
 
@@ -131,7 +131,7 @@ func (repo *PurchasePersistance) GetAll(request commonModels.InventoryListReques
 	var filterFlag = false
 	var filter expression.ConditionBuilder
 	if len(request.PurchaseStatus) > 0 {
-		filter = expression.Name("status").Equal(expression.Value(request.PurchaseStatus))
+		filter = expression.Name("purchaseStatus").Equal(expression.Value(request.PurchaseStatus))
 		filterFlag = true
 	}
 
@@ -279,20 +279,20 @@ func (repo *PurchasePersistance) UpdateSold(purchaseId string) *commonModels.Err
 	input := &dynamodb.UpdateItemInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":r": {
-				N: aws.String(common.STATUS_PURCHASE_SOLD),
+				S: aws.String(common.STATUS_PURCHASE_SOLD),
 			},
 		},
 		TableName: &repo.purchaseTableName,
 		Key: map[string]*dynamodb.AttributeValue{
 			"godownId": {
-				N: aws.String(purchaseDetails.GodownId),
+				S: aws.String(purchaseDetails.GodownId),
 			},
 			"sortKey": {
 				S: aws.String(purchaseDetails.SortKey),
 			},
 		},
 		ReturnValues:     aws.String("UPDATED_NEW"),
-		UpdateExpression: aws.String("set status = :r"),
+		UpdateExpression: aws.String("set purchaseStatus = :r"),
 	}
 	_, err := repo.db.UpdateItem(input)
 	if err != nil {

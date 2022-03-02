@@ -132,16 +132,16 @@ func (svc *PurchaseService) Add(data commonModels.AddPurchaseDataRequest) common
 		data.BaleDetails[i].PurchaseDetails = commonModels.BalePurchaseDetails{
 			PurchaseId: data.PurchaseDetails.PurchaseId,
 		}
+		data.BaleDetails[i].GodownId = data.PurchaseDetails.GodownId
 		data.BaleDetails[i].ProductId = data.PurchaseDetails.ProductId
 		data.BaleDetails[i].QualityId = data.PurchaseDetails.QualityId
 		data.BaleDetails[i].SortKey = common.GetInStockBaleSortKey(data.PurchaseDetails.ProductId, data.PurchaseDetails.QualityId, data.BaleDetails[i].BaleNo)
 	}
-
 	if len(errors) > 0 {
 		return commonModels.AddPurchaseDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign basic challan due to multiple errors.",
+				ErrorMessage: "Error in adding basic challan due to multiple errors.",
 				Errors:       errors,
 			},
 			PurchaseDetails: data.PurchaseDetails,
@@ -153,7 +153,7 @@ func (svc *PurchaseService) Add(data commonModels.AddPurchaseDataRequest) common
 		return commonModels.AddPurchaseDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign basic challan due to multiple errors.",
+				ErrorMessage: "Error in adding basic challan due to multiple errors.",
 				Errors: []commonModels.ErrorDetail{
 					{
 						ErrorCode:    commonModels.ErrorAlreadyExists,
@@ -169,7 +169,7 @@ func (svc *PurchaseService) Add(data commonModels.AddPurchaseDataRequest) common
 		return commonModels.AddPurchaseDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign basic challan due to multiple errors.",
+				ErrorMessage: "Error in adding basic challan due to multiple errors.",
 				Errors: []commonModels.ErrorDetail{
 					*getPurchaseBillNo,
 				},
@@ -183,7 +183,7 @@ func (svc *PurchaseService) Add(data commonModels.AddPurchaseDataRequest) common
 		return commonModels.AddPurchaseDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign basic challan due to multiple errors.",
+				ErrorMessage: "Error in adding basic challan due to multiple errors.",
 				Errors: []commonModels.ErrorDetail{
 					*err,
 				},
@@ -197,7 +197,7 @@ func (svc *PurchaseService) Add(data commonModels.AddPurchaseDataRequest) common
 		return commonModels.AddPurchaseDataResponse{
 			CommonResponse: commonModels.CommonResponse{
 				StatusCode:   http.StatusBadRequest,
-				ErrorMessage: "Error in addign basic challan due to multiple errors.",
+				ErrorMessage: "Error in adding basic challan due to multiple errors.",
 				Errors: []commonModels.ErrorDetail{
 					*batchinsertErr,
 				},
