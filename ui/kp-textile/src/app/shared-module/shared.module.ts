@@ -27,7 +27,7 @@ import { TransporterService } from "../services/transporter-service";
 import { VendorService } from "../services/vendor-service";
 import { GodownService } from "../services/godown-service";
 import { QualityService } from "../services/quality-serice";
-
+import {MatTabsModule} from '@angular/material/tabs'; 
 const declaration = [
     PaginationComponent,
     DeleteConfirmationComponent
@@ -48,6 +48,7 @@ const imports = [
     MatAutocompleteModule,
     MatProgressSpinnerModule,
     MatIconModule,
+    MatTabsModule,
     CommonModule
 ]
 @NgModule({

@@ -1,98 +1,102 @@
-
 <div class="content">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card card-plain">
-          <div class="card-header flex">
-            <button routerLink="/addpurchase" class="btn btn-icon btn-round align-right">
-              <i class="tim-icons icon-simple-add"></i>
-            </button>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <!-- <div class="row justify" [formGroup]="filterForm">
-                <div class="col-md-11 mr-bottom-remove mr-rigth-remove">
-                  <div class="form-group">
-                    <input formControlName="searchText" class="form-control" placeholder="search" type="text" />
-                  </div>
-                </div>
-                <div class="col-md-1 mr-left-remove mr-top-remove">
-                  <button class="btn btn-fill btn-info" (click)="applyFilter()" type="button">Search</button>
-                </div>
-              </div> -->
-              <table mat-table [dataSource]="purchases" multiTemplateDataRows class="table tablesorter" matSort
-                matSortActive="created" matSortDisableClear matSortDirection="desc">
-                <ng-container matColumnDef="PurchaseBillNumber">
-                  <th mat-header-cell *matHeaderCellDef>Purchase Bill Number</th>
-                  <td mat-cell *matCellDef="let purchaseOrder" class="pointer-cursor"
-                    (click)="expandedElement = expandedElement === purchaseOrder ? null : purchaseOrder">{{purchaseOrder.billNo}}</td>
-                </ng-container>
-                <ng-container matColumnDef="HsnCode">
-                  <th mat-header-cell *matHeaderCellDef>Hsn Code</th>
-                  <td mat-cell *matCellDef="let purchaseOrder">{{purchaseOrder.hsnCode}}</td>
-                </ng-container>
-                <ng-container matColumnDef="expandedDetail">
-                  <td mat-cell *matCellDef="let purchaseOrder" [attr.colspan]="displayedColumns.length"
-                    [@detailExpand1]="purchaseOrder == expandedElement ? 'expanded' : 'collapsed'">
-                    <div class="example-element-detail"
-                      [@detailExpand]="purchaseOrder == expandedElement ? 'expanded' : 'collapsed'">
-                      <div *ngIf="purchaseOrder.bailDetails; else nobail">
-                       <div *ngFor="let baildata of purchaseOrder.bailDetails; let i = index">
-                         <span># {{i+1}}</span>
-                         <br/>
-                        Bail No: {{baildata.bailNo}}
-                        <br/>
-                        Billed Quanitity: {{baildata.billedQuantity}}
-                        <br/>
-                        Received Quantity: {{baildata.receivedQuantity}}
-                        <br/>
-                        Quality: {{baildata.quality}}
-                        <hr/>
-                       </div>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card card-plain">
+        <div class="card-header flex">
+          <button routerLink="/addpurchase" class="btn btn-icon btn-round align-right">
+            <i class="tim-icons icon-simple-add"></i>
+          </button>
+        </div>
+        <div class="card-body">
+          <mat-tab-group (selectedIndexChange)="selectedIndexChange($event)">
+            <mat-tab *ngFor="let tab of godowns; let index = index" [label]="tab.name">
+              <div class="table-responsive">
+                <table mat-table [dataSource]="purchases" multiTemplateDataRows class="table tablesorter" matSort
+                  matSortActive="created" matSortDisableClear matSortDirection="desc">
+                  <ng-container matColumnDef="purchaseBillNo">
+                    <th mat-header-cell *matHeaderCellDef>Purchase Bill Number</th>
+                    <td mat-cell *matCellDef="let purchaseOrder" class="pointer-cursor">
+                      <!-- (click)="expandedElement = expandedElement === purchaseOrder ? null : purchaseOrder"> -->
+                      {{purchaseOrder.purchaseBillNo}}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="hsnCode">
+                    <th mat-header-cell *matHeaderCellDef>Hsn Code</th>
+                    <td mat-cell *matCellDef="let purchaseOrder">{{purchaseOrder.hsnCode}}</td>
+                  </ng-container>
+                  <!-- <ng-container matColumnDef="expandedDetail">
+                    <td mat-cell *matCellDef="let purchaseOrder" [attr.colspan]="displayedColumns.length"
+                      [@detailExpand1]="purchaseOrder == expandedElement ? 'expanded' : 'collapsed'">
+                      <div class="example-element-detail"
+                        [@detailExpand]="purchaseOrder == expandedElement ? 'expanded' : 'collapsed'">
+                        <div *ngIf="purchaseOrder.bailDetails; else nobail">
+                          <div *ngFor="let baildata of purchaseOrder.bailDetails; let i = index">
+                            <span># {{i+1}}</span>
+                            <br />
+                            Bail No: {{baildata.bailNo}}
+                            <br />
+                            Billed Quanitity: {{baildata.billedQuantity}}
+                            <br />
+                            Received Quantity: {{baildata.receivedQuantity}}
+                            <br />
+                            Quality: {{baildata.quality}}
+                            <hr />
+                          </div>
+                        </div>
+                        <ng-template #nobail>
+                          No Bails
+                        </ng-template>
                       </div>
-                      <ng-template #nobail>
-                        No Bails
-                      </ng-template>
-                    </div>
-  
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="TotalQuantity">
-                  <th mat-header-cell *matHeaderCellDef>Total Quantity</th>
-                  <td mat-cell *matCellDef="let purchaseOrder">{{getTotalQuanity(purchaseOrder)}}
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="PurchaseDate">
-                  <th mat-header-cell *matHeaderCellDef>PurchaseDate</th>
-                  <td mat-cell *matCellDef="let purchaseOrder"> {{purchaseOrder.purchaseDate| date: 'longDate'}}
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="Action">
-                  <th mat-header-cell *matHeaderCellDef>Action</th>
-                  <td mat-cell *matCellDef="let purchaseOrder">
-                    <button [routerLink]="['/updatepurchase', purchaseOrder.billNo]" type="button"
-                      class="btn btn-icon btn-round"> <i class="tim-icons icon-pencil"></i></button>
-                    <button type="button" (click)="deletePurchase(purchaseOrder)" class="btn btn-icon btn-round"> <i
-                        class="tim-icons icon-trash-simple"></i></button>
-                  </td>
-                </ng-container>
-  
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                  [class.example-expanded-row]="expandedElement === row"></tr>
-                <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr>
-                <!-- Row shown when there is no matching data. -->
-                <tr class="mat-row" *matNoDataRow>
-                  <td class="mat-cell" [attr.colspan]="displayedColumns.length">No data matching the filter</td>
-                </tr>
-              </table>
-              <app-pagination [pageSize]="pageSize" (pageSizeChange)="onPageSizeChange($event)"
-                (nextButtonClick)="onNextPageClick($event)"  (prevButtonClick)="onPrevPageClick($event)" 
-                 [pageNumber]="pageNumber" [total]="total">
-              </app-pagination>
-            </div>
-          </div>
+
+                    </td>
+                  </ng-container> -->
+                  <ng-container matColumnDef="productName">
+                    <th mat-header-cell *matHeaderCellDef>Product name</th>
+                    <td mat-cell *matCellDef="let purchaseOrder">{{purchaseOrder.productName}}
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="vendorName">
+                    <th mat-header-cell *matHeaderCellDef>Vendor name</th>
+                    <td mat-cell *matCellDef="let purchaseOrder">{{purchaseOrder.vendorName}}
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="purchaseStatus">
+                    <th mat-header-cell *matHeaderCellDef>Purchase Status</th>
+                    <td mat-cell *matCellDef="let purchaseOrder">
+                      <span class="badge"
+                      [ngClass]="{ 'active-status': purchaseOrder.purchaseStatus == 'Stock',  'inactive-status': purchaseOrder.purchaseStatus == 'Sold' }">{{purchaseOrder.purchaseStatus}}</span>
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef>Purchase Date</th>
+                    <td mat-cell *matCellDef="let purchaseOrder"> {{purchaseOrder.date| date: 'longDate'}}
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="qualityName">
+                    <th mat-header-cell *matHeaderCellDef>Quality Name</th>
+                    <td mat-cell *matCellDef="let purchaseOrder"> {{purchaseOrder.qualityName}}
+                    </td>
+                  </ng-container>
+
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                    [class.example-expanded-row]="expandedElement === row"></tr>
+                  <!-- <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="example-detail-row"></tr> -->
+                  <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell" [attr.colspan]="displayedColumns.length">No data matching the filter</td>
+                  </tr>
+                </table>
+                <app-pagination [pageSize]="pageSize" (pageSizeChange)="onPageSizeChange($event)"
+                  (nextButtonClick)="onNextPageClick($event)" (prevButtonClick)="onPrevPageClick($event)"
+                  [pageNumber]="pageNumber" [total]="total">
+                </app-pagination>
+              </div>
+
+            </mat-tab>
+          </mat-tab-group>
+
         </div>
       </div>
     </div>
   </div>
+</div>

@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
-import { Observable } from "rxjs";
+import { EMPTY, expand, map, Observable, reduce } from "rxjs";
 import { HttpClient } from "@angular/common/http"
 import { CommonResponse } from "../models/genric-model";
-import { AddVendorRequest, AddVendorResponse, VendorListResponse } from "../models/vendor-models";
+import { AddVendorRequest, AddVendorResponse, VendorDto, VendorListResponse } from "../models/vendor-models";
 import { environment } from "src/environments/environment";
 
 @Injectable({
@@ -14,13 +14,31 @@ export class VendorService {
         private httpClient: HttpClient
     ) { }
 
-
-    getAllVendors(pageSize: number, searchText: string, lastEvalutionKey: any | null): Observable<VendorListResponse> {
+    getAllVendors() {
+        return this.getVendors();
+    }
+    
+    getVendorList(pageSize: number, searchText: string, lastEvalutionKey: any | null): Observable<VendorListResponse> {
         let url = `${this.baseUrl}getall?pageSize=${pageSize}`
         if (searchText.length > 0) {
             url += `&companyName=${searchText}`
         }
         return this.httpClient.post<VendorListResponse>(url, { lastEvalutionKey: lastEvalutionKey });
+    }
+
+    private getVendors() {
+        let lastEvalutionKey: any | null = null;
+        return this.getNextPageVendorList(lastEvalutionKey).pipe(
+            expand((response: VendorListResponse) => (response.lastEvalutionKey != undefined && response.lastEvalutionKey != null)
+                ? this.getNextPageVendorList(response.lastEvalutionKey)
+                : EMPTY),
+            map(res => res.data),
+            reduce((acc, val) => acc.concat(val), new Array<VendorDto>())
+        )
+    }
+
+    private getNextPageVendorList(lastEvalutionKey: any | null) {
+        return this.getVendorList(10, "", lastEvalutionKey)
     }
 
     addVendor(client: AddVendorRequest): Observable<AddVendorResponse> {

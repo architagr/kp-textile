@@ -6,6 +6,7 @@ import (
 	"item-service/common"
 	"item-service/persistance"
 	"net/http"
+	"strings"
 
 	uuid "github.com/iris-contrib/go.uuid"
 )
@@ -125,7 +126,7 @@ func (svc *SalesService) Add(data commonModels.AddSalesDataRequest) commonModels
 
 	for i := range data.BaleDetails {
 		oldBale, err := svc.baleRepo.GetBaleInfoByBaleNo(data.BaleDetails[i].BaleNo)
-		if oldBale == nil || err != nil {
+		if oldBale == nil || err != nil || (oldBale != nil && strings.HasPrefix(oldBale.BaleNo, common.SORTKEY_BAILDETAILS_SOLD)) {
 			errors = append(errors, commonModels.ErrorDetail{
 				ErrorCode:    commonModels.ErrorAlreadyExists,
 				ErrorMessage: fmt.Sprintf("bale no %s not found", data.BaleDetails[i].BaleNo),

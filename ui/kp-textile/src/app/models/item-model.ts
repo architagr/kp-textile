@@ -1,5 +1,75 @@
 import { CommonListResponse, CommonResponse } from "./genric-model"
 
+
+export interface AddPurchaseDataRequest {
+    purchaseDetails: PurchaseDto;
+    baleDetails: BaleDetailsDto[];
+}
+export interface AddPurchaseDataResponse extends CommonResponse {
+    purchaseDetails: PurchaseDto;
+    baleDetails: BaleDetailsDto[];
+}
+
+export interface PurchaseDto {
+    godownId: string;
+    sortKey: string; /// ProductId|QualityId|PurchaseId
+    purchaseId: string; // GSI -1  PK  (all attr)
+    purchaseBillNo: string; // GSI - 2 PK (keys only)
+    date: Date;
+    vendorId: string;
+    vendorName: string;
+    productId: string;
+    productName: string;
+    qualityId: string;
+    qualityName: string;
+    hsnCode: string;
+    purchaseStatus: string; // Stock | Sold
+}
+
+export interface SalesDto {
+    godownId: string;
+    sortKey: string;// ProductId|QualityId|SalesId
+    salesId: string;// GSI -1  PK  (all attr)
+    salesBillNo: string;// GSI PK (keys only)
+    clientId: string;
+    transporterId: string;
+    lrNo: string;
+    challanNo: string; // GSI PK (keys only)
+    date: Date;
+    productId: string;
+    qualityId: string;
+}
+
+export interface BalePurchaseDetails {
+    purchaseId: string;
+}
+export interface BaleSalesDetails {
+    salesId: string;
+}
+export interface BaleTransferDetails {
+    fromGodownId: string;
+    toGowodnId: string;
+    date: Date;
+}
+
+export interface BaleDetailsDto {
+    godownId: string;
+    sortKey: string;
+    baleNo: string;
+    productId: string;
+    qualityId: string;
+    billedQuantity: number;
+    receivedQuantity: number;
+    rate: number;
+    purchaseDetails: BalePurchaseDetails;
+    salesDetails: BaleSalesDetails;
+    transferDetails: BaleTransferDetails[];
+}
+
+export interface PurchaseListResponse extends CommonListResponse{
+	data:PurchaseDto[];
+}
+
 export interface BailDetailsDto {
     branchId: string;
     sortKey: string; //// Bail | <Purchase or Sales or OutOfStock>|Quality|BailNo|<salesBill or purchseBill number>
@@ -43,12 +113,11 @@ export interface InventoryDto {
 }
 
 export interface InventoryFilterDto {
-    branchId: string
+    godownId: string
     purchaseBillNumber: string;
     salesBillNumber: string;
-    startDate: Date;
-    endDate: Date;
-    quality: string;
+    qualityId: string;
+    productId: string;
 }
 
 export interface InventoryListRequest extends InventoryFilterDto {

@@ -60,3 +60,22 @@
       margin-right: -15px;
     }
   }
+  .badge {
+    padding: 5px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 12px;
+    color: #1d1d2c;
+    min-width: 4rem;
+    &.active-status {
+      background-color: #00bf9a;
+    }
+  
+    &.inactive-status {
+      background-color: #ff9f89;
+    }
+  
+    &.blocked-status {
+      background-color: #fd77a4;
+    }
+  }

@@ -29,4 +29,13 @@
   .sub-form {
     margin-top: 5px;
   }
-  
+  .card.bale-card{
+    padding:10px;
+    box-shadow: 0px 0px 10px 0px rgba(213, 211, 211, 0.6)
+  }
+  .delete-icon{
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .form-control[disabled]{
+    color: rgba(255, 255, 255, 0.8);
+  }

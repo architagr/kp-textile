@@ -1,59 +1,58 @@
 <div class="content">
     <div class="row">
         <div class="col-md-12">
-            <app-spinner *ngIf="showSpinnerCount>0"></app-spinner>
-            <form *ngIf="showSpinnerCount<=0" [formGroup]="addPurchaseForm" (submit)="submitData()">
+            <form [formGroup]="addPurchaseForm" (submit)="submitData()">
                 <mat-accordion class="example-headers-align" multi>
 
                     <mat-expansion-panel expanded="true">
                         <mat-expansion-panel-header>
                             <mat-panel-title>
-                                Basic Purchase order details
-
+                                Basic challan details
                             </mat-panel-title>
                         </mat-expansion-panel-header>
-                        <div class="card">
+                        <div class="card" formGroupName="purchaseDetails">
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-5 pr-md-1">
+                                    <div class="col-md-4">
                                         <div class="form-group">
-                                            <label> Bill Number </label>
-                                            <input class="form-control"
-                                                [ngClass]="{'error': addPurchaseForm.dirty && formControls['billNo'].errors}"
-                                                formControlName="billNo" placeholder="Purchase order bill no"
-                                                type="text" />
-                                            <div *ngIf="formControls['billNo'].errors">
-                                                <p class=" text-danger">
-                                                    Bill No is required
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 px-md-1">
-                                        <div class="form-group">
-                                            <label> Hsn Code </label>
+                                            <label> Godown </label>
                                             <select
-                                                [ngClass]="{'error': addPurchaseForm.dirty && formControls['hsnCode'].errors}"
-                                                placeholder="hsnCode" class="form-control" formControlName="hsnCode">
-                                                <option value="">Select Hsn Code</option>
-                                                <option *ngFor="let name of hsnCodes" [value]="name.id">{{name.hnsCode}}
+                                                [ngClass]="{'error': addPurchaseForm.dirty && purchaseDetailsFC['godownId'].errors}"
+                                                placeholder="Godown" class="form-control" formControlName="godownId">
+                                                <option value="">Select Godown</option>
+                                                <option *ngFor="let godown of godowns" [value]="godown.id">
+                                                    {{godown.name}}
                                                 </option>
                                             </select>
 
-                                            <div *ngIf="formControls['hsnCode'].errors">
+                                            <div *ngIf="purchaseDetailsFC['godownId'].errors">
                                                 <p class=" text-danger">
-                                                    Hsn Code is required
+                                                    Godown is required
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4 pl-md-1">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label> Purchase Bill No </label>
+                                            <input class="form-control"
+                                                [ngClass]="{'error': addPurchaseForm.dirty && purchaseDetailsFC['purchaseBillNo'].errors}"
+                                                formControlName="purchaseBillNo" placeholder="Purchase order bill no"
+                                                type="text" />
+                                            <div *ngIf="purchaseDetailsFC['purchaseBillNo'].errors">
+                                                <p class=" text-danger">
+                                                    Purchase Bill No is required
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
                                         <div class="form-group">
                                             <label> Purchase Date </label>
                                             <input class="form-control"
-                                                [ngClass]="{'error': addPurchaseForm.dirty && formControls['purchaseDate'].errors}"
-                                                formControlName="purchaseDate" placeholder="purchaseDate" type="date" />
-                                            <div *ngIf="formControls['purchaseDate'].errors">
+                                                [ngClass]="{'error': addPurchaseForm.dirty && purchaseDetailsFC['date'].errors}"
+                                                formControlName="date" placeholder="date" type="date" />
+                                            <div *ngIf="purchaseDetailsFC['date'].errors">
                                                 <p class=" text-danger">
                                                     Purchase Date is required
                                                 </p>
@@ -62,9 +61,71 @@
 
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label> Vendor </label>
+                                            <select
+                                                [ngClass]="{'error': addPurchaseForm.dirty && purchaseDetailsFC['vendorId'].errors}"
+                                                placeholder="Vendor" class="form-control" formControlName="vendorId">
+                                                <option value="">Select Vendor</option>
+                                                <option *ngFor="let vendor of vendors" [value]="vendor.vendorId">{{vendor.companyName}}
+                                                </option>
+                                            </select>
+
+                                            <div *ngIf="purchaseDetailsFC['vendorId'].errors">
+                                                <p class=" text-danger">
+                                                    Vendor is required
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label> Product </label>
+                                            <select
+                                                [ngClass]="{'error': addPurchaseForm.dirty && purchaseDetailsFC['productId'].errors}"
+                                                placeholder="product" class="form-control" formControlName="productId">
+                                                <option value="">Select product</option>
+                                                 <option *ngFor="let product of products" [value]="product.id">{{product.name}}
+                                                </option> 
+                                            </select>
+                                            <div *ngIf="purchaseDetailsFC['productId'].errors">
+                                                <p class=" text-danger">
+                                                    Product is required
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label> Quality </label>
+                                            <select
+                                                [ngClass]="{'error': addPurchaseForm.dirty && purchaseDetailsFC['qualityId'].errors}"
+                                                placeholder="Quality" class="form-control" formControlName="qualityId">
+                                                <option value="">Select Quality</option>
+                                                <option *ngFor="let quality of uiQualities" [value]="quality.id">{{quality.name}} 
+                                                </option>
+                                            </select>
+                                            <div *ngIf="purchaseDetailsFC['qualityId'].errors">
+                                                <p class=" text-danger">
+                                                    Quality is required
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label> Hsn Code </label>
+                                            <input class="form-control" [value]="hsnCode" placeholder="Hsn Code"
+                                                type="text" disabled />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </mat-expansion-panel>
+
                     <mat-expansion-panel expanded="true">
                         <mat-expansion-panel-header>
                             <mat-panel-title>
@@ -73,87 +134,69 @@
 
                         </mat-expansion-panel-header>
                         <mat-panel-description>
-                            <div *ngIf="formControls['bailDetails'].errors">
+                            <div *ngIf="formControls['baleDetails'].errors">
                                 <p class=" text-danger">
-                                    Atleast 1 bail is required
+                                    Atleast 1 bale is required
                                 </p>
                             </div>
                         </mat-panel-description>
                         <div class="card">
-                            <div class=" card-header"><button type="button" (click)="addBail()"
-                                    class="btn btn-icon btn-round align-right"><i
-                                        class="tim-icons icon-simple-add"></i></button></div>
+                            <div class="card-header">
+                                <button type="button" (click)="addBale()" class="btn btn-icon btn-round align-right">
+                                    <i class="tim-icons icon-simple-add"></i>
+                                </button>
+                            </div>
                             <div class="card-body">
-                                <ng-container formArrayName="bailDetails">
-                                    <ng-container *ngFor="let bails of bailDetails.controls; let i = index">
-                                        <div [formGroupName]="i" class="sub-form">
-                                            <div class="card-subheading">
-                                                <h4>Bail {{i+1}}</h4>
+                                <ng-container formArrayName="baleDetails">
+                                    <div class="row">
+                                        <ng-container *ngFor="let bails of baleDetails.controls; let i = index">
+                                            <div [formGroupName]="i" class="col-md-4">
+                                                <div class="card bale-card">
+                                                    <div class="card-subheading">
+                                                        <h4>Bale {{i+1}}</h4>
+                                                        <i class="tim-icons icon-trash-simple align-right delete-icon"
+                                                            (click)="removeBale(i)"></i>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label> Bale No </label>
+                                                                    <input
+                                                                        [ngClass]="{'error': addPurchaseForm.dirty &&  getBaleControl(i)['baleNo'].errors}"
+                                                                        class="form-control" formControlName="baleNo"
+                                                                        placeholder="Bale Number" type="text" />
+                                                                    <div *ngIf="getBaleControl(i)['baleNo'].errors">
+                                                                        <p class=" text-danger">
+                                                                            Bale no is required
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label> Billed Quality </label>
+                                                                    <input
+                                                                        [ngClass]="{'error': addPurchaseForm.dirty && getBaleControl(i)['billedQuantity'].errors}"
+                                                                        class="form-control"
+                                                                        formControlName="billedQuantity"
+                                                                        placeholder="Billed Quantity" type="number" />
 
-                                                <button type="button" (click)="removeBail(i)"
-                                                    class="btn btn-icon btn-round align-right"><i
-                                                        class="tim-icons icon-trash-simple"></i></button>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-3 pr-md-1">
-                                                    <div class="form-group">
-                                                        <label> Bail No </label>
-                                                        <input
-                                                            [ngClass]="{'error': addPurchaseForm.dirty &&  getBailControl(i)['bailNo'].errors}"
-                                                            class="form-control" formControlName="bailNo"
-                                                            placeholder="Bail Number" type="text" />
-                                                        <div *ngIf="getBailControl(i)['bailNo'].errors">
-                                                            <p class=" text-danger">
-                                                                Address Label is required
-                                                            </p>
+                                                                    <div
+                                                                        *ngIf="getBaleControl(i)['billedQuantity'].errors">
+                                                                        <p class=" text-danger">
+                                                                            Quality is required
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3 pr-md-1">
-                                                    <div class="form-group">
-                                                        <label> Quality </label>
-                                                        <select
-                                                            [ngClass]="{'error': addPurchaseForm.dirty &&  getBailControl(i)['quality'].errors}"
-                                                            placeholder="quality" class="form-control" formControlName="quality">
-                                                            <option value="">Select Quality</option>
-                                                            <option *ngFor="let name of qualities" [value]="name.id">
-                                                                {{name.name}}</option>
-                                                        </select>
-
-                                                        <div *ngIf="getBailControl(i)['quality'].errors">
-                                                            <p class=" text-danger">
-                                                                Quality is required
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3 pr-md-1">
-                                                    <div class="form-group">
-                                                        <label> Billed Quantity </label>
-                                                        <input
-                                                            [ngClass]="{'error': addPurchaseForm.dirty &&  getBailControl(i)['billedQuantity'].errors}"
-                                                            class="form-control" formControlName="billedQuantity"
-                                                            placeholder="Billed Quantity" type="number" />
-                                                        <div *ngIf="getBailControl(i)['billedQuantity'].errors">
-                                                            <p class=" text-danger">
-                                                                Billed Quantity is required
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3 pr-md-1">
-                                                    <div class="form-group">
-                                                        <label> Received Quantity </label>
-                                                        <input class="form-control" formControlName="receivedQuantity"
-                                                            placeholder="Received Quantity" type="number" />
 
                                                     </div>
                                                 </div>
                                             </div>
-
-                                        </div>
-                                        <mat-divider></mat-divider>
-                                    </ng-container>
+                                        </ng-container>
+                                    </div>
                                 </ng-container>
                                 <button class="btn btn-fill btn-primary" [disabled]="!addPurchaseForm.valid"
                                     type="submit">Save</button>
@@ -165,6 +208,7 @@
 
                 </mat-accordion>
             </form>
+
         </div>
     </div>
 </div>

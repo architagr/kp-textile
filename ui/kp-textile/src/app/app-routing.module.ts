@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './components/home/home.component';
 import { PurchaseListComponent } from './components/purchase/purchase-list/purchase-list.component';
-import { PurchaseUpdateComponent } from './components/purchase/purchase-update/purchase-update.component';
 import { PurchaseAddComponent } from './components/purchase/purchase-add/purchase-add.component';
 import { SalesAddComponent } from './components/sales/sales-add/sales-add.component';
 import { SalesUpdateComponent } from './components/sales/sales-update/sales-update.component';
@@ -24,7 +23,6 @@ export const declaration = [
   SpinnerComponent,
   PurchaseListComponent,
   PurchaseAddComponent,
-  PurchaseUpdateComponent,
   SalesListComponent,
   SalesAddComponent,
   SalesUpdateComponent,
@@ -50,10 +48,6 @@ const routes: Routes = [
   {
     path: 'purchase',
     component: PurchaseListComponent,
-  },
-  {
-    path: 'updatepurchase/:purchaseBillNumber',
-    component: PurchaseUpdateComponent,
   },
   {
     path: 'addpurchase',

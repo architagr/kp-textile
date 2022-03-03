@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { HttpClient } from "@angular/common/http"
-import { InventoryDto, InventoryListRequest, InventoryListResponse, InventoryResponse } from "../models/item-model";
+import { AddPurchaseDataRequest, AddPurchaseDataResponse, InventoryDto, InventoryListRequest, InventoryListResponse, InventoryResponse, PurchaseListResponse } from "../models/item-model";
 import { environment } from "src/environments/environment";
 
 
@@ -15,23 +15,15 @@ export class PurchaseService {
     ) { }
 
 
-    getAllPurchase(lastEvalutionKey: any, pageSize: number):Observable<InventoryListResponse>{
-        return this.httpClient.post<InventoryListResponse>(`${this.baseUrl}/getall`, { 
+    getAllPurchase(lastEvalutionKey: any, pageSize: number, godownId: string):Observable<PurchaseListResponse>{
+        return this.httpClient.post<PurchaseListResponse>(`${this.baseUrl}/getall`, { 
             lastEvalutionKey: lastEvalutionKey,
             pageSize: pageSize,
+            godownId: godownId
          } as InventoryListRequest);
     }
-    addPurchase(data: InventoryDto):Observable<InventoryResponse>{
-        return this.httpClient.post<InventoryResponse>(`${this.baseUrl}/`, data);
-    }
-    updatePurchase(data: InventoryDto):Observable<InventoryResponse>{
-        return this.httpClient.put<InventoryResponse>(`${this.baseUrl}/${data.billNo}`, data);
-    }
-    deletePurchaseOrder(billNumber: string):Observable<InventoryResponse>{
-        return this.httpClient.delete<InventoryResponse>(`${this.baseUrl}/${billNumber}`);
-    }
-    getPurchaseOrder(billNumber: string):Observable<InventoryResponse>{
-        return this.httpClient.get<InventoryResponse>(`${this.baseUrl}/${billNumber}`);
+    addPurchase(data: AddPurchaseDataRequest):Observable<AddPurchaseDataResponse>{
+        return this.httpClient.post<AddPurchaseDataResponse>(`${this.baseUrl}/`, data);
     }
 
 }

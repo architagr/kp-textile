@@ -2,12 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { HnsCodeDto } from 'src/app/models/hsn-code-model';
-import { InventoryDto } from 'src/app/models/item-model';
-import { QualityDto } from 'src/app/models/quality-model';
-import { HsnCodeService } from 'src/app/services/hsn-code-service';
+import { empty, EMPTY, expand, map, reduce } from 'rxjs';
+import { GodownDto } from 'src/app/models/godown-model';
+import { AddPurchaseDataRequest, InventoryDto } from 'src/app/models/item-model';
+import { ProductDto, QualityDto } from 'src/app/models/quality-model';
+import { VendorDto, VendorListResponse } from 'src/app/models/vendor-models';
+import { GodownService } from 'src/app/services/godown-service';
 import { PurchaseService } from 'src/app/services/purchase-service';
 import { QualityService } from 'src/app/services/quality-serice';
+import { ToastService } from 'src/app/services/toast-service';
+import { VendorService } from 'src/app/services/vendor-service';
 @Component({
   selector: 'app-purchase-add',
   templateUrl: './purchase-add.component.html',
@@ -15,108 +19,118 @@ import { QualityService } from 'src/app/services/quality-serice';
 })
 export class PurchaseAddComponent implements OnInit {
   addPurchaseForm: FormGroup;
-  showSpinnerCount= 0;
-  hsnCodes: HnsCodeDto[] = [];
+  hsnCode: string = "";
   qualities: QualityDto[] = [];
+  uiQualities: QualityDto[] = [];
+  products: ProductDto[] = [];
+  vendors: VendorDto[] = [];
+  godowns: GodownDto[] = [];
   constructor(
     private router: Router,
-    private toastr: ToastrService,
+    private toastr: ToastService,
     private purchaseService: PurchaseService,
     private fb: FormBuilder,
-    private hsnCodeService: HsnCodeService,
     private qualityService: QualityService,
+    private godownService: GodownService,
+    private vendorService: VendorService
   ) {
     this.addPurchaseForm = this.fb.group({
-      billNo: new FormControl('', [Validators.required]),
-      hsnCode: new FormControl('', [Validators.required]),
-      purchaseDate: new FormControl(new Date(), [Validators.required]),
-      bailDetails: this.fb.array([
+      purchaseDetails: this.fb.group({
+        godownId: new FormControl('', [Validators.required]),
+        purchaseBillNo: new FormControl('', [Validators.required]),
+        vendorId: new FormControl('', [Validators.required]),
+        date: new FormControl(new Date(), [Validators.required]),
+        productId: new FormControl('', [Validators.required]),
+        qualityId: new FormControl('', [Validators.required]),
+      }),
+      baleDetails: this.fb.array([
         this.getBailFormGroup()
       ], [Validators.required]),
     })
+    this.purchaseDetailsFC['productId'].valueChanges.subscribe(x => {
+      this.uiQualities = this.qualities.filter(qual => qual.productId === x)
+    })
+    this.purchaseDetailsFC['qualityId'].valueChanges.subscribe(x => {
+      this.hsnCode = this.qualities.find(qual => qual.id === x)?.hsnCode!
+    })
+  }
 
+  getAllGodowns() {
+    this.godownService.getAllGodown().subscribe({
+      next: (data) => {
+        this.godowns = data.data
+      },
+    });
   }
   getAllQuality() {
-    this.showSpinnerCount++;
     this.qualityService.getAllQualities().subscribe({
-      next:(data)=>{
-          this.qualities = data.data
-          this.showSpinnerCount--;
+      next: (data) => {
+        this.qualities = data.data
       },
-      complete:()=>{
-
-      }
     });
   }
-
-  getAllCodes() {
-    this.showSpinnerCount++;
-    this.hsnCodeService.getAllHsnCode().subscribe({
-      next:(data)=>{
-          this.hsnCodes = data.data
-          this.showSpinnerCount--;
+  getAllProducts() {
+    this.qualityService.getAllProduct().subscribe({
+      next: (data) => {
+        this.products = data.data
       },
-      complete:()=>{
-
-      }
     });
   }
+  getAllVendors() {
+    this.vendorService.getAllVendors().subscribe({
+      next: (data: VendorDto[]) => {
+        this.vendors = data;
+      }
+    })
+  }
+  
+
   private getBailFormGroup(): FormGroup {
     return this.fb.group({
-      bailNo: new FormControl('', [Validators.required]),
-      quality: new FormControl('', [Validators.required]),
+      baleNo: new FormControl('', [Validators.required]),
       billedQuantity: new FormControl(0, [Validators.required, Validators.min(1)]),
-      receivedQuantity: new FormControl(0),
     });
   }
   get formControls(): { [key: string]: AbstractControl } {
     return this.addPurchaseForm.controls
   }
-  get bailDetails(): FormArray {
-    return this.addPurchaseForm.controls['bailDetails'] as FormArray
+  get purchaseDetailsFC(): { [key: string]: AbstractControl } {
+    return (this.formControls['purchaseDetails'] as FormGroup).controls
   }
-  addBail() {
-    this.bailDetails.push(this.getBailFormGroup());
+  get baleDetails(): FormArray {
+    return this.addPurchaseForm.controls['baleDetails'] as FormArray
   }
-  removeBail(removeIndex: number) {
-    this.bailDetails.removeAt(removeIndex);
+  addBale() {
+    this.baleDetails.push(this.getBailFormGroup());
   }
-  getBailControl(index: number): { [key: string]: AbstractControl } {
-    return (this.bailDetails.controls[index] as FormGroup).controls
+  removeBale(removeIndex: number) {
+    this.baleDetails.removeAt(removeIndex);
+  }
+  getBaleControl(index: number): { [key: string]: AbstractControl } {
+    return (this.baleDetails.controls[index] as FormGroup).controls
   }
   ngOnInit(): void {
-    this.getAllCodes();
+    this.getAllGodowns();
+    this.getAllProducts();
     this.getAllQuality();
+    this.getAllVendors();
   }
-  submitData(){
-    let data: InventoryDto = this.addPurchaseForm.value
-    data.purchaseDate = new Date(data.purchaseDate)
+  submitData() {
+    let data: AddPurchaseDataRequest = this.addPurchaseForm.value
+    data.purchaseDetails.date = new Date(data.purchaseDetails.date)
     this.purchaseService.addPurchase(data).subscribe({
-      next:(data)=>{
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Purchase order added.', 'Success', {
-          disableTimeOut: false,
-          timeOut: 2000,
-          closeButton: true,
-          enableHtml: true,
-          toastClass: "alert alert-success alert-with-icon",
-          positionClass: 'toast-top-right'
-        });
+      next: (data) => {
+        this.toastr.show("Success", "Purchase order added.")
         setTimeout(() => {
           this.router.navigate(['/purchase']);
         }, 2000);
       },
-      error:(err)=>{
-        let errorMessage  = `${err.error.errors[0].errorMessage}`
-        this.toastr.info(`<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> ${err.error.errorMessage}.<br/>${errorMessage}`, 'Error', {
-          disableTimeOut: false,
-          timeOut: 3000,
-          closeButton: true,
-          enableHtml: true,
-          toastClass: "alert alert-danger alert-with-icon",
-          positionClass: 'toast-top-right'
-        });
+      error: (err) => {
+        debugger;
+        let errorMessage = `${err.error.errors[0].errorMessage}`
+        this.toastr.show("Error", `${err.error.errorMessage}.<br/>${errorMessage}`)
       },
-      complete: () =>{
+      complete: () => {
         console.log(`complete`)
       }
     })

@@ -89,7 +89,7 @@ export class VendorListComponent implements OnInit {
     this.getVendorFromLocalList();
   }
   getVendors() {
-    this.vendorService.getAllVendors(this.pageSize, this.searchText, this.lastEvalutionKey).subscribe(data => {
+    this.vendorService.getVendorList(this.pageSize, this.searchText, this.lastEvalutionKey).subscribe(data => {
       this.vendors = data.data
       this.addToAllVendorList(data.data);
       this.lastEvalutionKey = data.lastEvalutionKey

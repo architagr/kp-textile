@@ -5,9 +5,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { DeleteConfirmationComponent } from '../../delete-confirmation/delete-confirmation.component';
 import { FormControl, FormGroup } from '@angular/forms';
 import { PurchaseService } from 'src/app/services/purchase-service';
-import { InventoryDto } from 'src/app/models/item-model';
+import { InventoryDto, PurchaseDto } from 'src/app/models/item-model';
 import { HsnCodeService } from 'src/app/services/hsn-code-service';
 import { HnsCodeDto } from 'src/app/models/hsn-code-model';
+import { QualityService } from 'src/app/services/quality-serice';
+import { GodownService } from 'src/app/services/godown-service';
+import { ProductDto, QualityDto } from 'src/app/models/quality-model';
+import { VendorDto } from 'src/app/models/vendor-models';
+import { GodownDto } from 'src/app/models/godown-model';
+import { VendorService } from 'src/app/services/vendor-service';
 
 @Component({
   selector: 'app-purchase-list',
@@ -29,20 +35,26 @@ import { HnsCodeDto } from 'src/app/models/hsn-code-model';
 export class PurchaseListComponent implements OnInit {
   filterForm: FormGroup
   searchText: string = ''
-  displayedColumns: string[] = ['PurchaseBillNumber', 'HsnCode', 'TotalQuantity', 'PurchaseDate', 'Action'];
+  displayedColumns: string[] = ['purchaseBillNo', 'vendorName', 'productName', 'qualityName', 'hsnCode', 'purchaseStatus', 'date'];
   pageNumber: number = 0;
-  pageSize: number = 10;
+  pageSize: number = 1;
   total: number = 0;
   lastEvalutionKey: any = null
-  purchases: InventoryDto[] = []
-  purchasesAll: InventoryDto[] = []
-  expandedElement: InventoryDto | null = null
-  hsnCodes: HnsCodeDto[] = [];
+  purchases: PurchaseDto[] = []
+  purchasesAll: PurchaseDto[] = []
+  expandedElement: PurchaseDto | null = null
+  qualities: QualityDto[] = [];
+  products: ProductDto[] = [];
+  vendors: VendorDto[] = [];
+  godowns: GodownDto[] = [];
+  selectedGodown: string = '';
   constructor(
     public purchaseService: PurchaseService,
     private toastr: ToastrService,
     public dialog: MatDialog,
-    private hsnCodeService: HsnCodeService
+    private qualityService: QualityService,
+    private godownService: GodownService,
+    private vendorService: VendorService
   ) {
     this.filterForm = new FormGroup({
       searchText: new FormControl('')
@@ -56,19 +68,46 @@ export class PurchaseListComponent implements OnInit {
     return total
   }
   ngOnInit(): void {
-    this.getAllCodes();
-
+    this.getAllGodowns();
+    this.getAllQuality();
+    this.getAllProducts();
+    this.getAllVendors();
   }
-  getAllCodes() {
 
-    this.hsnCodeService.getAllHsnCode().subscribe({
+  getAllGodowns() {
+    this.godownService.getAllGodown().subscribe({
       next: (data) => {
-        this.hsnCodes = data.data
+        this.godowns = data.data
       },
-      complete: () => {
-        this.getPurchases();
-      }
     });
+  }
+  getAllQuality() {
+    this.qualityService.getAllQualities().subscribe({
+      next: (data) => {
+        this.qualities = data.data
+      },
+    });
+  }
+  getAllProducts() {
+    this.qualityService.getAllProduct().subscribe({
+      next: (data) => {
+        this.products = data.data
+      },
+    });
+  }
+  getAllVendors() {
+    this.vendorService.getAllVendors().subscribe({
+      next: (data: VendorDto[]) => {
+        this.vendors = data;
+      }
+    })
+  }
+  selectedIndexChange(event: number){
+    this.purchases = [];
+    this.purchasesAll = [];
+    this.lastEvalutionKey = null;
+    this.selectedGodown = this.godowns[event].id;
+    this.getPurchases();
   }
   onPageSizeChange(pageSize: number) {
     this.pageSize = pageSize;
@@ -109,23 +148,28 @@ export class PurchaseListComponent implements OnInit {
     this.getPurchaseFromLocalList();
   }
   getPurchases() {
-
-    this.purchaseService.getAllPurchase(this.lastEvalutionKey, this.pageSize).subscribe({
+    if(this.selectedGodown)
+    this.purchaseService.getAllPurchase(this.lastEvalutionKey, this.pageSize, this.selectedGodown).subscribe({
       next: (data) => {
-        this.purchases = data.data
+        
         data.data.forEach(x => {
-          x.hsnCode = this.hsnCodes.find(y => y.id === x.hsnCode)!.hnsCode;
+          x.vendorName = this.vendors.find(y => y.vendorId === x.vendorId)!.companyName;
+          x.productName= this.products.find(y => y.id === x.productId)!.name;
+          let quality = this.qualities.find(y => y.id === x.qualityId);
+          x.qualityName = quality!.name;
+          x.hsnCode = quality!.hsnCode;
         })
+        this.purchases = data.data;
         this.addToAllPurchaseList(data.data);
         this.lastEvalutionKey = data.lastEvalutionKey
         this.total = data.total;
       },
-     
+
     });
   }
-  addToAllPurchaseList(data: InventoryDto[]) {
+  addToAllPurchaseList(data: PurchaseDto[]) {
     data.forEach(x => {
-      if (!this.purchasesAll.some(y => y.billNo === x.billNo)) {
+      if (!this.purchasesAll.some(y => y.purchaseBillNo === x.purchaseBillNo)) {
         this.purchasesAll.push(x);
       }
     });
@@ -134,42 +178,5 @@ export class PurchaseListComponent implements OnInit {
     this.searchText = this.filterForm.controls['searchText'].value;
     this.lastEvalutionKey = null;
     this.getPurchases();
-  }
-  deletePurchase(purchaseOrder: InventoryDto) {
-    const dialogRef = this.dialog.open(DeleteConfirmationComponent, {
-      data: { heading: 'Delete Purchase Order', message: `Are you sure you want to delete ${purchaseOrder.billNo} ?` },
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      console.log('The dialog was closed', result);
-      if (result) {
-        this.delete(purchaseOrder.billNo);
-      }
-    });
-  }
-  delete(purchaseBillNo: string) {
-    this.purchaseService.deletePurchaseOrder(purchaseBillNo).subscribe({
-      next: (data) => {
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Purchase order deleted.', 'Success', {
-          disableTimeOut: false,
-          timeOut: 2000,
-          closeButton: true,
-          enableHtml: true,
-          toastClass: "alert alert-success alert-with-icon",
-          positionClass: 'toast-top-right'
-        });
-        this.getPurchases();
-      },
-      error: (err) => {
-        this.toastr.info('<span class="tim-icons icon-bell-55" [data-notify]="icon"></span> Error in deleting purchase order.', 'Error', {
-          disableTimeOut: false,
-          timeOut: 2000,
-          closeButton: true,
-          enableHtml: true,
-          toastClass: "alert alert-danger alert-with-icon",
-          positionClass: 'toast-top-right'
-        });
-      }
-    })
   }
 }

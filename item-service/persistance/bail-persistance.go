@@ -59,8 +59,7 @@ func InitBalePersistance() (IBalePersistance, *commonModels.ErrorDetail) {
 
 func (repo *BalePersistance) GetBaleInfoByBaleNo(baleNumber string) (*commonModels.BaleDetailsDto, *commonModels.ErrorDetail) {
 	keyCondition := expression.Key("baleNo").Equal(expression.Value(baleNumber))
-	filter := expression.Name("sortKey").BeginsWith(common.SORTKEY_BAILDETAILS_STOCK)
-	expr, err := expression.NewBuilder().WithFilter(filter).WithKeyCondition(keyCondition).Build()
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCondition).Build()
 
 	if err != nil {
 		errMessage := fmt.Sprintf("Got error building expression: %s", err.Error())
